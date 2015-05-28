@@ -1,0 +1,9 @@
+ifdef VBISAM
+  PYISAM_LIBS=-lvbisam
+else
+  PYISAM_LIBS=-lifisam -lifisamx
+endif
+libpyisam.so:
+	$(LD) -shared -soname=$@ -rpath='$${ORIGIN}' -o $@ -L. ${PYISAM_LIBS}
+tstisam: tstisam.c
+	$(CC) -o $@ $< -L. ${PYISAM_LIBS}

@@ -1,0 +1,133 @@
+/*
+ * Title:	CODING_STYLE
+ * Copyright:	(C) 2004 Trevor van Bremen
+ * Author:	Trevor van Bremen
+ * Created:	10Jan2004
+ * Description:
+ *	Just my own 'style' lossely defined.  PLEASE follow it if you want
+ *	me to include *YOUR* additions
+ * Version:
+ *	$Id: CODING_STYLE,v 1.1 2004/01/10 17:59:17 trev_vb Exp $
+ * Modification History:
+ *	$Log: CODING_STYLE,v $
+ *	Revision 1.1  2004/01/10 17:59:17  trev_vb
+ *	TvB 10Jan2004 It was just *TIME* I did this!
+ *	
+ */
+Please keep all 'internal' modifications as close as possible to this style.
+If anyone can think of additional 'coding style' improvements, please drop me a
+line.  Obviously, anyone responding with "you're doing it all wrong" type of
+suggestion will be redirected to /dev/null.  However, if someone takes the time
+to write a note of the form "you're doing it all wrong because it causes problem
+x, y and z", then I will definitely take it into consideration (and THEN I'll
+probably redirect it to /dev/null... [Just kidding])
+
+1: Naming convention
+====================
+With the exception of the functions and variables with external linkage that
+are *REQUIRED* to have certain names within VBISAM in order to be compatible
+with the competition, I have endeavored to use the following consistent naming
+convention for ALL functions and variables:
+a: Meaningful names
+-------------------
+I despise having a loop counter defined as "int	i;".  When I am perusing code,
+I like to be able to search for other occurences of the variable with a
+reasonably high likelihood of finding what I want rather than a 'hit' on some
+totally unrelated variable.  Thus, I would use "int iLoop".  Please keep the
+names meaningful and, as a generalization, avoid using abbreviations unless a
+two-year old would understand them.
+b: Prefixes
+-----------
+Every function or variable should have a prefix.  The prefix visually defines
+the return type (function) or data type (variable).  The prefix is variable in
+length from 1 to n characters.  The LAST character of the prefix defines the
+data type and should be selected from the following list:
+	c	Character
+	d	Double
+	f	Float
+	i	Integer (Both short and int use this prefix presently)
+	l	Long
+	s	Structure
+	t	a Typedef
+	v	Void
+The only character that precedes the data type prefix should be the letter 'p'.
+The 'p' defines the variable / function as a 'P'ointer to the following data
+type.  Additionally, the 'p' should be repeated as many times as necessary to
+indicate the level of indirection.  For example, the traditional argv passed to
+the main function is a pointer to a list of pointers and thus I would define it
+as "char **ppcArgv".
+c: Capitalization
+-----------------
+The FIRST letter of the actual variable / function name AFTER the prefix shall
+be a capital letter.  Additionally, each new word within the name should also
+be started with a capital letter.  (I prefer to *NOT* use an underscore for the
+purposes of separating words in a variable / function name)
+d: Structure definitions / Typedefs
+-----------------------------------
+The definition of a struct or a typedef does NOT reserve any memory space.
+The names given to a struct definition or a typedef are COMPLETELY CAPITALIZED
+and are prefixed by an 'S' or 'T' respectively.  Use of an underscore to
+separate words within these definitions is 'frowned upon'.  Note that this rule
+INTENTIONALLY deviates from the standard 'C' header typdef definitions whereby
+the name is often suffixed with "_t" (eg: pid_t, uid_t etc).
+Once the structure / typdef is actually used to reserve memory space, the naming
+convention in clause a becomes relevant.
+e: Definitions using #define
+----------------------------
+These are all capitalized.  However, I often use an underscore ("_") to separate
+individual words within a definition.
+
+2: Coding convention
+====================
+a: I _*hate*_ (tm) K&R style.
+b: Indentation
+--------------
+I set tabstops at 8 characters (the default in vi).  I am very strict about the
+use of hard tabs as opposed to 8 spaces.  Every curly brace ("{" or "}") shall
+appear on a line ALL BY ITSELF in the relevant position.  All executable code
+within the curly brace shall be indented exactly one more tab than the code
+preceding it.  The use of 'if' and 'else' are causes for following code to be
+indented one additional tab.  The 'else' should appear on a line by itself
+(i.e. I avoid the use of "else if (some_other_condition)").  Any 'if' should
+appear on a line by itself (i.e. I don't use "if (condition) statement;")
+c: Wordwrap
+-----------
+I avoid splitting a long line of code onto multiple lines.  This is simply so
+that a grep on the code will extract the ENTIRE line.
+d: Comments
+-----------
+I use BOTH single-line comments ("// comment") & multi-line comments as needed
+Multi line comments *MUST* begin with the "/*" on a line by itself and *MUST*
+end with the "*/" on a line by itself.  The body of a multi-line comment will
+always begin with a " *" (to avoid it being visually interpreted as code).
+The initial '*' character of each line of a multi-line comment should be
+vertically aligned.
+I TRY to make sure each function if preceded by a multi-line comment block that
+loosely defines the function.  (As at 10Jan2004, I believe these comment blocks
+need to be extended to be more 'descriptive' of what the function actually DOES)
+Any new functions written should have a similarly formatted comment block.
+Inline comments within the code are only added when I think the code in question
+is not 'obvious'.
+Feel free to add humorous comments where applicable, especially if they're
+in any way derogatory to the children in Redmond.  Just keep in mind that I have
+an ego the size of Jupiter (like ALL I.T. people), so please be a FRACTION more
+subtle when you take a dig at ME else I will CRY and throw a TEMPER TANTRUM!.
+BTW, did you hear the one about how Ross Perot's young son asked his dad for a
+"Mickey-Mouse-Outfit" for Christmas?...
+Ross was considering buying him Micro$oft.
+e: Function length
+------------------
+I have a (very flexible) standard that states that a function should not exceed
+more than about 100 lines of actual code. (Excluding variable definitions &
+comments).  That way it becomes manageable to read the entire function on one or
+two screenfuls of text.  (I have a BIG screen @ 2048*1536 resolution OK!)
+f: Prototyping of functions
+---------------------------
+In the words of Nike, "Just do it!" (tm)
+g: VBISAM specific
+------------------
+I've tried to make all variables / functions with EXTERNAL linkage begin with
+the letters "VB" (after the mandatory prefix) in order to try to avoid the
+namespace pollution issue as much as possible.  In other projects (outside SF),
+I accomplished a similar goal by the addition of a 'g' prefix to denote Globally
+visible functions / variables.  I've grown tired of this method though.

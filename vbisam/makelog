@@ -1,0 +1,184 @@
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isDecimal.o isDecimal.c
+isDecimal.c: In function ‘stdecimal’:
+isDecimal.c:282:4: warning: pointer targets in passing argument 1 of ‘comp100’ differ in signedness [-Wpointer-sign]
+    comp100 (buffer, len < count ? len : count);
+    ^
+isDecimal.c:32:6: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ void comp100 (char *, int);
+      ^
+isDecimal.c: In function ‘lddecimal’:
+isDecimal.c:322:3: warning: pointer targets in passing argument 1 of ‘comp100’ differ in signedness [-Wpointer-sign]
+   comp100 (buffer, len);
+   ^
+isDecimal.c:32:6: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ void comp100 (char *, int);
+      ^
+isDecimal.c:333:9: warning: pointer targets in assignment differ in signedness [-Wpointer-sign]
+  digits = dp->dec_dgts;
+         ^
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isHelper.o isHelper.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isaudit.o isaudit.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isbuild.o isbuild.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isdelete.o isdelete.c
+isdelete.c: In function ‘iRowDelete’:
+isdelete.c:258:8: warning: variable ‘tDupNumber’ set but not used [-Wunused-but-set-variable]
+  off_t tDupNumber [MAXSUBS];
+        ^
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isopen.o isopen.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isread.o isread.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isrecover.o isrecover.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o isrewrite.o isrewrite.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o istrans.o istrans.c
+istrans.c: In function ‘iVBRollMeBack’:
+istrans.c:1178:46: warning: array subscript is below array bounds [-Warray-bounds]
+   if (iSavedHandle [iLoop] == -1 && psVBFile [iSavedHandle [iLoop]])
+                                              ^
+istrans.c: In function ‘iVBRollMeForward’:
+istrans.c:1296:46: warning: array subscript is below array bounds [-Warray-bounds]
+   if (iSavedHandle [iLoop] == -1 && psVBFile [iSavedHandle [iLoop]])
+                                              ^
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o iswrite.o iswrite.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbBlockIO.o vbBlockIO.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbDataIO.o vbDataIO.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbIndexIO.o vbIndexIO.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbKeysIO.o vbKeysIO.c
+vbKeysIO.c: In function ‘iVBKeyLocateRow’:
+vbKeysIO.c:299:3: warning: pointer targets in passing argument 4 of ‘iVBKeyCompare’ differ in signedness [-Wpointer-sign]
+   if (iVBKeyCompare (iHandle, iKeyNumber, 0, cKeyValue, psVBFile [iHandle]->psKeyCurr [iKeyNumber]->cKey))
+   ^
+vbKeysIO.c:66:5: note: expected ‘unsigned char *’ but argument is of type ‘char *’
+ int iVBKeyCompare (int, int, int, unsigned char *, unsigned char *);
+     ^
+vbKeysIO.c:299:3: warning: pointer targets in passing argument 5 of ‘iVBKeyCompare’ differ in signedness [-Wpointer-sign]
+   if (iVBKeyCompare (iHandle, iKeyNumber, 0, cKeyValue, psVBFile [iHandle]->psKeyCurr [iKeyNumber]->cKey))
+   ^
+vbKeysIO.c:66:5: note: expected ‘unsigned char *’ but argument is of type ‘char *’
+ int iVBKeyCompare (int, int, int, unsigned char *, unsigned char *);
+     ^
+vbKeysIO.c: In function ‘iVBKeyCompare’:
+vbKeysIO.c:875:5: warning: pointer targets in passing argument 1 of ‘ldint’ differ in signedness [-Wpointer-sign]
+     iValue1 = ldint (pcKey1);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:389:5: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ int ldint (char *);
+     ^
+vbKeysIO.c:876:5: warning: pointer targets in passing argument 1 of ‘ldint’ differ in signedness [-Wpointer-sign]
+     iValue2 = ldint (pcKey2);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:389:5: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ int ldint (char *);
+     ^
+vbKeysIO.c:890:5: warning: pointer targets in passing argument 1 of ‘ldlong’ differ in signedness [-Wpointer-sign]
+     lValue1 = ldlong (pcKey1);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:391:6: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ long ldlong (char *);
+      ^
+vbKeysIO.c:891:5: warning: pointer targets in passing argument 1 of ‘ldlong’ differ in signedness [-Wpointer-sign]
+     lValue2 = ldlong (pcKey2);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:391:6: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ long ldlong (char *);
+      ^
+vbKeysIO.c:905:5: warning: pointer targets in passing argument 1 of ‘ldquad’ differ in signedness [-Wpointer-sign]
+     tValue1 = ldquad (pcKey1);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:393:7: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ off_t ldquad (char *);
+       ^
+vbKeysIO.c:906:5: warning: pointer targets in passing argument 1 of ‘ldquad’ differ in signedness [-Wpointer-sign]
+     tValue2 = ldquad (pcKey2);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:393:7: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ off_t ldquad (char *);
+       ^
+vbKeysIO.c:920:5: warning: pointer targets in passing argument 1 of ‘ldfloat’ differ in signedness [-Wpointer-sign]
+     fValue1 = ldfloat (pcKey1);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:395:8: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ double ldfloat (char *);
+        ^
+vbKeysIO.c:921:5: warning: pointer targets in passing argument 1 of ‘ldfloat’ differ in signedness [-Wpointer-sign]
+     fValue2 = ldfloat (pcKey2);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:395:8: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ double ldfloat (char *);
+        ^
+vbKeysIO.c:935:5: warning: pointer targets in passing argument 1 of ‘lddbl’ differ in signedness [-Wpointer-sign]
+     dValue1 = lddbl (pcKey1);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:399:8: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ double lddbl (char *);
+        ^
+vbKeysIO.c:936:5: warning: pointer targets in passing argument 1 of ‘lddbl’ differ in signedness [-Wpointer-sign]
+     dValue2 = lddbl (pcKey2);
+     ^
+In file included from vbKeysIO.c:54:0:
+isinternal.h:399:8: note: expected ‘char *’ but argument is of type ‘unsigned char *’
+ double lddbl (char *);
+        ^
+vbKeysIO.c: In function ‘iTreeLoad’:
+vbKeysIO.c:1055:5: warning: pointer targets in passing argument 4 of ‘iVBKeyCompare’ differ in signedness [-Wpointer-sign]
+     iResult = iVBKeyCompare (iHandle, iKeyNumber, iLength, pcKeyValue, psTree->psKeyCurr->cKey);
+     ^
+vbKeysIO.c:826:1: note: expected ‘unsigned char *’ but argument is of type ‘char *’
+ iVBKeyCompare (int iHandle, int iKeyNumber, int iLength, unsigned char *pcKey1, unsigned char *pcKey2)
+ ^
+vbKeysIO.c:1055:5: warning: pointer targets in passing argument 5 of ‘iVBKeyCompare’ differ in signedness [-Wpointer-sign]
+     iResult = iVBKeyCompare (iHandle, iKeyNumber, iLength, pcKeyValue, psTree->psKeyCurr->cKey);
+     ^
+vbKeysIO.c:826:1: note: expected ‘unsigned char *’ but argument is of type ‘char *’
+ iVBKeyCompare (int iHandle, int iKeyNumber, int iLength, unsigned char *pcKey1, unsigned char *pcKey2)
+ ^
+vbKeysIO.c:1088:3: warning: pointer targets in passing argument 4 of ‘iVBKeyCompare’ differ in signedness [-Wpointer-sign]
+   iResult = iVBKeyCompare (iHandle, iKeyNumber, iLength, pcKeyValue, psTree->psKeyCurr->cKey);
+   ^
+vbKeysIO.c:826:1: note: expected ‘unsigned char *’ but argument is of type ‘char *’
+ iVBKeyCompare (int iHandle, int iKeyNumber, int iLength, unsigned char *pcKey1, unsigned char *pcKey2)
+ ^
+vbKeysIO.c:1088:3: warning: pointer targets in passing argument 5 of ‘iVBKeyCompare’ differ in signedness [-Wpointer-sign]
+   iResult = iVBKeyCompare (iHandle, iKeyNumber, iLength, pcKeyValue, psTree->psKeyCurr->cKey);
+   ^
+vbKeysIO.c:826:1: note: expected ‘unsigned char *’ but argument is of type ‘char *’
+ iVBKeyCompare (int iHandle, int iKeyNumber, int iLength, unsigned char *pcKey1, unsigned char *pcKey2)
+ ^
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbLocking.o vbLocking.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbLowLevel.o vbLowLevel.c
+vbLowLevel.c: In function ‘iVBOpen’:
+vbLowLevel.c:98:7: warning: suggest parentheses around operand of ‘!’ or change ‘&’ to ‘&&’ or ‘!’ to ‘~’ [-Wparentheses]
+   if (!iFlags & O_CREAT)
+       ^
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbMemIO.o vbMemIO.c
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbNodeMemIO.o vbNodeMemIO.c
+vbNodeMemIO.c: In function ‘iVBNodeSave’:
+vbNodeMemIO.c:706:78: warning: ‘psRootKey[2]’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  psRootKey [0]->psParent = psRootKey [1]->psParent = psRootKey [2]->psParent = psRootTree;
+                                                                              ^
+vbNodeMemIO.c:569:4: note: ‘psRootKey[2]’ was declared here
+   *psRootKey [3];
+    ^
+vbNodeMemIO.c:704:24: warning: ‘psRootKey[1]’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  psRootKey [2]->psPrev = psRootKey [1];
+                        ^
+vbNodeMemIO.c:569:4: note: ‘psRootKey[1]’ was declared here
+   *psRootKey [3];
+    ^
+vbNodeMemIO.c:705:24: warning: ‘psRootKey[0]’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+  psRootKey [1]->psPrev = psRootKey [0];
+                        ^
+vbNodeMemIO.c:569:4: note: ‘psRootKey[0]’ was declared here
+   *psRootKey [3];
+    ^
+gcc -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0   -c -o vbVarLenIO.o vbVarLenIO.c
+ar srv /usr/lib/libvbisam.a isDecimal.o isHelper.o isaudit.o isbuild.o isdelete.o isopen.o isread.o isrecover.o isrewrite.o istrans.o iswrite.o vbBlockIO.o vbDataIO.o vbIndexIO.o vbKeysIO.o vbLocking.o vbLowLevel.o vbMemIO.o vbNodeMemIO.o vbVarLenIO.o Makefile
+ar: /usr/lib/libvbisam.a: Permission denied
+make: *** [/usr/lib/libvbisam.a] Error 1

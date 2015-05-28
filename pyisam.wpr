@@ -1,0 +1,16 @@
+#!wing
+#!version=5.0
+##################################################################
+# Wing IDE project file                                          #
+##################################################################
+[project attributes]
+proj.directory-list = [{'dirloc': loc('.'),
+                        'excludes': [u'pyisam/defile.dsc',
+                                     u'pyisam/defile.dat',
+                                     u'tst.c',
+                                     u'pyisam/defile.idx'],
+                        'filter': '*',
+                        'include_hidden': False,
+                        'recursive': True,
+                        'watch_for_changes': True}]
+proj.file-type = 'shared'
