@@ -51,8 +51,8 @@
 SHELL	= /bin/sh
 DEPS	= isinternal.h vbisam.h Makefile
 LIB	= vbisam
-ALB	= /usr/lib/lib$(LIB).a
-SLB	= /usr/lib/lib$(LIB).so
+ALB	= ./lib$(LIB).a
+SLB	= ./lib$(LIB).so
 # ****************************************************************************
 # CFLAGS info
 # ===========
@@ -105,7 +105,7 @@ OBJS	= ${SRCS:.c=.o}
 all:	${ALB} ${SLB} vbCheck vbIndexEdit vbRecover MVTest
 
 .o:
-	$(CC) $(CFLAGS) -o $@ $< -l$(LIB)
+	$(CC) $(CFLAGS) -o $@ $< -L. -l$(LIB)
 
 ${ALB}:	${OBJS} Makefile
 	${AR} srv $@ $?
