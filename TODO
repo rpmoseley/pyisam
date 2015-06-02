@@ -1,0 +1,10 @@
+This file provides the current things that need to be reviewed, in addition to those that
+are marked with TODO or FIXME in the source code.
+
+* Need to review the usage of the ISAMfunc decorator wrapper and the actual ISAM functions
+in order to make those functions that don't return an int by default are actually correct,
+at present there is an implicit keyword of 'restype' which will set the return type,
+however the current usage does not make use of the keyword to implement the correct setting.
+
+This is most evident on the isbuild() function which is used to build a new table with a 
+given primary key, and thus, must be tested to check if the result is as expected
