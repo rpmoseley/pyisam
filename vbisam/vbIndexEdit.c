@@ -142,7 +142,7 @@ iGetHex (int iOldValue, int iNibbles)
 static	void
 vEditKey (off_t tNode, int iPrevLevel)
 {
-	unsigned char
+	char
 		cKeyValue [VB_MAX_KEYLEN],
 		*pcKeyValue;
 	int	iCurrKey = 0,

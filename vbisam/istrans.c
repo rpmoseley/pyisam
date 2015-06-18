@@ -1175,7 +1175,7 @@ iVBRollMeBack (off_t tOffset, int iPID, int iInRecover)
 		}
 	}
 	for (iLoop = 0; iLoop <= VB_MAX_FILES; iLoop++)
-		if (iSavedHandle [iLoop] == -1 && psVBFile [iSavedHandle [iLoop]])
+		if (iSavedHandle [iLoop] != -1 && psVBFile [iSavedHandle [iLoop]])
 			isclose (iSavedHandle [iLoop]);
 	return (iErrorEncountered);
 }
@@ -1293,7 +1293,7 @@ iVBRollMeForward (off_t tOffset, int iPID)
 		}
 	}
 	for (iLoop = 0; iLoop <= VB_MAX_FILES; iLoop++)
-		if (iSavedHandle [iLoop] == -1 && psVBFile [iSavedHandle [iLoop]])
+		if (iSavedHandle [iLoop] != -1 && psVBFile [iSavedHandle [iLoop]])
 			isclose (iSavedHandle [iLoop]);
 	return (0);
 }

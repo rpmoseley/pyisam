@@ -51,8 +51,8 @@
 SHELL	= /bin/sh
 DEPS	= isinternal.h vbisam.h Makefile
 LIB	= vbisam
-ALB	= ./lib$(LIB).a
-SLB	= ./lib$(LIB).so
+ALB	= lib$(LIB).a
+SLB	= lib$(LIB).so
 # ****************************************************************************
 # CFLAGS info
 # ===========
@@ -75,9 +75,10 @@ CC	= gcc
 # CFLAGS	= -fPIC -Wall -pg -g -D_FILE_OFFSET_BITS=64 -DDEBUG -DISAMMODE=0
 # CFLAGS	= -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DDEBUG -DISAMMODE=0
 # CFLAGS	= -fPIC -Wall -pg -g -D_FILE_OFFSET_BITS=64 -DISAMMODE=1
-# CFLAGS	= -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=1
+CFLAGS	= -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=1
 # CFLAGS	= -fPIC -Wall -pg -g -D_FILE_OFFSET_BITS=64 -DISAMMODE=0
-CFLAGS	= -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0
+##R0CFLAGS	= -fPIC -Wall -O3 -s -D_FILE_OFFSET_BITS=64 -DISAMMODE=0 -funsigned-char
+##R1CFLAGS	= -fPIC -Wall -O0 -g -D_FILE_OFFSET_BITS=64 -DISAMMODE=1 -funsigned-char
 
 SRCS	= \
 	isDecimal.c \
@@ -117,8 +118,13 @@ ${SLB}:	${OBJS} Makefile
 # access(2) to using stat(2) instead!
 #	${LD} -shared -o $@ ${OBJS}
 
+.PHONY: clean
 clean:
 	rm -f *.o
+
+.PHONY: distclean
+distclean: clean
+	rm ${ALB} ${SLB} vbCheck vbIndexEdit vbRecover MVTest
 
 vbCheck:	vbCheck.o ${SLB}
 
@@ -133,6 +139,7 @@ vbRecover:	vbRecover.o ${SLB}
 vbRecover.o:	vbRecover.c ${DEPS}
 
 MVTest:		MVTest.o ${SLB}
+	$(CC) -o $@ $< -Wl,-rpath='$${ORIGIN}' -L. -lvbisam -lc
 
 MVTest.o:	MVTest.c ${DEPS}
 

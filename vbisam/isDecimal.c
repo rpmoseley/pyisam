@@ -137,7 +137,7 @@ void
 dectofix (dec_t *dp, long *ip)
 {
 	long	i = 0;
-	char	*digits = dp->dec_dgts;
+	unsigned char	*digits = dp->dec_dgts;
 	int	exp = dp->dec_exp;
 	int	valid = dp->dec_ndgts;
 
@@ -183,7 +183,7 @@ int
 deccvreal (double dbl, dec_t *dp, int ndigits)
 {
 	char	*str;
-	char	*dgt;
+	unsigned char	*dgt;
 	int	decpt;
 	int	sign;
 
@@ -217,7 +217,7 @@ deccvreal (double dbl, dec_t *dp, int ndigits)
 int
 dectoreal (dec_t *dp, double *dblp, int valid)
 {
-	char	*digits = dp->dec_dgts;
+	unsigned char	*digits = dp->dec_dgts;
 	double	dbl;
 
 	if (valid > dp->dec_ndgts)

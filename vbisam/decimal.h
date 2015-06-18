@@ -13,7 +13,7 @@ struct decimal                 /* the structure on an UNPACKED decimal */
       { short dec_exp;         /* the exponent */
         short dec_pos;         /* is the value "positive", flag */
         short dec_ndgts;       /* the number of valid digits in dec_dgts */
-        char  dec_dgts[DECSIZE];       /* the digits, base 100 */
+        unsigned char  dec_dgts[DECSIZE];       /* the digits, base 100 */
       };
 
 typedef struct decimal dec_t;

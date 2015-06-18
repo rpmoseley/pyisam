@@ -598,6 +598,10 @@ iNodeSplit (int iHandle, int iKeyNumber, struct VBTREE *psTree, struct VBKEY *ps
 		if (tNewNode2 == -1)
 			return (iserrno);
 	}
+	else
+	{
+		psRootKey[0] = psRootKey[1] = psRootKey[2] = NULL;
+	}
 	tNewNode1 = tVBNodeAllocate (iHandle);
 	if (tNewNode1 == -1)
 		return (iserrno);
@@ -631,7 +635,7 @@ iNodeSplit (int iHandle, int iKeyNumber, struct VBTREE *psTree, struct VBKEY *ps
 		psKeyHalfway->psNext = psNewKey;
 		psNewKey->psPrev = psKeyHalfway;
 		psNewKey->psNext = VBKEY_NULL;
-psNewKey->psParent = psNewTree;	// Doubtful
+		psNewKey->psParent = psNewTree;	// Doubtful
 		psNewKey->sFlags.iIsDummy = 1;
 		for (psKey = psNewTree->psKeyFirst; psKey; psKey = psKey->psNext)
 		{

@@ -491,7 +491,7 @@ int	iVBKeyLoad (int, int, int, int, struct VBKEY **);
 void	vVBKeyValueSet (int, struct keydesc *, char *);
 int	iVBKeyInsert (int, struct VBTREE *, int, char *, off_t, off_t, struct VBTREE *);
 int	iVBKeyDelete (int, int);
-int	iVBKeyCompare (int, int, int, unsigned char *, unsigned char *);
+int	iVBKeyCompare (int, int, int, char *, char *);
 #ifdef	DEBUG
 int	iDumpTree (int, int);
 int	iChkTree (int, int);

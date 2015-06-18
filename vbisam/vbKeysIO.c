@@ -63,7 +63,7 @@ int	iVBKeyLoad (int, int, int, int, struct VBKEY **);
 void	vVBKeyValueSet (int, struct keydesc *, char *);
 int	iVBKeyInsert (int, struct VBTREE *, int, char *, off_t, off_t, struct VBTREE *);
 int	iVBKeyDelete (int, int);
-int	iVBKeyCompare (int, int, int, unsigned char *, unsigned char *);
+int	iVBKeyCompare (int, int, int, char *, char *);
 static	int	iTreeLoad (int, int, int, char *, off_t);
 #ifdef	DEBUG
 static	void	vDumpKey (struct VBKEY *, struct VBTREE *, int);
@@ -823,7 +823,7 @@ iVBKeyDelete (int iHandle, int iKeyNumber)
  *	NONE known
  */
 int
-iVBKeyCompare (int iHandle, int iKeyNumber, int iLength, unsigned char *pcKey1, unsigned char *pcKey2)
+iVBKeyCompare (int iHandle, int iKeyNumber, int iLength, char *pcKey1, char *pcKey2)
 {
 	int	iDescBias,
 		iPart,

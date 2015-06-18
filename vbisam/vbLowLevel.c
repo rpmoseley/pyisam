@@ -95,7 +95,7 @@ iVBOpen (char *pcFilename, int iFlags, mode_t tMode)
 	}
 	if (iVBStat (pcFilename, &sStat))
 	{
-		if (!iFlags & O_CREAT)
+		if (!(iFlags & O_CREAT))
 			return (-1);
 	}
 	else

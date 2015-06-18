@@ -49,8 +49,8 @@ main (int iArgc, char **ppcArgv)
 		cRecord [256];
 	struct	keydesc
 		sKeydesc;
-	char	cLogfileName [100],
-		cCommand [100];
+	char	cLogfileName [100];
+	/*	cCommand [100];			* REPLACED */
 	char	cFileName [] = "IsamTest";
 
 	memset (&sKeydesc, 0, sizeof (sKeydesc));
@@ -87,8 +87,13 @@ main (int iArgc, char **ppcArgv)
 	// However, I have to admit to liking the fact that this will FAIL when
 	// using WynDoze (TvB)
 	sprintf (cLogfileName, "RECOVER");
+	/* REPLACED THE FOLLOWING:
 	sprintf (cCommand, "rm -f %s; touch %s", cLogfileName, cLogfileName);
 	system (cCommand);
+	** REPLACED WITH THE FOLLOWING: */
+	if ((iHandle = open(cLogfileName,O_TRUNC|O_RDWR|O_CREAT,0644)) >= 0)
+		if (close(iHandle)) /*NOWORK*/;
+	/* END OF REPLACED */
 	iResult = islogopen (cLogfileName);
 	if (iResult < 0)
 	{

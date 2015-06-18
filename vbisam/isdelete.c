@@ -255,7 +255,7 @@ iRowDelete (int iHandle, off_t tRowNumber)
 {
 	int	iKeyNumber,
 		iResult;
-	off_t	tDupNumber [MAXSUBS];
+	/* off_t	tDupNumber [MAXSUBS]; *SETNUSED*/
 
 	/*
 	 * Step 1:
@@ -266,10 +266,12 @@ iRowDelete (int iHandle, off_t tRowNumber)
 		if (psVBFile [iHandle]->psKeydesc [iKeyNumber]->iNParts == 0)
 			continue;
 		iResult = iVBKeyLocateRow (iHandle, iKeyNumber, tRowNumber);
-		iserrno = EBADFILE;
 		if (iResult)
+		{
+			iserrno = EBADFILE;
 			return (-1);
-		tDupNumber [iKeyNumber] = psVBFile [iHandle]->psKeyCurr [iKeyNumber]->tDupNumber;
+		}
+		/* tDupNumber [iKeyNumber] = psVBFile [iHandle]->psKeyCurr [iKeyNumber]->tDupNumber; *SETNUSED*/
 	}
 
 	/*
