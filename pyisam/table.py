@@ -3,7 +3,12 @@ This module provides a structured way of accessing tables using ISAM by providin
 permit the table layout to be defined and referenced later.
 '''
 
-from .isam import ReadMode,OpenMode,LockMode
+import collections
+from ctypes import create_string_buffer
+import os
+import struct
+from .isam import ReadMode,OpenMode,LockMode,ISAMobject,keydesc,keypart
+from .utils import ISAM_bytes,ISAM_str
 
 # Provides a cache of the struct.Struct objects used to reduce need for multiple instances
 class StructDict(dict):

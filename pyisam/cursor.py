@@ -3,6 +3,8 @@ This module provides the cursor support utilising the concept of rowsets consist
 which are defined using the table module.
 '''
 
+import collections
+
 class ISAMrowset:
   '''Class that provides a result set that is sorted by the rowid'''
   def __init__(self, tabobj, size=None, cursor=None, descend=None):

@@ -1,6 +1,7 @@
 '''
 This module provides some example definitions that match the files used by the
-commercial product Strategix/OneOffice sold by KCS Commercial Systems.
+commercial product Strategix/OneOffice sold by KCS Commercial Systems (originally
+TIS Software Ltd).
 '''
 
 from ..table import ISAMtableDefn,TextColumn,CharColumn,ShortColumn,LongColumn

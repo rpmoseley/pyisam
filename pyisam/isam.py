@@ -11,7 +11,6 @@ causing issues with the original method (the underlying library functions are
 added prefixed with an underscore, isopen -> _isopen).
 '''
 
-import collections
 from ctypes import c_short, c_char, c_char_p, c_long, c_int, c_void_p
 from ctypes import Structure, POINTER, _SimpleCData, _CFuncPtr, cdll, Array
 from ctypes import create_string_buffer, byref, pointer
@@ -183,7 +182,7 @@ class ISAMobject:
   def_lockmode = LockMode.ISMANULOCK
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
-  _lib_ = cdll.LoadLibrary('./libpyisam.so') # FIXME: Make 32/64-bit correct
+  _lib_ = cdll.LoadLibrary(os.path.join(os.path.dirname(__file__),'libpyisam.so')) # FIXME: Make 32/64-bit correct
   def __init__(self):
     self._isfd_ = self._fdmode_ = self._fdlock_ = None
   def __getattr__(self,name):
