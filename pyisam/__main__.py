@@ -9,7 +9,7 @@ elif __name__ == '__main__':
   run_name = '__main1__'
 if run_name == '__main1__':
   from .table import ISAMtable
-  from .examples.stxtables import DEFILEdefn
+  from .tabdefns.stxtables import DEFILEdefn
   DEFILE = ISAMtable(DEFILEdefn)
   tabname = 'decomp'
   def_rec = DEFILE.read(StartMode.ISGREAT,'key',tabname)
