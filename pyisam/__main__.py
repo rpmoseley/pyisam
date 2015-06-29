@@ -11,7 +11,7 @@ if run_name == '__main1__':
   from .table import ISAMtable
   from .tabdefns.stxtables import DEFILEdefn
   DEFILE = ISAMtable(DEFILEdefn)
-  tabname = 'decomp'
+  tabname = 'ref'
   def_rec = DEFILE.read(StartMode.ISGREAT,'key',tabname)
   while def_rec.filename == tabname:
     print(def_rec)

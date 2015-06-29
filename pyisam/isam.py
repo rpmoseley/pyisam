@@ -42,6 +42,16 @@ class keypart(Structure):
   def __str__(self):
     return '({0.start}, {0.leng}, {0.type_})'.format(self)
 
+# Define the types that can be applied to the keydesc.flags field
+class IndexFlags(enum.IntEnum):
+  NO_DUPS      = 0
+  DUPS         = 1
+  DUP_COMPRESS = 2
+  LDR_COMPRESS = 4
+  TRL_COMPRESS = 8
+  ALL_COMPRESS = 16
+  CLUSTER      = 32
+
 class keydesc(Structure):
   _fields_ = [('flags', c_short),
               ('nparts', c_short),

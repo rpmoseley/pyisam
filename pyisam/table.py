@@ -7,8 +7,13 @@ import collections
 from ctypes import create_string_buffer
 import os
 import struct
-from .isam import ReadMode,OpenMode,LockMode,ISAMobject,keydesc,keypart
+from .isam import ReadMode,OpenMode,LockMode,IndexFlags,ISAMobject,keydesc,keypart
 from .utils import ISAM_bytes,ISAM_str
+
+# Define the objects that are available using 'from .table import *'
+__all__ = ('CharColumn','TextColumn','ShortColumn','FloatColumn','DoubleColumn',
+           'PrimaryKey','UniqueKey','DuplicateKey','AscendKey','DescendKey',
+           'ISAMtableDefn','ISAMtable','ISAMrecord')
 
 # Provides a cache of the struct.Struct objects used to reduce need for multiple instances
 class StructDict(dict):
@@ -72,7 +77,7 @@ class TextColumn(ISAMcolumn):
   def __init__(self, name, length):
     if length < 0: raise ValueError("Must provide a positive length")
     self._size_ = length
-    self._struct_ = _StructDict('%ds' % self._size_)
+    self._struct_ = _StructDict('{}s'.format(self._size_))
     super().__init__(name)
   def _pack(self, recbuff, value):
     if value is None:
@@ -114,6 +119,13 @@ class DoubleColumn(ISAMcolumn):
   _struct_ = _StructDict('d', '=d')
   def _convnull(self):
     return 0.0
+
+# Provide an easier to read way of identifying the various key types
+PrimaryKey = True
+UniqueKey = True
+DuplicateKey = False
+AscendKey = False
+DescendKey = True
 
 class ISAMtableDefn:
   '''Class providing the table definition for an instance of ISAMtable,
@@ -185,7 +197,7 @@ class ISAMtableDefn:
     self._size_ += col._size_
     self._colinfo_[col._name_] = col
     self._colname_.append(col._name_)
-  def _add_index(self, idx):
+  def _add_index(self, idx, optimize=True):
     if idx[0] in self._keyinfo_:
       raise ValueError('Index of the same name ({}) already present in table'.format(idx[0]))
     def idxpart(idxcol):
@@ -221,8 +233,8 @@ class ISAMtableDefn:
     else:
       for curidx, idxcol in enumerate(idx[2:]):
         kdesc.part[curidx] = idxpart(idxcol)
-    if kdesc.leng > 8:
-      kdesc.flags |= 14  # COMPRESS within isam.h (octal 016)
+    if kdesc.leng > 8 and optimize:
+      kdesc.flags |= IndexFlags.ALL_COMPRESS  # Used by the Strategix/OneOffice product
     self._keyinfo_[idx[0]] = (kdesc,idx)
 
 class ISAMtable(ISAMobject):
@@ -307,7 +319,6 @@ class ISAMtable(ISAMobject):
         idxmap[curkey] = idxname
     self._idxmap_ = idxmap
 
-# NOTE: Place this in record.py
 class ISAMrecord(dict):
   '''Class providing access to the current record providing access to the columns
      as both attributes as well as dictionary access.'''
@@ -371,4 +382,3 @@ class ISAMrecord(dict):
       setattr(self, name, value)
   def __str__(self):
     return str(self.rectuple)
-
