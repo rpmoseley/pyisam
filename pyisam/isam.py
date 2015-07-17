@@ -13,7 +13,7 @@ added prefixed with an underscore, isopen -> _isopen).
 
 from ctypes import c_short, c_char, c_char_p, c_long, c_int, c_void_p
 from ctypes import Structure, POINTER, _SimpleCData, _CFuncPtr, cdll, Array
-from ctypes import create_string_buffer, byref, pointer
+from ctypes import create_string_buffer
 import enum
 import functools
 import os

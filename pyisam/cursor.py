@@ -4,10 +4,13 @@ which are defined using the table module.
 '''
 
 import collections
+from .table import ISAMtable
 
 class ISAMrowset:
   '''Class that provides a result set that is sorted by the rowid'''
   def __init__(self, tabobj, size=None, cursor=None, descend=None):
+    if not isinstance(tabobj, ISAMtable):
+      raise ValueError('Must provide a ISAMtable object on which to base the rowset')
     self._tabobj_ = tabobj
     self._rows_ = collections.OrderedDict()
     self._maxlen_ = size
@@ -16,6 +19,9 @@ class ISAMrowset:
     self._current_ = None
   def _first_(self):
     'Return the first row in the result set'
+    if len(self._rows_) < 1:
+      self._next_()
+    return self._rows_[0]
   def _next_(self):
     'Return the next row in the result set, extending if possible'
   def _prev_(self):
@@ -38,6 +44,8 @@ class ISAMcursor:
      table, which provides a scrollable pointer into the current result
      set'''
   def __init__(self, tabobj, index, _descend=False, _cachesize=None, *colarg, **colkey):
+    if not isinstance(tabobj, ISAMtable):
+      raise ValueError('Must provide a ISAMtable object on which to base the cursor')
     self._tabobj_ = tabobj
     if index not in tabobj._defn_._indexes_:
       raise ValueError('Non-existant index referenced')

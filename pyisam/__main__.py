@@ -3,10 +3,13 @@ from .utils import ISAM_str
 import os
 import sys
 
-if len(sys.argv) > 1 and sys.argv[1] in '12345':
+if len(sys.argv) > 1 and sys.argv[1] in '1234':
   run_name = '__main{}__'.format(sys.argv[1])
 elif __name__ == '__main__':
   run_name = '__main1__'
+else:
+  run_name = None
+
 if run_name == '__main1__':
   from .table import ISAMtable
   from .tabdefns.stxtables import DEFILEdefn
@@ -20,7 +23,7 @@ if run_name == '__main1__':
 if run_name == '__main2__':
   isamobj = ISAMobject()
   for errno in range(100,isamobj.is_nerr):
-    print(isamobj.isamerror(errno))
+    print(errno,isamobj.strerror(errno))
 
 if run_name == '__main3__':
   isamobj = ISAMobject()
@@ -29,6 +32,3 @@ if run_name == '__main3__':
 if run_name == '__main4__':
   isamobj = ISAMobject()
   print(OpenMode.ISFIXLEN.value,OpenMode.ISFIXLEN.name)
-
-if run_name == '__main5__':
-  isamobj = ISAMobject()
