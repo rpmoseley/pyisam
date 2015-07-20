@@ -122,7 +122,7 @@ class IsamFuncFailed(IsamException):
   'Exception raised when an ISAM function is not found in the library'
   def __init__(self,errno):
     self.errno = errno
-class IsamNoRecord(IsamFuncFailed):
+class IsamNoRecord(IsamException):
   'Exception raised when no record was found'
 
 # The OpenMode and LockMode enums provide the available modes used

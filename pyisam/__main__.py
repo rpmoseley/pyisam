@@ -1,4 +1,4 @@
-from .isam import ISAMobject,StartMode,OpenMode
+from .isam import ISAMobject,ReadMode,OpenMode
 from .utils import ISAM_str
 import os
 import sys
@@ -15,10 +15,11 @@ if run_name == '__main1__':
   from .tabdefns.stxtables import DEFILEdefn
   DEFILE = ISAMtable(DEFILEdefn)
   tabname = 'ref'
-  def_rec = DEFILE.read(StartMode.ISGREAT,'key',tabname)
+  def_rec = DEFILE.read('key', ReadMode.ISGREAT, tabname)
   while def_rec.filename == tabname:
     print(def_rec)
     def_rec = DEFILE.read()
+  def_rec = DEFILE.read('key', ReadMode.ISEQUAL, 'decomp')  # NOTE Should fail!!
 
 if run_name == '__main2__':
   isamobj = ISAMobject()
