@@ -6,5 +6,13 @@ in order to make those functions that don't return an int by default are actuall
 at present there is an implicit keyword of 'restype' which will set the return type,
 however the current usage does not make use of the keyword to implement the correct setting.
 
-This is most evident on the isbuild() function which is used to build a new table with a 
++ This is most evident on the isbuild() function which is used to build a new table with a 
 given primary key, and thus, must be tested to check if the result is as expected
+
+* Need to make the indexes more object orientated rather than just a list of tuples, and also
+document the expected usage of the feature.
+
+* Need to overhaul the handling of columns and indexes so that a table can be defined dynamically
+at runtime without first having to provide a table definition through the use of an instance of
+ISAMtableDefn(), this involves reworking how the indexes and columns are defined in order to make
+them as product netural as possible.

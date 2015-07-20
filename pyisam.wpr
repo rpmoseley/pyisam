@@ -4,6 +4,22 @@
 # Wing IDE project file                                          #
 ##################################################################
 [project attributes]
+debug.launch-configs = (1,
+                        {'launch-VHTB44eSFYbXuabt': ({},
+        {'buildcmd': ('project',
+                      None),
+         'env': ('project',
+                 [u'']),
+         'name': 'pyisam_main',
+         'pyexec': ('custom',
+                    u'python3'),
+         'pypath': ('project',
+                    ''),
+         'pyrunargs': ('project',
+                       '-u -m'),
+         'runargs': u'pyisam',
+         'rundir': ('custom',
+                    u'$(WING:PROJECT_DIR)')})})
 proj.directory-list = [{'dirloc': loc('.'),
                         'excludes': [u'pyisam/defile.dsc',
                                      u'pyisam/defile.dat',
@@ -14,3 +30,15 @@ proj.directory-list = [{'dirloc': loc('.'),
                         'recursive': True,
                         'watch_for_changes': True}]
 proj.file-type = 'shared'
+proj.launch-config = {loc('pyisam/__main__.py'): ('custom',
+        (u'',
+         'launch-VHTB44eSFYbXuabt')),
+                      loc('pyisam/isam.py'): ('project',
+        (u'',
+         'launch-VHTB44eSFYbXuabt')),
+                      loc('pyisam/table.py'): ('project',
+        (u'',
+         'launch-VHTB44eSFYbXuabt')),
+                      loc('wingmain.py'): ('project',
+        (u'',
+         'launch-VHTB44eSFYbXuabt'))}
