@@ -282,15 +282,21 @@ class ISAMtableDefn:
     self._colinfo_ = collections.OrderedDict()
     self._idxinfo_ = {}
     if self._columns_ is not None:
-      if not isinstance(self._columns_,(tuple,list)):
-        raise ValueError('`_columns_` should be a sequence object')
-      for col in self._columns_:
-        self._add_column(col)
+      if isinstance(self._columns_, ISAMcolumn):
+        self._add_column(self._columns_)
+      elif isinstance(self._columns_, (tuple,list)):
+        for col in self._columns_:
+          self._add_column(col)
+      else:
+        raise ValueError('`_columns_` should be a sequence or ISAMcolumn object')
     if self._indexes_ is not None:
-      if not isinstance(self._indexes_,(tuple,list)):
-        raise ValueError('`_indexes_` should be a sequence object')
-      for idx in self._indexes_:
-        self._add_index(idx)
+      if isinstance(self._indexes_, ISAMindex):
+        self._add_index(self._indexes_)
+      elif isinstance(self._indexes_, (tuple,list)):
+        for idx in self._indexes_:
+          self._add_index(idx)
+      else:
+        raise ValueError('`_indexes_` should be a sequence or ISAMindex object')
     if not hasattr(self, '_database_'):
       self._database_ = kwds.pop('_database_',None)
     if not hasattr(self, '_prefix_'):
@@ -424,15 +430,16 @@ class ISAMtable(ISAMobject):
     return self._row_.rectuple
   def _prepare(self):
     'Prepare the object for the actual table file provided'
-    self._prepare_kdesc()
-    idxmap = [None] * len(self._kdesc_)
-    dinfo = self.isdictinfo()
-    for curkey in range(dinfo.nkeys):
-      kdesc = self.iskeyinfo(curkey+1)
-      idxname = self.match_index(kdesc)
-      if idxname is not None:
-        idxmap[curkey] = idxname
-    self._idxmap_ = idxmap
+    if not hasattr(self, '_idxmap_'):
+      self._prepare_kdesc()
+      idxmap = [None] * len(self._kdesc_)
+      dinfo = self.isdictinfo()
+      for curkey in range(dinfo.nkeys):
+        kdesc = self.iskeyinfo(curkey+1)
+        idxname = self.match_index(kdesc)
+        if idxname is not None:
+          idxmap[curkey] = idxname
+      self._idxmap_ = idxmap
   def _prepare_kdesc(self):
     'Prepare the kdesc information for each of the indexes defined for this table'
     if not hasattr(self,'_kdesc_'):
@@ -507,7 +514,7 @@ class ISAMrecord(dict):
   def __setitem__(self, name, value):
     if isinstance(name, tuple):
       if len(name) < len(value):
-        raise ValueError('Must pass a value with the same number of columns')
+        raise ValueError('Must pass a value with the same number of columns as underlying table')
       for n,v in zip(name, value):
         setattr(self, n.name if isinstance(n, ISAMindexCol) else n, value)
     else:
