@@ -120,8 +120,14 @@ class IsamRecMutable(IsamException):
   'Exception when given a non mutable buffer'
 class IsamFuncFailed(IsamException):
   'Exception raised when an ISAM function is not found in the library'
-  def __init__(self,errno):
+  def __init__(self,tabname,errno,errstr=None):
+    self.tabname = tabname
     self.errno = errno
+    self.errstr = errstr
+  def __str__(self):
+    if self.errstr is None:
+      return '{}: {}'.format(self.tabname,self.errno)
+    return '{}: {} ({})'.format(self.tabname,self.errstr,self.errno)
 class IsamNoRecord(IsamException):
   'Exception raised when no record was found'
 
@@ -226,7 +232,7 @@ class ISAMobject:
       elif self.iserrno == 111:
         raise IsamNoRecord
       elif result is not None and (result < 0 or self.iserrno != 0):
-        raise IsamFuncFailed(self.iserrno)
+        raise IsamFuncFailed(ISAM_str(args[0]),self.iserrno,self.strerror(self.iserrno))
     return args
   def strerror(self, errno=None):
     '''Return the error message related to the error number given'''
@@ -235,7 +241,7 @@ class ISAMobject:
     if 100 <= errno < self.is_nerr:
       return ISAM_str(self.is_errlist[errno - 100])
     else:
-      return '{} is not a valid ISAM error number'.format(errno)
+      return os.strerror(errno)
   @ISAMfunc(c_int,POINTER(keydesc))
   def isaddindex(self,kdesc):
     '''Add an index to an open ISAM table'''

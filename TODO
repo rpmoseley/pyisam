@@ -16,3 +16,5 @@ document the expected usage of the feature.
 at runtime without first having to provide a table definition through the use of an instance of
 ISAMtableDefn(), this involves reworking how the indexes and columns are defined in order to make
 them as product netural as possible.
+
+* Consider changing the license under which this package should be released.
