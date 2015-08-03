@@ -276,14 +276,14 @@ class ISAMobject:
     '''Begin a transaction'''
     if self._isfd_ is None: raise IsamNotOpen
     self._isbegin(self._isfd_)
-  @ISAMfunc(c_char_p,c_int,POINTER(keydesc))
-  def isbuild(self,tabname,kdesc):
+  @ISAMfunc(c_char_p,c_int,POINTER(keydesc),c_int)
+  def isbuild(self,tabname,reclen,kdesc):
     '''Build a new table in exclusive mode'''
     if not isinstance(kdesc, keydesc):
       raise ValueError('Must provide the primary key description for table')
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
-    self._isfd_ = self._isbuild(ISAM_bytes(tabname), self._fdmode_.value|self._fdlock_.value, kdesc)
+    self._isfd_ = self._isbuild(ISAM_bytes(tabname), reclen, kdesc, self._fdmode_.value|self._fdlock_.value)
   @ISAMfunc()
   def iscleanup(self):
     '''Cleanup the ISAM library'''
