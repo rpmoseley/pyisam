@@ -30,7 +30,10 @@ proj.directory-list = [{'dirloc': loc('.'),
                         'recursive': True,
                         'watch_for_changes': True}]
 proj.file-type = 'shared'
-proj.launch-config = {loc('pyisam/__main__.py'): ('custom',
+proj.launch-config = {loc('bldtabinfo.py'): ('project',
+        (u'',
+         'launch-VHTB44eSFYbXuabt')),
+                      loc('pyisam/__main__.py'): ('custom',
         (u'',
          'launch-VHTB44eSFYbXuabt')),
                       loc('pyisam/isam.py'): ('project',

@@ -39,10 +39,10 @@ class DECOMPdefn(ISAMtableDefn):
                TextColumn('release',5),
                LongColumn('timeup'),
                LongColumn('specup'))
-  _indexes_ = (PrimaryKey('comp'),
-               DuplicateKey('prefix'),
-               UniqueKey('typkey','comptyp','comp'),
-               UniqueKey('syskey','sys','comptyp','comp'))
+  _indexes_ = (PrimaryIndex('comp'),
+               DuplicateIndex('prefix'),
+               UniqueIndex('typkey','comptyp','comp'),
+               UniqueIndex('syskey','sys','comptyp','comp'))
   _prefix_ = 'dec'
   _database_ = 'utool'
 
@@ -52,9 +52,9 @@ class DEITEMdefn(ISAMtableDefn):
                CharColumn('comptyp'),
                TextColumn('comp',9),
                CharColumn('spec'))
-  _indexes_ = (PrimaryKey('key','item','seq','comptyp','comp'),
-               UniqueKey('usekey','comp','item'),
-               UniqueKey('compkey','item','comptyp','comp','seq'))
+  _indexes_ = (PrimaryIndex('key','item','seq','comptyp','comp'),
+               UniqueIndex('usekey','comp','item'),
+               UniqueIndex('compkey','item','comptyp','comp','seq'))
   _prefix_ = 'deit'
   _database_ = 'utool'
 
@@ -71,9 +71,9 @@ class DEFILEdefn(ISAMtableDefn):
                CharColumn('scode'),
                TextColumn('fgroup',10),
                CharColumn('idxflag'))
-  _indexes_ = (PrimaryKey('key','filename','seq'),
-               UniqueKey('unikey','filename','field'),
-               UniqueKey('vkey','filename','vseq','field'))
+  _indexes_ = (PrimaryIndex('key','filename','seq'),
+               UniqueIndex('unikey','filename','field'),
+               UniqueIndex('vkey','filename','vseq','field'))
   _prefix_ = 'def'
   _database_ = 'utool'
 
@@ -88,7 +88,7 @@ class DEKEYSdefn(ISAMtableDefn):
                TextColumn('key6',9),
                TextColumn('key7',9),
                TextColumn('key8',9))
-  _indexes_ = PrimaryKey('key','filename','keyfield')
+  _indexes_ = PrimaryIndex('key','filename','keyfield')
   _prefix_ = 'dek'
   _database_ = 'utool'
 
@@ -107,8 +107,8 @@ class DEBFILEdefn(ISAMtableDefn):
                ShortColumn('seq'),
                TextColumn('group',10),
                TextColumn('refptr',9))
-  _indexes_ = (PrimaryKey('key','source','license','filename','dataset','field'),
-               DuplicateKey('fkey','filename','dataset','field'))
+  _indexes_ = (PrimaryIndex('key','source','license','filename','dataset','field'),
+               DuplicateIndex('fkey','filename','dataset','field'))
   _prefix_ = 'debf'
   _database_ = 'utool'
 
@@ -126,7 +126,7 @@ class DEBKEYSdefn(ISAMtableDefn):
                TextColumn('key6',9),
                TextColumn('key7',9),
                TextColumn('key8',9))
-  _indexes_ = PrimaryKey('key','source','license','dataset','filename','keyfield')
+  _indexes_ = PrimaryIndex('key','source','license','dataset','filename','keyfield')
   _prefix_ = 'debk'
   _database_ = 'utool'
 
@@ -136,7 +136,7 @@ class DEBCOMPdefn(ISAMtableDefn):
                TextColumn('mask',5),
                TextColumn('dataset',5),
                TextColumn('location',128))
-  _indexes_ = (PrimaryKey('filename'),
-               DuplicateKey('mask'))
+  _indexes_ = (PrimaryIndex('filename'),
+               DuplicateIndex('mask'))
   _prefix_ = 'debc'
   _database_ = 'utool'
