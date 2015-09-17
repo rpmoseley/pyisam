@@ -1,0 +1,10 @@
+#
+# This script will create a libpyisam.so linked to run against the IBM/Informix C-ISAM runtime libraries or
+# alternatively the open source implementation VBISAM which provides most of the functionality minus the
+# number of rows within a table and the isaudit() function.
+
+if test x$1 = xVBISAM; then
+  ld -shared -soname=libpyisam.so -rpath='${ORIGIN}' -o libpyisamv.so -Lvbisam -lvbisam
+else
+  ld -shared -soname=libpyisam.so -rpath='${ORIGIN}' -o libpyisamc.so -Lcisam -lifisam -lifisamx
+fi
