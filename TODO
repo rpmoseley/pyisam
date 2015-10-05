@@ -18,3 +18,8 @@ ISAMtableDefn(), this involves reworking how the indexes and columns are defined
 them as product netural as possible.
 
 * Consider changing the license under which this package should be released.
+
+* Need to copy CISAM32U3 onto the machine and relink the libpyisam.so library
+
+* Need to rebase the dynamic ISAMtableDefn object on that provided by the collections.namedtuple
+  way of implementation

@@ -8,3 +8,5 @@
 __pycache__/
 .??*.sw?
 *.db
+*.la
+*.lo

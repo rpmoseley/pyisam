@@ -7,11 +7,17 @@ TODO: Refactor how the column and index information is stored on the ISAMtable d
 '''
 
 import collections
-from ctypes import create_string_buffer
 import os
 import struct
-from .isam import ReadMode,OpenMode,LockMode,IndexFlags,StartMode,ISAMobject,keydesc,keypart
-from .utils import ISAM_bytes,ISAM_str
+from .enums import ReadMode, OpenMode, LockMode, IndexFlags, StartMode
+from .isam import ISAMobject, dictinfo
+from .utils import ISAM_bytes, ISAM_str
+from .config import use_cffi, use_orig_ISAMindex
+if not use_orig_ISAMindex:
+  if use_cffi:
+    from .cffi.table import ISAMindexMixin
+  else:
+    from .ctypes.table import ISAMindexMixin
 
 # Define the objects that are available using 'from .table import *'
 __all__ = ('CharColumn','TextColumn','ShortColumn','LongColumn','FloatColumn','DoubleColumn',
@@ -141,98 +147,148 @@ class ISAMindexCol:
     else:
       return 'ISAMindexCol({0._name},{0._offset},{0._length})'.format(self)
 
-class ISAMindex:
-  '''This class provides the base implementation of an index for a table,
-     an index is represented by a name, a flag whether duplicates are allowed,
-     an optional list of ISAMindexCol instances which define the columns within
-     the index, and an optional flag whether the index is descending instead of
-     ascending.'''
-  def __init__(self, name, *colinfo, dups=True, desc=False):
-    self.name = name
-    self.dups = dups
-    self.desc = desc
-    if len(colinfo) < 1:
-      self.colinfo = ISAMindexCol(name)
-    elif len(colinfo) == 1:
-      if isinstance(colinfo[0], str):
-        self.colinfo = ISAMindexCol(colinfo[0])
-      elif isinstance(colinfo[0], ISAMindexCol):
-        self.colinfo = colinfo[0]
-    else:
-      colinfo2 = list()
-      for col in colinfo:
-        if isinstance(col, str):
-          colinfo2.append(ISAMindexCol(col))
-        elif isinstance(col, (tuple, list)):
-          if len(col) < 2:
-            colinfo2.append(ISAMindexCol(col[0]))
-          elif len(col) < 3:
-            colinfo2.append(ISAMindexCol(col[0], col[1]))
-          elif len(col) < 4:
-            colinfo2.append(ISAMindexCol(col[0], col[1], col[2]))
-          else:
-            raise ValueError('Column definition is not correctly formatted: {}'.format(col))
-      self.colinfo = colinfo2
-  def prepare_kdesc(self, tabobj, optimize=False):
-    '''Return an instance of keydesc() using the column information from the
-       given OWNTABLE instance'''
-    if not isinstance(tabobj, ISAMtable):
-      raise ValueError('Expecting an instance of ISAMtable for `tabobj`')
-    def _idxpart(idxcol):
-      '''Internal function to add column to current index definition.
-         Also modifies the kdesc instance.'''
-      if not isinstance(idxcol, ISAMindexCol):
-        raise ValueError('Expecting an instance of ISAMindexCol for `idxcol`')
-      colinfo = tabobj._defn_._colinfo_[idxcol.name]
-      kpart = keypart()
-      if idxcol.length is None and idxcol.offset is None:
-        # Use the whole column in the index
-        kpart.start = colinfo._offset_
-        kpart.leng  = colinfo._size_
-        kpart.type_ = colinfo._type_
-        kdesc.leng += colinfo._size_
-      elif idxcol.offset is None:
-        # Use the prefix part of column in the index
-        if idxcol.length > colsize._size_:
-          raise ValueError('Index part is larger than specified column')
-        kpart.start = colinfo._offset_
-        kpart.leng  = idxcol.length
-        kpart.type_ = colinfo._type_
-        kdesc.leng += colinfo._size_  # FIXME: Shouldn't this be idxcol.length
+if use_orig_ISAMindex:
+  from .isam import keydesc, keypart
+  class ISAMindex:
+    '''This class provides the base implementation of an index for a table,
+       an index is represented by a name, a flag whether duplicates are allowed,
+       an optional list of ISAMindexCol instances which define the columns within
+       the index, and an optional flag whether the index is descending instead of
+       ascending.'''
+    def __init__(self, name, *colinfo, dups=True, desc=False):
+      self.name = name
+      self.dups = dups
+      self.desc = desc
+      if len(colinfo) < 1:
+        self.colinfo = ISAMindexCol(name)
+      elif len(colinfo) == 1:
+        if isinstance(colinfo[0], str):
+          self.colinfo = ISAMindexCol(colinfo[0])
+        elif isinstance(colinfo[0], ISAMindexCol):
+          self.colinfo = colinfo[0]
       else:
-        # Use the length of column from the given offset in the index
-        if idxcol.offset + idxcol.length > colsize._size_:
-          raise ValueError('Index part too long for specified column')
-        kpart.start = colinfo._offset_ + idxcol.offset
-        kpart.leng  = idxcol.length
-        kpart.type_ = colinfo._type_
-        kdesc.leng += colinfo._size_  # FIXME: Shouldn't this be idxcol.length
-      return kpart
-    kdesc = keydesc()
-    kdesc.flags = 1 if self.dups else 0
-    kdesc.leng = 0
-    if isinstance(self.colinfo, ISAMindexCol):
-      # Single key comprising the given column
-      kdesc.nparts = 1
-      kdesc.part[0] = _idxpart(self.colinfo)
-    elif isinstance(self.colinfo, (tuple, list)):
-      # Multi-part key comprising the given columns
-      kdesc.nparts = len(self.colinfo)
-      for curidx, idxcol in enumerate(self.colinfo):
-        kdesc.part[curidx] = _idxpart(idxcol)
-    if kdesc.leng > 8 and optimize:
-      kdesc.flags |= IndexFlags.ALL_COMPRESS
-    return kdesc
-  def __str__(self):
-    'Provide a readable form of the information in the index'
-    out = ['{}({},'.format(self.__class__.__name__,self.name)]
-    if isinstance(self.colinfo,ISAMindexCol):
-      out.append('{},'.format(self.colinfo))
-    else:
-      for cinfo in self.colinfo:
-        out.append('{},'.format(cinfo))
-    out.append('dups={0.dups},desc={0.desc})'.format(self))
-    return ''.join(out)
+        colinfo2 = list()
+        for col in colinfo:
+          if isinstance(col, str):
+            colinfo2.append(ISAMindexCol(col))
+          elif isinstance(col, (tuple, list)):
+            if len(col) < 2:
+              colinfo2.append(ISAMindexCol(col[0]))
+            elif len(col) < 3:
+              colinfo2.append(ISAMindexCol(col[0], col[1]))
+            elif len(col) < 4:
+              colinfo2.append(ISAMindexCol(col[0], col[1], col[2]))
+            else:
+              raise ValueError('Column definition is not correctly formatted: {}'.format(col))
+        self.colinfo = colinfo2
+    def prepare_kdesc(self, tabobj, optimize=False):
+      '''Return an instance of keydesc() using the column information from the
+         given TABOBJ instance'''
+      if not isinstance(tabobj, ISAMtable):
+        raise ValueError('Expecting an instance of ISAMtable for `tabobj`')
+      def _idxpart(idxcol):
+        '''Internal function to add column to current index definition.
+           Also modifies the kdesc instance.'''
+        if not isinstance(idxcol, ISAMindexCol):
+          raise ValueError('Expecting an instance of ISAMindexCol for `idxcol`')
+        colinfo = tabobj._defn_._colinfo_[idxcol.name]
+        kpart = keypart()
+        if idxcol.length is None and idxcol.offset is None:
+          # Use the whole column in the index
+          kpart.start = colinfo._offset_
+          kpart.leng  = colinfo._size_
+          kpart.type_ = colinfo._type_
+        elif idxcol.offset is None:
+          # Use the prefix part of column in the index
+          if idxcol.length > colinfo._size_:
+            raise ValueError('Index part is larger than specified column')
+          kpart.start = colinfo._offset_
+          kpart.leng  = idxcol.length
+          kpart.type_ = colinfo._type_
+        else:
+          # Use the length of column from the given offset in the index
+          if idxcol.offset + idxcol.length > colinfo._size_:
+            raise ValueError('Index part too long for specified column')
+          kpart.start = colinfo._offset_ + idxcol.offset
+          kpart.leng  = idxcol.length
+          kpart.type_ = colinfo._type_
+        return kpart
+      kdesc = keydesc()
+      kdesc.flags = 1 if self.dups else 0
+      kdesc_leng = 0
+      if isinstance(self.colinfo, ISAMindexCol):
+        # Single key comprising the given column
+        kdesc.nparts = 1
+        kpart = kdesc.part[0] = _idxpart(self.colinfo)
+        kdesc_leng = kpart.leng
+      elif isinstance(self.colinfo, (tuple, list)):
+        # Multi-part key comprising the given columns
+        kdesc.nparts = len(self.colinfo)
+        for curidx, idxcol in enumerate(self.colinfo):
+          kpart = kdesc.part[curidx] = _idxpart(idxcol)
+          kdesc_leng += kpart.leng
+      if optimize and kdesc_leng > 8:
+        kdesc.flags |= IndexFlags.ALL_COMPRESS
+      return kdesc
+    def __str__(self):
+      'Provide a readable form of the information in the index'
+      out = ['{}({},'.format(self.__class__.__name__,self.name)]
+      if isinstance(self.colinfo,ISAMindexCol):
+        out.append('{},'.format(self.colinfo))
+      else:
+        for cinfo in self.colinfo:
+          out.append('{},'.format(cinfo))
+      out.append('dups={0.dups},desc={0.desc})'.format(self))
+      return ''.join(out)
+else:
+  class ISAMindex(ISAMindexMixin):
+    '''This class provides the base implementation of an index for a table,
+       an index is represented by a name, a flag whether duplicates are allowed,
+       an optional list of ISAMindexCol instances which define the columns within
+       the index, and an optional flag whether the index is descending instead of
+       ascending.'''
+    def __init__(self, name, *colinfo, dups=True, desc=False):
+      self.name = name
+      self.dups = dups
+      self.desc = desc
+      if len(colinfo) < 1:
+        self.colinfo = ISAMindexCol(name)
+      elif len(colinfo) == 1:
+        if isinstance(colinfo[0], str):
+          self.colinfo = ISAMindexCol(colinfo[0])
+        elif isinstance(colinfo[0], ISAMindexCol):
+          self.colinfo = colinfo[0]
+      else:
+        colinfo2 = list()
+        for col in colinfo:
+          if isinstance(col, str):
+            colinfo2.append(ISAMindexCol(col))
+          elif isinstance(col, (tuple, list)):
+            if len(col) < 2:
+              colinfo2.append(ISAMindexCol(col[0]))
+            elif len(col) < 3:
+              colinfo2.append(ISAMindexCol(col[0], col[1]))
+            elif len(col) < 4:
+              colinfo2.append(ISAMindexCol(col[0], col[1], col[2]))
+            else:
+              raise ValueError('Column definition is not correctly formatted: {}'.format(col))
+        self.colinfo = colinfo2
+    def prepare_kdesc(self, tabobj, optimize=False):
+      '''Return an instance of keydesc() using the column information from the
+         given TABOBJ instance'''
+      if not isinstance(tabobj, ISAMtable):
+        raise ValueError('Expecting an instance of ISAMtable for `tabobj`')
+      return self.create_keydesc(tabobj, optimize=optimize)
+    def __str__(self):
+      'Provide a readable form of the information in the index'
+      out = ['{}({},'.format(self.__class__.__name__,self.name)]
+      if isinstance(self.colinfo,ISAMindexCol):
+        out.append('{},'.format(self.colinfo))
+      else:
+        for cinfo in self.colinfo:
+          out.append('{},'.format(cinfo))
+      out.append('dups={0.dups},desc={0.desc})'.format(self))
+      return ''.join(out)
 
 # Provide an easier to read way of identifying the various key types
 class DuplicateIndex(ISAMindex):
@@ -414,9 +470,9 @@ class ISAMtable(ISAMobject):
     'Open the underlying ISAM table with the specified modes'
     if self._isfd_ is None:
       if mode is None:
-        mode = getattr(self,'_mode_', OpenMode.ISINPUT)
+        mode = getattr(self,'_mode_', self.def_openmode)
       if lock is None:
-        lock = getattr(self,'_lock_', LockMode.ISMANULOCK)
+        lock = getattr(self,'_lock_', self.def_lockmode)
       self.isopen(os.path.join(self._path_,self._name_),mode,lock)
       self._prepare()
   def close(self):
@@ -448,7 +504,7 @@ class ISAMtable(ISAMobject):
           self[col] = None
     if self._curidx_ != idxname:
       smode = StartMode(mode)           # Convert to a StartMode value
-      self.isstart(self._kdesc_[idxname],smode)
+      self.isstart(self._kdesc_[idxname], smode, self._row_.record)
       self._curidx_ = idxname
       mode = ReadMode.ISNEXT
     self.isread(self._row_.record,mode)
@@ -482,7 +538,7 @@ class ISAMtable(ISAMobject):
     for idxname,idxinfo in self._kdesc_.items():
       ofd.write('     {}: {}\n'.format(idxname,idxinfo))
 
-class ISAMrecord(dict):
+class ISAMrecord:
   '''Class providing access to the current record providing access to the columns
      as both attributes as well as dictionary access.'''
   def __init__(self, tabobj, idname=None, **kwd):
@@ -490,7 +546,7 @@ class ISAMrecord(dict):
       raise ValueError('Definition must be an instance of ISAMtable')
     self._tabobj_ = tabobj
     self._defn_ = defn = tabobj._defn_
-    self._recbuff_ = create_string_buffer(defn._size_ + 1)
+    self._recbuff_ = ISAMobject.Record(defn._size_)
     fqtname = [defn._database_, defn._prefix_]
     if idname is not None:
       fqtname.append(idname)
@@ -546,14 +602,3 @@ class ISAMrecord(dict):
       setattr(self, name.name if isinstance(name, ISAMindexCol) else name, value)
   def __str__(self):
     return str(self.rectuple)
-
-if __name__ == '__main1__':
-  iic = ISAMindexCol('test')
-  print(iic.name,   iic[0])
-  print(iic.offset, iic[1])
-  print(iic.length, iic[2])
-  print(iic[3])
-
-if __name__ == '__main__':
-  from pyisam.tabdefns.stxtables import DEKEYSdefn
-  iit = ISAMtable(DEKEYSdefn)

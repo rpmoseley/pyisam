@@ -1,7 +1,8 @@
 '''
-This module provides the utility functions for the pyisam package.
+This module provides the utility functions and exceptions for the pyisam package.
 '''
-__all__ = ('ISAM_bytes','ISAM_str')
+__all__ = ('ISAM_bytes','ISAM_str','IsamException','IsamNotOpen','IsamNotWritable',
+           'IsamRecMutable','IsamFuncFailed','IsamNoRecord')
 
 # Convert the given value to a bytes value
 def ISAM_bytes(value,default=None):
@@ -22,3 +23,25 @@ def ISAM_str(value,default=None):
   else:
     raise ValueError('Value is not convertable to a str value')
   return value
+
+# Define the shared exceptions raised by the package
+class IsamException(Exception):
+  'General exception raised by ISAM'
+class IsamNotOpen(IsamException):
+  'Exception raised when ISAM table not open'
+class IsamNotWritable(IsamNotOpen):
+  'Exception raised when ISAM table not opened with writable mode'
+class IsamRecMutable(IsamException):
+  'Exception raised when given a not mutable buffer'
+class IsamFuncFailed(IsamException):
+  'Exception raised when an ISAM function is not found in the libaray'
+  def __init__(self, tabname, errno, errstr=None):
+    self.tabname = tabname
+    self.errno = errno
+    self.errstr = errstr
+  def __str__(self):
+    if self.errstr is None:
+      return '{}: {}'.format(self.tabname, self.errno)
+    return '{}: {} ({})'.format(self.tabname, self.errstr, self.errno)
+class IsamNoRecord(IsamException):
+  'Exception raised when no record was found'

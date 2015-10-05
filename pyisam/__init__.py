@@ -5,5 +5,11 @@ definitions and the idea of rowsets to the underlying library of choice.
 '''
 
 from .isam import ISAMobject
+from .enums import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
+from .utils import IsamException, IsamNotOpen, IsamNotWritable, IsamRecMutable, IsamFuncFailed, IsamNoRecord
 
-__all__ = ('ISAMobject',)
+__all__ = ('ISAMobject', 
+           'IndexFlags', 'LockMode', 'OpenMode', 'ReadMode', 'StartMode',
+           'IsamException', 'IsamNotOpen', 'IsamNotWritable', 'IsamRecMutable',
+           'IsamFuncFailed', 'IsamNoRecord'
+          )
