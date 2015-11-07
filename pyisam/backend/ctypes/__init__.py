@@ -1,4 +1,6 @@
 '''
+This is the CTYPES specific implementation of the package
+
 This module provides a ctypes based interface to the IBM C-ISAM library without
 requiring an explicit extension to be compiled. The only requirement is that
 the existing libifisam/libifisamx libraries are combined such that the SONAME
@@ -16,9 +18,11 @@ from ctypes import create_string_buffer
 import functools
 import os
 import struct
-from ..enums import OpenMode,LockMode,ReadMode,StartMode
-from ..utils import ISAM_bytes,ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable, IsamNotWritable
+from ...enums import OpenMode,LockMode,ReadMode,StartMode
+from ...utils import ISAM_bytes,ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable, IsamNotWritable
 ##import platform
+
+__all__ = ('ISAMobjectMixin', 'dictinfo')
 
 # Define the structures that are usually defined by the isam.h and decimal.h
 # header files.
@@ -39,8 +43,7 @@ class keydesc(Structure):
   _fields_ = [('flags', c_short),
               ('nparts', c_short),
               ('part', keypart * 8),
-              ('leng', c_short),      # NOTE: Makes structure pad to even boundary
-              ('pad', c_char * 32)]   # NOTE: Add padding to make structure large enough for 32/64.
+              ('pad', c_char * 32)]      # NOTE: Makes structure pad to even boundary
   def __eq__(self,other):
     '''Compare if the two keydesc structures are the same'''
     if (self.flags & 1) ^ (other.flags & 1) or self.nparts != other.nparts:
@@ -92,12 +95,12 @@ def ISAMfunc(*orig_args,**orig_kwd):
     return functools.wraps(func)(wrapper)
   return call_wrapper
 
-class ISAMobject:
+class ISAMobjectMixin:
   '''This provides the interface to the underlying ISAM libraries.
      The underlying ISAM routines are loaded on demand with a
      prefix of an underscore, so isopen becomes _isopen.
   '''
-  __slots__ = ('_isfd_','_fdmode_','_fdlock_')
+  __slots__ = ()
   # The _const_ dictionary initially consists of the ctypes type
   # which will be mapped to the correct variable when accessed.
   _const_ = {
@@ -107,13 +110,9 @@ class ISAMobject:
     'isserial'     : c_char_p, 'issingleuser' : c_int,
     'is_nerr'      : c_int,    'is_errlist'   : None
   }
-  def_openmode = OpenMode.ISINPUT
-  def_lockmode = LockMode.ISMANULOCK
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
   _lib_ = cdll.LoadLibrary(os.path.normpath(os.path.join(os.path.dirname(__file__),'../lib','libpyisam.so'))) # FIXME: Make 32/64-bit correct
-  def __init__(self):
-    self._isfd_ = self._fdmode_ = self._fdlock_ = None
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library
        or define and return the numeric equivalent'''
@@ -194,7 +193,7 @@ class ISAMobject:
     if self._isfd_ is None: raise IsamNotOpen
     self._isbegin(self._isfd_)
   @ISAMfunc(c_char_p,c_int,POINTER(keydesc),c_int)
-  def isbuild(self,tabname,reclen,kdesc):
+  def isbuild(self,tabname,reclen,kdesc,varlen=None):
     '''Build a new table in exclusive mode'''
     if self._isfd_ is not None:
       raise IsamException('Attempt to build with open table')

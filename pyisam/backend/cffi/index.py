@@ -3,14 +3,14 @@ This module provides the cffi specific support for indexes
 '''
 
 from ._isam_cffi import ffi
-from ..enums import IndexFlags
+from ...enums import IndexFlags
 
 class ISAMindexMixin:
   'This class provides the cffi specific methods for ISAMindex'
   def create_keydesc(self, tabobj, optimize=False):
     'Create a new keydesc using the column information in tabobj'
     def _idxpart(idxno, idxcol):
-      colinfo = tabobj._defn_._colinfo_[idxcol.name]
+      colinfo = getattr(tabobj, idxcol.name)
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
         kdesc.k_part[idxno].kp_start = colinfo._offset_
@@ -29,17 +29,19 @@ class ISAMindexMixin:
         kdesc.k_part[idxno].kp_leng = idxcol.length
       kdesc.k_part[idxno].kp_type = colinfo._type_
     kdesc = ffi.new('struct keydesc *')
+    kdesc.k_flags = IndexFlags.DUPS if self._dups_ else IndexFlags.NO_DUPS
+    if self._desc_: kdesc.k_flags += IndexFlags.DESCEND
     kdesc_leng = 0
-    if isinstance(self.colinfo, (tuple, list)):
+    if isinstance(self._colinfo_, (tuple, list)):
       # Multi-part index comprising the given columns
-      kdesc.k_nparts = len(self.colinfo)
-      for idxno, idxcol in enumerate(self.colinfo):
+      kdesc.k_nparts = len(self._colinfo_)
+      for idxno, idxcol in enumerate(self._colinfo_):
         _idxpart(idxno, idxcol)
         kdesc_leng += kdesc.k_part[idxno].kp_leng
     else:
       # Single part index comprising the given column
       kdesc.k_nparts = 1
-      _idxpart(0, self.colinfo)
+      _idxpart(0, self._colinfo_)
       kdesc_leng = kdesc.k_part[0].kp_leng
     if optimize and kdesc_leng > 8:
       kdesc.k_flags += IndexFlags.ALL_COMPRESS

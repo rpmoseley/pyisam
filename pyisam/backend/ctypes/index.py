@@ -3,14 +3,14 @@ This module provides the ctypes specific support for indexes
 '''
 
 from .isam import keydesc,keypart
-from ..enums import IndexFlags
+from ...enums import IndexFlags
 
 class ISAMindexMixin:
   'This class provides the ctypes specific methods for ISAMindex'
   def create_keydesc(self, tabobj, optimize=False):
     'Create a new keydesc using the column information in tabobj'
     def _idxpart(idxcol):
-      colinfo = tabobj._defn_._colinfo_[idxcol.name]
+      colinfo = getattr(tabobj, idxcol.name)
       kpart = keypart()
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
@@ -31,19 +31,20 @@ class ISAMindexMixin:
       kpart.type_ = colinfo._type_
       return kpart
     kdesc = keydesc()
-    kdesc.flags = 1 if self.dups else 0
+    kdesc.flags = IndexFlags.DUPS if self._dups_ else IndexFlags.NO_DUPS
+    if self._desc_: kdesc.flags += IndexFlags.DESCEND
     kdesc_leng = 0
-    if isinstance(self.colinfo, (tuple, list)):
+    if isinstance(self._colinfo_, (tuple, list)):
       # Multi-part index comprising the given columns
-      kdesc.nparts = len(self.colinfo)
-      for idxno, idxcol in enumerate(self.colinfo):
+      kdesc.nparts = len(self._colinfo_)
+      for idxno, idxcol in enumerate(self._colinfo_):
         kpart = kdesc.part[idxno] = _idxpart(idxcol)
         kdesc_leng += kpart.leng
     else:
       # Single part index comprising the given column
       kdesc.nparts = 1
-      kpart = kdesc.part[0] = _idxpart(self.colinfo)
+      kpart = kdesc.part[0] = _idxpart(self._info_._colinfo_)
       kdesc_leng = kpart.leng
     if optimize and kdesc_leng > 8:
-      kdesc.flags |= IndexFlags.ALL_COMPRESS
+      kdesc.flags += IndexFlags.ALL_COMPRESS
     return kdesc

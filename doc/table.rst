@@ -1,7 +1,7 @@
 ISAMtable structure
 ===================
 
-The ISAMtable object (provided by the pyisam.table module), provides an object- orientated
+The ISAMtable object (provided by the pyisam.table module), provides an object-orientated
 view of an ISAM table replacing the need for accessing the individual column information
 directly from the current record area into accesses using the x[fld] notation.  It also
 maps the underlying key descriptions that define the columns in each of the indexes on the
@@ -21,7 +21,7 @@ with actual column names which enable them to be accessed using the usual x.attr
   object that provides the necessary attributes) which provides information about the columns
   and indexes on the table which are otherwise not directly available within the underlying
   ISAM tables. This information provides the offsets to the various column values within a
-  record and also enable the correct key description to be generated to enable the use of
+  record and also enable the correct key descriptions to be generated to enable the use of
   indexes other than the primary one to be used during queries of the ISAM table.
 
   The _row_ attribute provides the last record that has been read for the associated table,

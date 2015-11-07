@@ -1,5 +1,8 @@
 '''
-This module provides all the various flags stored as enum objects
+This module provides all the various flags stored as enum objects, in
+addition it defines an enum for current state of the ISAMtable object
+that enables lazy evaluation of the index lookup and other potentially
+memory intensive operations.
 '''
 import enum
 
@@ -12,6 +15,7 @@ class IndexFlags(enum.IntEnum):
   TRL_COMPRESS = 0x08
   ALL_COMPRESS = 0x10
   CLUSTER      = 0x20
+  DESCEND      = 0x80
 
 # The OpenMode and LockMode enums provide the available modes used
 # when using the isbuild or isopen methods.

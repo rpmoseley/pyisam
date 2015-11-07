@@ -1,16 +1,16 @@
 '''
-This module will load the appropriate variant according to whether the builtin ctypes or cffi
-version should be used.
-
-For now the module provides the ctypes version as is
+This module will load the backend that is currently configured for the underlying ISAM support.
 '''
 
-__all__ = ('ISAMobject', 'dictinfo', 'keydesc', 'keypart')
+__all__ = ('ISAMobject', 'dictinfo', 'ISAMindexMixin')
 
-from .config import use_cffi
-if use_cffi:
-  print('Using CFFI backend')
-  from .cffi import ISAMobject, dictinfo
-else:
-  print('Using CTYPES backend')
-  from .ctypes import ISAMobject, dictinfo
+from .enums import OpenMode, LockMode
+from .backend import ISAMobjectMixin, ISAMindexMixin, dictinfo
+
+# Stub for the actual ISAMobject which maintains existing usage
+class ISAMobject(ISAMobjectMixin):
+  __slots__ = ('_isfd_','_fdmode_','_fdlock_')
+  def_openmode = OpenMode.ISINPUT
+  def_lockmode = LockMode.ISMANULOCK
+  def __init__(self, *args, **kwds):
+    self._isfd_ = self._fdmode_ = self._fdlock_ = None

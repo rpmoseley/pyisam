@@ -1,11 +1,16 @@
 '''
+This is the CFFI specific implementation of the pyisam package
+
 This module provides a cffi based interface to the underlying IBM C-ISAM or VBISAM library and
 is designed to be a direct replacement for the ctypes based module in that it aims to provide
 the same objects and also functionality for situations when performance is required.
 '''
 from ._isam_cffi import ffi,lib
-from ..enums import OpenMode, LockMode, ReadMode, StartMode
-from ..utils import ISAM_bytes, ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable
+from .index import ISAMindexMixin
+from ...enums import OpenMode, LockMode, ReadMode, StartMode
+from ...utils import ISAM_bytes, ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable
+
+__all__ = ('ISAMobjectMixin', 'dictinfo')
 
 # Define the structures that are usually defined in the isam.h and decimal.h
 # header files, these will be copied into the underlying C structures by the
@@ -27,15 +32,11 @@ class dictinfo:
   def nrecords(self):
     return self._dinfo.di_nrecords
 
-class ISAMobject:
+class ISAMobjectMixin:
   ''' This provides the interface to underlying ISAM libraries adding the context of the
       current file to avoid having to remember it separately.
   '''
-  __slots__ = ('_isfd_', '_fdmode_', '_fdlock_')
-  def __init__(self):
-    self._isfd_ = self._fdmode_ = self._fdlock_ = None
-  def_openmode = OpenMode.ISINPUT
-  def_lockmode = LockMode.ISMANULOCK
+  __slots__ = ()
   @classmethod
   def Record(cls, size):
     'Return a rewritable array to represent a single record in ISAM'
@@ -116,13 +117,13 @@ class ISAMobject:
     'Begin a transaction'
     if self._isfd_ is None: raise IsamNotOpen
     self._chkerror(lib.isbegin(self._isfd_))
-  def isbuild(self,tabname,reclen,kdesc):
+  def isbuild(self, tabname, reclen, kdesc, varlen=None):
     'Build a new table in exclusive mode'
     if self._isfd_ is not None: raise IsamException('Attempt to build with open table')
     if not isinstance(kdesc, keydesc): raise ValueError('Must provide instance of keydesc for primary index')
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
-    self._isfd_ = self._chkerror(lib.isbuild(ISAM_bytes(tabname), reclen, kdesc.raw(), self._fdmode_.value | self._fdlock_.value))
+    self._isfd_ = self._chkerror(lib.isbuild(ISAM_bytes(tabname), reclen, kdesc, self._fdmode_.value | self._fdlock_.value))
   def iscleanup(self):
     'Cleanup the ISAM library'
     self._chkerror(lib.iscleanup())
@@ -189,6 +190,10 @@ class ISAMobject:
   def islanginfo(self, tabname):
     'Return the collation sequence if any in use'
     return ISAM_str(lib.islanginfo(ISAM_bytes(tabname)))
+  def islock(self):
+    'Lock the entire table'
+    if self._isfd_ is None: raise IsamNotOpen
+    self._chkerror(lib.islock(self._isfd_))
   def islogclose(self):
     'Close the transaction logfile'
     self._chkerror(lib.islogclose())

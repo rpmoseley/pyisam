@@ -4,15 +4,15 @@ commercial product Strategix/OneOffice sold by KCS Commercial Systems (originall
 TIS Software Ltd).
 '''
 
-from ..table import *
+from . import *
 
-__all__ = ('AppcodeColumn','AppdescColumn',
+__all__ = ('AppcodeColumnDef','AppdescColumnDef',
            'DECOMPdefn','DEITEMdefn','DEFILEdefn','DEKEYSdefn',
            'DEBFILEdefn','DEBKEYSdefn','DEBCOMPdefn')
 
 # Provide a variant of the CharColumn that adds the support for appcode specific to the 
 # Strategix/OneOffice product
-class AppcodeColumn(CharColumn):
+class AppcodeColumnDef(CharColumnDef):
   __slots__ = ('_appcode_',)
   def __init__(self, name, appcode=None):
     super().__init__(name)
@@ -21,7 +21,7 @@ class AppcodeColumn(CharColumn):
 
 # Provide a variant of the CharColumn that adds the support of appdesc specific to the
 # Strategix/OneOffice product
-class AppdescColumn(CharColumn):
+class AppdescColumnDef(CharColumnDef):
   __slots__ = ('_appdesc_',)
   def __init__(self, name, appdesc=None):
     super().__init__(name)
@@ -29,114 +29,121 @@ class AppdescColumn(CharColumn):
       self._appdesc_ = appdesc
 
 # Examples of the usage of ISAMtable and ISAMtableDefn
-class DECOMPdefn(ISAMtableDefn):
-  _columns_ = (TextColumn('comp',9),
-               CharColumn('comptyp'),
-               TextColumn('sys',9),
-               TextColumn('prefix',5),
-               TextColumn('user',4),
-               TextColumn('database',6),
-               TextColumn('release',5),
-               LongColumn('timeup'),
-               LongColumn('specup'))
-  _indexes_ = (PrimaryIndex('comp'),
-               DuplicateIndex('prefix'),
-               UniqueIndex('typkey','comptyp','comp'),
-               UniqueIndex('syskey','sys','comptyp','comp'))
+class DECOMPdefn:
+  _tabname_ = 'decomp'
+  _columns_ = (TextColumnDef('comp',9),
+               CharColumnDef('comptyp'),
+               TextColumnDef('sys',9),
+               TextColumnDef('prefix',5),
+               TextColumnDef('user',4),
+               TextColumnDef('database',6),
+               TextColumnDef('release',5),
+               LongColumnDef('timeup'),
+               LongColumnDef('specup'))
+  _indexes_ = (PrimaryIndexDef('comp'),
+               DuplicateIndexDef('prefix'),
+               UniqueIndexDef('typkey','comptyp','comp'),
+               UniqueIndexDef('syskey','sys','comptyp','comp'))
   _prefix_ = 'dec'
   _database_ = 'utool'
 
-class DEITEMdefn(ISAMtableDefn):
-  _columns_ = (TextColumn('item',9),
-               ShortColumn('seq'),
-               CharColumn('comptyp'),
-               TextColumn('comp',9),
-               CharColumn('spec'))
-  _indexes_ = (PrimaryIndex('key','item','seq','comptyp','comp'),
-               UniqueIndex('usekey','comp','item'),
-               UniqueIndex('compkey','item','comptyp','comp','seq'))
+class DEITEMdefn:
+  _tabname_ = 'deitem'
+  _columns_ = (TextColumnDef('item',9),
+               ShortColumnDef('seq'),
+               CharColumnDef('comptyp'),
+               TextColumnDef('comp',9),
+               CharColumnDef('spec'))
+  _indexes_ = (PrimaryIndexDef('key','item','seq','comptyp','comp'),
+               UniqueIndexDef('usekey','comp','item'),
+               UniqueIndexDef('compkey','item','comptyp','comp','seq'))
   _prefix_ = 'deit'
   _database_ = 'utool'
 
-class DEFILEdefn(ISAMtableDefn):
-  _columns_ = (TextColumn('filename',9),
-               ShortColumn('seq'),
-               TextColumn('field',9),
-               TextColumn('refptr',9),
-               CharColumn('type'),
-               ShortColumn('size'),
-               CharColumn('keytype'),
-               ShortColumn('vseq'),
-               ShortColumn('stype'),
-               CharColumn('scode'),
-               TextColumn('fgroup',10),
-               CharColumn('idxflag'))
-  _indexes_ = (PrimaryIndex('key','filename','seq'),
-               UniqueIndex('unikey','filename','field'),
-               UniqueIndex('vkey','filename','vseq','field'))
+class DEFILEdefn:
+  _tabname_ = 'defile'
+  _columns_ = (TextColumnDef('filename',9),
+               ShortColumnDef('seq'),
+               TextColumnDef('field',9),
+               TextColumnDef('refptr',9),
+               CharColumnDef('type'),
+               ShortColumnDef('size'),
+               CharColumnDef('keytype'),
+               ShortColumnDef('vseq'),
+               ShortColumnDef('stype'),
+               CharColumnDef('scode'),
+               TextColumnDef('fgroup',10),
+               CharColumnDef('idxflag'))
+  _indexes_ = (PrimaryIndexDef('key','filename','seq'),
+               UniqueIndexDef('unikey','filename','field'),
+               UniqueIndexDef('vkey','filename','vseq','field'))
   _prefix_ = 'def'
   _database_ = 'utool'
 
-class DEKEYSdefn(ISAMtableDefn):
-  _columns_ = (TextColumn('filename',9),
-               TextColumn('keyfield',9),
-               TextColumn('key1',9),
-               TextColumn('key2',9),
-               TextColumn('key3',9),
-               TextColumn('key4',9),
-               TextColumn('key5',9),
-               TextColumn('key6',9),
-               TextColumn('key7',9),
-               TextColumn('key8',9))
-  _indexes_ = PrimaryIndex('key','filename','keyfield')
+class DEKEYSdefn:
+  _tabname_ = 'dekeys'
+  _columns_ = (TextColumnDef('filename',9),
+               TextColumnDef('keyfield',9),
+               TextColumnDef('key1',9),
+               TextColumnDef('key2',9),
+               TextColumnDef('key3',9),
+               TextColumnDef('key4',9),
+               TextColumnDef('key5',9),
+               TextColumnDef('key6',9),
+               TextColumnDef('key7',9),
+               TextColumnDef('key8',9))
+  _indexes_ = PrimaryIndexDef('key','filename','keyfield')
   _prefix_ = 'dek'
   _database_ = 'utool'
 
-class DEBFILEdefn(ISAMtableDefn):
-  _columns_ = (CharColumn('source'),
-               LongColumn('license'),
-               TextColumn('filename',9),
-               TextColumn('dataset',4),
-               TextColumn('field',9),
-               CharColumn('action'),
-               ShortColumn('stype'),
-               ShortColumn('size'),
-               CharColumn('scode'),
-               CharColumn('keytype'),
-               ShortColumn('vseq'),
-               ShortColumn('seq'),
-               TextColumn('group',10),
-               TextColumn('refptr',9))
-  _indexes_ = (PrimaryIndex('key','source','license','filename','dataset','field'),
-               DuplicateIndex('fkey','filename','dataset','field'))
+class DEBFILEdefn:
+  _tabname_ = 'debfile'
+  _columns_ = (CharColumnDef('source'),
+               LongColumnDef('license'),
+               TextColumnDef('filename',9),
+               TextColumnDef('dataset',4),
+               TextColumnDef('field',9),
+               CharColumnDef('action'),
+               ShortColumnDef('stype'),
+               ShortColumnDef('size'),
+               CharColumnDef('scode'),
+               CharColumnDef('keytype'),
+               ShortColumnDef('vseq'),
+               ShortColumnDef('seq'),
+               TextColumnDef('group',10),
+               TextColumnDef('refptr',9))
+  _indexes_ = (PrimaryIndexDef('key','source','license','filename','dataset','field'),
+               DuplicateIndexDef('fkey','filename','dataset','field'))
   _prefix_ = 'debf'
   _database_ = 'utool'
 
-class DEBKEYSdefn(ISAMtableDefn):
-  _columns_ = (CharColumn('source'),
-               LongColumn('license'),
-               TextColumn('dataset',4),
-               TextColumn('filename',9),
-               TextColumn('keyfield',9),
-               TextColumn('key1',9),
-               TextColumn('key2',9),
-               TextColumn('key3',9),
-               TextColumn('key4',9),
-               TextColumn('key5',9),
-               TextColumn('key6',9),
-               TextColumn('key7',9),
-               TextColumn('key8',9))
-  _indexes_ = PrimaryIndex('key','source','license','dataset','filename','keyfield')
+class DEBKEYSdefn:
+  _tabname_ = 'debkeys'
+  _columns_ = (CharColumnDef('source'),
+               LongColumnDef('license'),
+               TextColumnDef('dataset',4),
+               TextColumnDef('filename',9),
+               TextColumnDef('keyfield',9),
+               TextColumnDef('key1',9),
+               TextColumnDef('key2',9),
+               TextColumnDef('key3',9),
+               TextColumnDef('key4',9),
+               TextColumnDef('key5',9),
+               TextColumnDef('key6',9),
+               TextColumnDef('key7',9),
+               TextColumnDef('key8',9))
+  _indexes_ = PrimaryIndexDef('key','source','license','dataset','filename','keyfield')
   _prefix_ = 'debk'
   _database_ = 'utool'
 
-class DEBCOMPdefn(ISAMtableDefn):
-  _columns_ = (TextColumn('filename',9),
-               CharColumn('stxbuild'),
-               TextColumn('mask',5),
-               TextColumn('dataset',5),
-               TextColumn('location',128))
-  _indexes_ = (PrimaryIndex('filename'),
-               DuplicateIndex('mask'))
+class DEBCOMPdefn:
+  _tabname_ = 'debcomp'
+  _columns_ = (TextColumnDef('filename',9),
+               CharColumnDef('stxbuild'),
+               TextColumnDef('mask',5),
+               TextColumnDef('dataset',5),
+               TextColumnDef('location',128))
+  _indexes_ = (PrimaryIndexDef('filename'),
+               DuplicateIndexDef('mask'))
   _prefix_ = 'debc'
   _database_ = 'utool'
