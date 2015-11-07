@@ -9,7 +9,7 @@ from ._isam_cffi import ffi,lib
 from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable
 
-__all__ = ('ISAMobjectMixin', 'ISAMindexMixini', 'dictinfo')
+__all__ = ('ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo')
 
 # Define the structures that are usually defined in the isam.h and decimal.h
 # header files, these will be copied into the underlying C structures by the
