@@ -6,11 +6,10 @@ is designed to be a direct replacement for the ctypes based module in that it ai
 the same objects and also functionality for situations when performance is required.
 '''
 from ._isam_cffi import ffi,lib
-from .index import ISAMindexMixin
-from ...enums import OpenMode, LockMode, ReadMode, StartMode
+from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable
 
-__all__ = ('ISAMobjectMixin', 'dictinfo')
+__all__ = ('ISAMobjectMixin', 'ISAMindexMixini', 'dictinfo')
 
 # Define the structures that are usually defined in the isam.h and decimal.h
 # header files, these will be copied into the underlying C structures by the
@@ -274,3 +273,45 @@ class ISAMobjectMixin:
     'Write a new record'
     if self._isfd_ is None: raise IsamNotOpen
     self._chkerror(lib.iswrite(self._isfd_, recbuff))
+
+class ISAMindexMixin:
+  'This class provides the cffi specific methods for ISAMindex'
+  def create_keydesc(self, tabobj, optimize=False):
+    'Create a new keydesc using the column information in tabobj'
+    def _idxpart(idxno, idxcol):
+      colinfo = getattr(tabobj, idxcol.name)
+      if idxcol.length is None and idxcol.offset is None:
+        # Use the whole column in the index
+        kdesc.k_part[idxno].kp_start = colinfo._offset_
+        kdesc.k_part[idxno].kp_leng = colinfo._size_
+      elif idxcol.offset is None:
+        # Use the prefix part of column in the index
+        if idxcol.length > colinfo._size_:
+          raise ValueError('Index part is larger than the specified column')
+        kdesc.k_part[idxno].kp_start = colinfo._start_
+        kdesc.k_part[idxno].kp_leng = idxcol.length
+      else:
+        # Use the length of column from the given offset in the index
+        if idxcol.offset + idxcol.length > colinfo._size_:
+          raise ValueError('Index part too long for the specified column')
+        kdesc.k_part[idxno].kp_start = colinfo._offset_ + idxcol.offset
+        kdesc.k_part[idxno].kp_leng = idxcol.length
+      kdesc.k_part[idxno].kp_type = colinfo._type_
+    kdesc = ffi.new('struct keydesc *')
+    kdesc.k_flags = IndexFlags.DUPS if self._dups_ else IndexFlags.NO_DUPS
+    if self._desc_: kdesc.k_flags += IndexFlags.DESCEND
+    kdesc_leng = 0
+    if isinstance(self._colinfo_, (tuple, list)):
+      # Multi-part index comprising the given columns
+      kdesc.k_nparts = len(self._colinfo_)
+      for idxno, idxcol in enumerate(self._colinfo_):
+        _idxpart(idxno, idxcol)
+        kdesc_leng += kdesc.k_part[idxno].kp_leng
+    else:
+      # Single part index comprising the given column
+      kdesc.k_nparts = 1
+      _idxpart(0, self._colinfo_)
+      kdesc_leng = kdesc.k_part[0].kp_leng
+    if optimize and kdesc_leng > 8:
+      kdesc.k_flags += IndexFlags.ALL_COMPRESS
+    return kdesc
