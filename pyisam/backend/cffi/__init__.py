@@ -5,17 +5,23 @@ This module provides a cffi based interface to the underlying IBM C-ISAM or VBIS
 is designed to be a direct replacement for the ctypes based module in that it aims to provide
 the same objects and also functionality for situations when performance is required.
 '''
-from ._isam_cffi import ffi,lib
+
+from ._isam_cffi import ffi, lib
+from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable
 from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
-from ...utils import ISAM_bytes, ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable
+from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = ('ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo')
+__all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
-# Define the structures that are usually defined in the isam.h and decimal.h
-# header files, these will be copied into the underlying C structures by the
-# appropriate methods.
+# Return a raw buffer that is used for the low-level access of the underlying
+# ISAM library and can be created when required.
+def RecordBuffer(size):
+  'Return a rewritable array to represent a single record in ISAM'
+  return ffi.buffer(ffi.new('char[]', size + 1))
+
+# Provide same information as the ctypes version by wrapping the underlying implementation.
 class dictinfo:
-  'Return a class that provides the names expected by the rest of the package'
+  'Class that provides the names expected by the rest of the package'
   def __init__(self, dinfo):
     self._dinfo = dinfo
   @property
@@ -30,16 +36,23 @@ class dictinfo:
   @property
   def nrecords(self):
     return self._dinfo.di_nrecords
+  def __str__(self):
+    return 'NKEY: {0.nkeys}; RECSIZE: {0.recsize}; ' \
+           'IDXSIZE: {0.idxsize}; NREC: {0.nrecords}'.format(self)
 
+class keydesc:
+  'Class that provides the names expected by the package using ctypes'
+  def __init__(self, kinfo):
+    self._kinfo = kinfo
+    print(dir(kinfo))  #DEBUG
+  def __str__(self):
+    out = ['(', ]
+    
 class ISAMobjectMixin:
   ''' This provides the interface to underlying ISAM libraries adding the context of the
       current file to avoid having to remember it separately.
   '''
   __slots__ = ()
-  @classmethod
-  def Record(cls, size):
-    'Return a rewritable array to represent a single record in ISAM'
-    return ffi.buffer(ffi.new('char[]', size + 1))
   @property
   def iserrno(self):
     return lib.iserrno
@@ -63,7 +76,7 @@ class ISAMobjectMixin:
     return ffi.string(lib.isserial).decode('utf-8')
   @property
   def issingleuser(self):
-    return lib.issingleuser
+    return bool(lib.issingleuser)
   @property
   def is_nerr(self):
     return lib.is_nerr
@@ -76,8 +89,8 @@ class ISAMobjectMixin:
         raise IsamNotOpen
       elif self.iserrno == 111:
         raise IsamNoRecord
-      elif result < 0 or self.iserrno != 0:
-        raise IsamFuncFailed(ISAM_str(args[0]), self.iserrno, self.strerror(self.iserrno))
+      elif self.iserrno != 0:
+        raise IsamFunctionFailed(ISAM_str(args[0]), self.iserrno, self.strerror(self.iserrno))
     return result
   def strerror(self, errno=None):
     'Return the error message related to the error number given'
@@ -85,6 +98,8 @@ class ISAMobjectMixin:
       errno = self.iserrno
     if 100 <= errno < self.is_nerr:
       return ISAM_str(self.is_errlist[errno - 100]) # NOTE: May need to review
+    else:
+      return os.strerror(errno)
   def isaddindex(self, kdesc):
     'Add an index to an open ISAM table'
     if self._isfd_ is None: raise IsamNotOpen
@@ -280,6 +295,7 @@ class ISAMindexMixin:
     'Create a new keydesc using the column information in tabobj'
     def _idxpart(idxno, idxcol):
       colinfo = getattr(tabobj, idxcol.name)
+      print(colinfo) #DEBUG
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
         kdesc.k_part[idxno].kp_start = colinfo._offset_
@@ -299,7 +315,8 @@ class ISAMindexMixin:
       kdesc.k_part[idxno].kp_type = colinfo._type_
     kdesc = ffi.new('struct keydesc *')
     kdesc.k_flags = IndexFlags.DUPS if self._dups_ else IndexFlags.NO_DUPS
-    if self._desc_: kdesc.k_flags += IndexFlags.DESCEND
+    if self.desc:
+      kdesc.k_flags += IndexFlags.DESCEND
     kdesc_leng = 0
     if isinstance(self._colinfo_, (tuple, list)):
       # Multi-part index comprising the given columns
@@ -315,3 +332,19 @@ class ISAMindexMixin:
     if optimize and kdesc_leng > 8:
       kdesc.k_flags += IndexFlags.ALL_COMPRESS
     return kdesc
+
+  def match_keydesc(self, other, exact=True):
+    'Check if the given OTHER keydesc matches ourselves'
+    kd1, kd2 = cls._kdesc_, other._kdesc_
+    if kd1.k_flags != kd2.k_flags:
+      return False
+    if kd1.k_nparts != kd2.k_nparts:
+      return False
+    for kp in range(kd1.k_nparts):
+      if kd1.k_part[kp].kp_start != kd2.k_part[kp].kp_start:
+        return False
+      if kd1.k_part[kp].kp_leng != kd2.k_part[kp].kp_leng:
+        return False
+      if kd1.k_part[kp].kp_type != kd2.k_part[kp].kp_type:
+        return False
+    return True

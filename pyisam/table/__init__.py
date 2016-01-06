@@ -3,6 +3,5 @@ This subpackage provides the access to the underlying ISAM tables using definiti
 by the tabdefns subpackage.
 '''
 
-from ..tabdefns import *
-from .defn import *
-from .table import *
+from .record import *
+from .table import ISAMtable

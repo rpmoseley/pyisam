@@ -10,3 +10,4 @@ __pycache__/
 *.db
 *.la
 *.lo
+_isam_cffi.c

@@ -4,6 +4,9 @@ which links with either IBM Informix CISAM or the open source VBISAM libraries a
 provides the necessary mappings.
 
 FIXME: This currently is restricted to the CISAM library.
+TODO: Update this script to perform all the necessary copies of the libraries and
+      include files into the working directory, and then copy the resultant compiled
+      module back into the correct location.
 '''
 import platform
 from cffi import FFI
@@ -47,11 +50,11 @@ void decround(struct decimal *, int);
 int dectoasc(struct decimal *, char *, int, int);
 int dectodbl(struct decimal *, double *);
 int dectoint(struct decimal *, int *);
-int dectolong(struct decimal *, {0} *);
+int dectolong(struct decimal *, {longsz} *);
 void dectrunc(struct decimal *, int);
 int deccvflt(double, struct decimal *);
 int dectoflt(struct decimal *, float *);
-'''.format(long32))
+'''.format(longsz=long32))
 # Define items found in isam.h
 ffi.cdef('''
 #define NPARTS 8
@@ -74,7 +77,7 @@ struct dictinfo {{
 }};
 int    iserrno;
 int    iserrio;
-{0}    isrecnum;
+{longsz}    isrecnum;
 int    isreclen;
 char  *isversnumber;
 char  *iscopyright;
@@ -116,12 +119,12 @@ int    isrewcurr(int, char *);
 int    isrewrec(int, long, char *);
 int    isrewrite(int, char *);
 int    isrollback(void);
-int    issetunique(int, {0});
+int    issetunique(int, {longsz});
 int    isstart(int, struct keydesc *, int, char *, int);
-int    isuniqueid(int, {0} *);
+int    isuniqueid(int, {longsz} *);
 int    isunlock(int);
 int    iswrcurr(int, char *);
 int    iswrite(int, char *);
-'''.format(long32))
+'''.format(longsz=long32))
 if __name__ == '__main__':
-  ffi.compile()
+  ffi.compile()   # NOTE Passing tmpdir moves ALL relative paths as well!

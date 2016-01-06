@@ -18,11 +18,18 @@ from ctypes import create_string_buffer
 import functools
 import os
 import struct
-from ...enums import OpenMode,LockMode,ReadMode,StartMode, IndexFlags
-from ...utils import ISAM_bytes,ISAM_str, IsamNotOpen, IsamNoRecord, IsamFuncFailed, IsamRecMutable, IsamNotWritable
+from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable, IsamNotWritable
+from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
+from ...utils import ISAM_bytes, ISAM_str
 ##import platform
 
-__all__ = ('ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo')
+__all__ = ('ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'RecordBuffer')
+
+# Return a raw buffer that is used for the low-level access of the underlying
+# ISAM library and can be created when required.
+def RecordBuffer(size):
+  'Return a rewritable area to represent a single record'
+  return create_string_buffer(size + 1)
 
 # Define the structures that are usually defined by the isam.h and decimal.h
 # header files.
@@ -53,9 +60,9 @@ class keydesc(Structure):
         return False
     return True
   def __str__(self):
-    res = ['({0.flags}, {0.nparts}, ['.format(self)]
+    res = ['({0.nparts}, ['.format(self)]
     res.append(', '.join([str(self.part[cpart]) for cpart in range(self.nparts)]))
-    res.append('])')
+    res.append('], {0.flags})'.format(self))
     return ''.join(res)
 
 class dictinfo(Structure):
@@ -145,7 +152,7 @@ class ISAMobjectMixin:
         raise IsamNoRecord
       elif result is not None and (result < 0 or self.iserrno != 0):
         # NOTE: What if args is None?
-        raise IsamFuncFailed(ISAM_str(args[0]),self.iserrno,self.strerror(self.iserrno))
+        raise IsamFunctionFailed(ISAM_str(args[0]),self.iserrno,self.strerror(self.iserrno))
     return args
   def strerror(self, errno=None):
     '''Return the error message related to the error number given'''
@@ -155,10 +162,6 @@ class ISAMobjectMixin:
       return ISAM_str(self.is_errlist[errno - 100])
     else:
       return os.strerror(errno)
-  @classmethod
-  def Record(cls, size):
-    'Return a rewritable area to represent a single record'
-    return create_string_buffer(size + 1)
   @ISAMfunc(c_int,POINTER(keydesc))
   def isaddindex(self,kdesc):
     '''Add an index to an open ISAM table'''

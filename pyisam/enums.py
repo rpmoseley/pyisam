@@ -1,9 +1,7 @@
 '''
-This module provides all the various flags stored as enum objects, in
-addition it defines an enum for current state of the ISAMtable object
-that enables lazy evaluation of the index lookup and other potentially
-memory intensive operations.
+This module provides all the various flags stored as enum objects.
 '''
+
 import enum
 
 # Define the types that can be applied to the keydesc.flags field
@@ -64,3 +62,11 @@ class StartMode(enum.IntEnum):
   ISWAIT     = 0x400
   ISLCKW     = 0x500
   ISKEEPLOCK = 0x800
+
+# The types of column supported by the package
+class ColumnType(enum.Enum):
+  CHAR   = 0
+  SHORT  = 1
+  LONG   = 2
+  DOUBLE = 3
+  FLOAT  = 4
