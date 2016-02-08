@@ -359,12 +359,12 @@ struct audhead
 */
 int    isaddindex(int isfd, struct keydesc *keydesc);
 int    isaudit(int isfd, char *filename, int mode);
-int    isbegin();
+int    isbegin(void);
 int    isbuild(char *filename, int reclen, struct keydesc *keydesc, int mode);
-int    iscleanup();
+int    iscleanup(void);
 int    isclose(int isfd);
 int    iscluster(int isfd, struct keydesc *keydesc);
-int    iscommit();
+int    iscommit(void);
 int    isdelcurr(int isfd);
 int    isdelete(int isfd, char *record);
 int    isdelindex(int isfd, struct keydesc *keydesc);
@@ -374,23 +374,23 @@ int    isflush(int isfd);
 int    isindexinfo(int isfd, void *buffer, int number);
 int    isdictinfo(int isfd, struct dictinfo *buffer);
 int    iskeyinfo(int isfd, struct keydesc *buffer, int number);
-void   islangchk();
+void   islangchk(void);
 char  *islanginfo(char *filename);
 int    islock(int isfd);
-int    islogclose();
+int    islogclose(void);
 int    islogopen(char *logname);
 int    isnlsversion(char *filename);
 int    isglsversion(char *filename);
-void   isnolangchk();
+void   isnolangchk(void);
 int    isopen(char *filename, int mode);
 int    isread(int isfd, char *record, int mode);
-int    isrecover();
+int    isrecover(void);
 int    isrelease(int isfd);
 int    isrename(char *oldname, char *newname);
 int    isrewcurr(int isfd, char *record);
 int    isrewrec(int isfd, int  recnum, char *record);
 int    isrewrite(int isfd, char *record);
-int    isrollback();
+int    isrollback(void);
 int    issetunique(int isfd, int  uniqueid);
 int    isstart(int isfd, struct keydesc *keydesc, 
 	       int length, char *record, int mode);
@@ -427,21 +427,21 @@ void   stlong(int  source, char *destination);
 
 #else
 
-extern char *islanginfo();        /* locale used for collation   */
+extern char *islanginfo(void);        /* locale used for collation   */
 
 #ifndef ldlong
-int  ldlong();
+int  ldlong(void);
 #endif
  
 #ifndef NOFLOAT
 #ifndef ldfloat
-double  ldfloat();
+double  ldfloat(void);
 #endif
 #ifndef lddbl
-double  lddbl();
+double  lddbl(void);
 #endif
-float ldfltnull();
-double lddblnull();
+float ldfltnull(void);
+double lddblnull(void);
 #endif
 
 #endif /*__STDC__*/

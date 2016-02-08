@@ -13,7 +13,7 @@ added prefixed with an underscore, isopen -> _isopen).
 '''
 
 from ctypes import c_short, c_char, c_char_p, c_longlong, c_long, c_int, c_void_p
-from ctypes import Structure, POINTER, _SimpleCData, _CFuncPtr, cdll, Array
+from ctypes import Structure, POINTER, _SimpleCData, _CFuncPtr, Array, CDLL, _dlopen
 from ctypes import create_string_buffer
 import functools
 import os
@@ -119,7 +119,7 @@ class ISAMobjectMixin:
   }
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
-  _lib_ = cdll.LoadLibrary(os.path.normpath(os.path.join(os.path.dirname(__file__),'../lib','libpyisam.so'))) # FIXME: Make 32/64-bit correct
+  _lib_ = CDLL('libpyisam', handle=_dlopen(os.path.normpath(os.path.join(os.path.dirname(__file__), 'libpyisam.so')))) # FIXME: Make 32/64-bit correct
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library
        or define and return the numeric equivalent'''
