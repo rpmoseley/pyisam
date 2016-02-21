@@ -2,24 +2,36 @@ This file provides the current things that need to be reviewed, in addition to t
 are marked with TODO or FIXME in the source code.
 
 * Need to review the usage of the ISAMfunc decorator wrapper and the actual ISAM functions
-in order to make those functions that don't return an int by default are actually correct,
-at present there is an implicit keyword of 'restype' which will set the return type,
-however the current usage does not make use of the keyword to implement the correct setting.
+  in order to make those functions that don't return an int by default are actually correct,
+  at present there is an implicit keyword of 'restype' which will set the return type,
+  however the current usage does not make use of the keyword to implement the correct setting.
 
 + This is most evident on the isbuild() function which is used to build a new table with a 
-given primary key, and thus, must be tested to check if the result is as expected
+  given primary key, and thus, must be tested to check if the result is as expected
 
 * Need to make the indexes more object orientated rather than just a list of tuples, and also
-document the expected usage of the feature.
+  document the expected usage of the feature.
 
 * Need to overhaul the handling of columns and indexes so that a table can be defined dynamically
-at runtime without first having to provide a table definition through the use of an instance of
-ISAMtableDefn(), this involves reworking how the indexes and columns are defined in order to make
-them as product netural as possible.
+  at runtime without first having to provide a table definition through the use of an instance of
+  ISAMtableDefn(), this involves reworking how the indexes and columns are defined in order to make
+  them as product netural as possible.
+
++ Need to make use of a metaclass that will instantiate the fields making up a table from a 
+  definition that is provided rather than using the namedtuples() way of doing this, unless this
+  is impossible/impratical.
 
 * Consider changing the license under which this package should be released.
 
-* Need to copy CISAM32U3 onto the machine and relink the libpyisam.so library
+* Need to copy CISAM32U3 onto the machine and relink the libpyisam.so library - DONE
 
 * Need to rebase the dynamic ISAMtableDefn object on that provided by the collections.namedtuple
   way of implementation
+
+* Need to write the interface to the APSW Virtual Table support feature
+
+* Need to lookup into using a metaclass to process the record definition without having to explicitly
+  provide the order list of fields and reduce the need for DRY. Use the outline of the PEP3115 in which
+  it supposes a use of the '__prepare__' function to return the object in which to accumulate the relevant
+  information, it is described as a namespace in the PEP -+- also see the example as used in the 'enums'
+  library module.
