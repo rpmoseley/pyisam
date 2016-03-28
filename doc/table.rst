@@ -20,9 +20,14 @@ with actual column names which enable them to be accessed using the usual x.attr
   The _defn_ attribute stores a reference to the ISAMtableDefn object (or other type of
   object that provides the necessary attributes) which provides information about the columns
   and indexes on the table which are otherwise not directly available within the underlying
-  ISAM tables. This information provides the offsets to the various column values within a
-  record and also enable the correct key descriptions to be generated to enable the use of
-  indexes other than the primary one to be used during queries of the ISAM table.
+  ISAM tables. [NOTE *This was the original intent* This information provides the offsets
+  to the various column values within a record and also enable the correct key description
+  to be generated to enable the use of indexes other than the primary one to be used during
+  queries of the ISAM table.]
+
+  The _colinfo_ attribute provides the list of columns available on the actual underlying
+  ISAM table and adds additional information information to that provided in the _defn_
+  attribute, such as offset and size of the column within the record.
 
   The _row_ attribute provides the last record that has been read for the associated table,
   and can also be used to build up a new record that will be written to the table.
@@ -58,3 +63,9 @@ object.
 A possible re-work would replace the mapping on _idxmap_ to be between the index name and
 and a new object ISAMindexMap which would enable the access of an index both by using its name
 and also its number within the ISAM table itself (the primary key is key number 0).]
+
+Records
+-------
+A record in pyisam knows how to retrieve and store the data for each column in a table, so when 
+an instance of ISAMtable returns a record, it is the record that knows the values of the columns
+and not the ISAMtable instance.

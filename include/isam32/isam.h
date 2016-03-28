@@ -427,21 +427,21 @@ void   stlong(long source, char *destination);
 
 #else
 
-extern char *islanginfo(void);        /* locale used for collation   */
+extern char *islanginfo();        /* locale used for collation   */
 
 #ifndef ldlong
-long ldlong(void);
+long ldlong();
 #endif
  
 #ifndef NOFLOAT
 #ifndef ldfloat
-double  ldfloat(void);
+double  ldfloat();
 #endif
 #ifndef lddbl
-double  lddbl(void);
+double  lddbl();
 #endif
-float ldfltnull(void);
-double lddblnull(void);
+float ldfltnull();
+double lddblnull();
 #endif
 
 #endif /*__STDC__*/

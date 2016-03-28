@@ -53,6 +53,26 @@ class DECOMPdefn:
   _prefix_ = 'dec'
   _database_ = 'utool'
 
+use_metaclass = False
+if use_metaclass:
+  class _BaseDefnT(metaclass=TableDefnMeta):
+    pass
+  class DECOMPdefnT(_BaseDefnT):
+    _tabname_ = 'decomp'
+    _prefix_ = 'dec'
+    _database_ = 'utool'
+    comp = PrimaryIndex(TextColumn(9))
+    comptyp = CharColumn()
+    sys = TextColumn(9)
+    prefix = DuplicateIndex(TextColumn(5))
+    user = TextColumn(4)
+    database = TextColumn(6)
+    release = TextColumn(5)
+    timeup = LongColumn()
+    specup = LongColumn()
+    typkey = UniqueIndex('comptyp', 'comp')
+    syskey = UniqueIndex('sys', 'comptyp', 'comp')
+
 class DEITEMdefn:
   _tabname_ = 'deitem'
   _columns_ = (TextColumn('item',9),

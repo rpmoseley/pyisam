@@ -17,13 +17,13 @@ Each instance of the ISAMindexMap object contains the following attributes:
 
   The kdesc attribute stores the key description as calculated by the pyisam package, this
   is used to match the indexes defined in the table to those actually present on the ISAM
-  table, this attribute will be set regardless of whether the index exists on the underlying
+  table, this attribute will set regardless of whether the index exists on the underlying
   ISAM table.
 
   The name attribute stores the name of the index as defined in pyisam package, this 
   permits the ISAM index to be referenced by number or name.
 
-  The idx_defn attribute stores the definition of the index as defined by the ISAMindex object.
+  The int_defn attribute stores the definition of the index as defined by the ISAMindex object.
 
   The isam_desc attribute stores the key description of the index as read from the underlying
   ISAM table, if no index actually exists then None is stored instead.

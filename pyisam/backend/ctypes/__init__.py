@@ -191,7 +191,7 @@ class ISAMobjectMixin:
   def isaudit(self,mode,audname=None):
     '''Perform audit trail related processing'''
     if self._isfd_ is None: raise IsamNotOpen
-    mode = ISAM_str(mode)  # Convert to a string in case a bytes object was passed
+    if not isinstance(mode, str): raise ValueError('Must provide a string value')
     if mode == 'AUDSETNAME':
       return self._isaudit(self,_isfd_,ISAM_bytes(audname),0)
     elif mode == 'AUDGETNAME':

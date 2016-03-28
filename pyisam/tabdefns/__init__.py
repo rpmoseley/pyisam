@@ -5,33 +5,88 @@ logic to permit alternative implementations to be provided and reduce the
 complexity of the table module.
 '''
 
+import collections
+
 __all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
            'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
            'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
            'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
-           'DescPrimaryIndex')
+           'DescPrimaryIndex', 'TableDefnMeta')
 
-class TableColumn:
+class TableDefnMeta(type):
+  'Metaclass for table definition classes that remembers the order of fields and indexes'
+  @classmethod
+  def __prepare__(metacls, name, bases, **kwds):
+    return collections.OrderedDict()
+  def __new__(cls, name, bases, namespace, **kwds):
+    result = super().__new__(cls, name, bases, dict(namespace))
+    fields, indexes = [], []
+    if '_columns_' in namespace:
+      # Fields given in _columns_ override the attribute variants
+      for info in namespace._columns_:
+        fields.append(info._name)
+    if '_indexes_' in namespace:
+      # Indexes given in _indexes_ override the attribute variants
+      for info in namespace._indexes_:
+        indexes.append(info._name)
+    for name, info in namespace.items():
+      # Check if a dunder ('__X__') name has been given
+      if (name[:2] == '__' and name[-2:] == '__' and
+          name[2:3] != '_' and name[-3:-2] != '_' and
+          len(name) > 4):
+        continue
+      # Check if a sunder ('_X_') name has been given
+      if (name[:1] == '_' and name[-1:] == '_' and
+          name[1:2] != '_' and name[-2:-1] != '_' and
+          len(name) > 2):
+        continue
+      # Check if an underscore name has been given
+      if (name[:1] == '_' and name[1:2] != '_' and len(name) > 1):
+        continue
+      # Store as a field or indexes depending on the base type
+      if issubclass(info, TableDefnColumn):
+        col = info()
+        if col.name in fields:
+          raise NameError('Duplicate field {} defined'.format(col.name))
+        fields.append(col.name)
+      elif isinstance(info, TableDefnColumn):
+        if name in fields:
+          raise NameError('Duplicate field {} defined'.format(name))
+        fields.append(name)
+      elif issubclass(info, TableDefnIndex):
+        idx = info()
+        if idx.name in indexes:
+          raise NameError('Duplicate index {} defined'.format(idx.name))
+        indexes.append(idx.name)
+      elif isinstance(info, TableDefnIndex):
+        if name in indexes:
+          raise NameError('Duplicate index {} defined'.format(name))
+        indexes.append(name)
+    result._fields_ = tuple(fields)
+    result._indexes_ = tuple(indexes)
+    for name in '_tabname_ _prefix_ _database_'.split():
+      value = getattr(namespace, name, None)
+      if value is not None:
+        setattr(result, name, value)
+    return result
+
+class TableDefnColumn:
   'Base class for all the column based classes used in definitions'
   def __init__(self, name, *args, **kwd):
-    self._name = name
-  def _template(self, arg=None):
-    return '{0.__class__.__name__}({1})'.format(self, '' if arg is None else arg)
-class CharColumn(TableColumn):
+    self.name = name
+class CharColumn(TableDefnColumn):
   pass
-class TextColumn(TableColumn):
+class TextColumn(TableDefnColumn):
   def __init__(self, name, length, *args, **kwd):
-    self._length = length
+    self.length = length
     super().__init__(name, *args, **kwd)
-  def _template(self):
-    return super()._template(arg='{0._length}'.format(self))
-class ShortColumn(TableColumn):
+class ShortColumn(TableDefnColumn):
   pass
-class LongColumn(TableColumn):
+class LongColumn(TableDefnColumn):
   pass
-class FloatColumn(TableColumn):
+class FloatColumn(TableDefnColumn):
   pass
-class DoubleColumn(TableColumn):
+class DoubleColumn(TableDefnColumn):
   pass
 
 class TableIndexCol:
@@ -42,16 +97,16 @@ class TableIndexCol:
     self.offset = offset
     self.length = length
   def __str__(self):
-    if self.offset is None and self.length is None:
-      return 'TableIndexCol({0.name})'.format(self)
-    elif self.length is None:
-      return 'TableIndexCol({0.name}, {0.offset})'.format(self)
-    elif self.offset is None:
-      return 'TableIndexCol({0.name}, 0, {0.length})'.format(self)
-    else:
-      return 'TableIndexCol({0.name}, {0.offset}, {0.length})'.format(self)
+    out = ['TableIndexCol({0.name}']
+    if self.length is not None:
+      out.append(', 0' if self.offset is None else ', {0.offset}')
+      out.append(', {0.length}')
+    elif self.offset is not None:
+      out.append(', {0.offset}')
+    out.append(')')
+    return ''.join(out).format(self)
 
-class TableIndex:
+class TableDefnIndex:
   '''This class provides the base implementation of an index for a table,
      an index is represented by a name, a flag whether duplicates are allowed,
      an optional list of TableindexCol instances which define the columns within
@@ -90,20 +145,20 @@ class TableIndex:
       self.colinfo = newinfo
   def __str__(self):
     'Provide a readable form of the information in the index'
-    out = ['{}({},'.format(self.__class__.__name__, self.name)]
+    out = ['{}({}'.format(self.__class__.__name__, self.name)]
     if isinstance(self.colinfo, TableIndexCol):
-      out.append('{},'.format(self.colinfo))
+      out.append('{}'.format(self.colinfo))
     else:
       for cinfo in self.colinfo_:
-        out.append('{},'.format(cinfo))
+        out.append('{}'.format(cinfo))
     out.append('dups={0._dups}, desc={0._desc})'.format(self))
-    return ' '.join(out)
+    return ', '.join(out)
 
 # Provide an easier to read way of identifying the various key types
-class DuplicateIndex(TableIndex):
+class DuplicateIndex(TableDefnIndex):
   def __init__(self, name, *colinfo, desc=False):
     super().__init__(name, *colinfo, dups=True, desc=desc)
-class UniqueIndex(TableIndex):
+class UniqueIndex(TableDefnIndex):
   def __init__(self, name, *colinfo, desc=False):
     super().__init__(name, *colinfo, dups=False, desc=desc)
 class PrimaryIndex(UniqueIndex):

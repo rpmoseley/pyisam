@@ -1,0 +1,28 @@
+#!/bin/bash -x
+
+# This module will perform an update of all the packages that are deemed out of date by the pip
+# program.
+
+PIP=pip
+PIP_OUTDATED=./pip-outdated
+TMP_FILE=${TMPDIR:-/tmp}/$(basename $0).$$
+
+# Generate the list of outdated packages
+${PIP_OUTDATED:-$PIP} list -o >$TMP_FILE
+if test -s $TMP_FILE; then
+  :
+else
+  echo No packages out of date
+  exit 0
+fi
+
+# Process the list to get the actual packages
+pkg_list=$(echo $out_dated | cut -f1 '-d ')
+
+## The following is an example of running the pip list -o command:
+## pip (8.0.2) - Latest: 8.1.0 [wheel]
+## Pygments (2.1.1) - Latest: 2.1.3 [wheel]
+## setuptools (20.1.1) - Latest: 20.2.2 [wheel]
+## Sphinx (1.3.5) - Latest: 1.3.6 [wheel]
+## You are using pip version 8.0.2, however version 8.1.0 is available.
+## You should consider upgrading via the 'pip install --upgrade pip' command.                                                                                                                      
