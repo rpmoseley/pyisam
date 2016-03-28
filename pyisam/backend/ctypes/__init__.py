@@ -21,15 +21,19 @@ import struct
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable, IsamNotWritable
 from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
+from operator import attrgetter
 ##import platform
 
-__all__ = ('ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'RecordBuffer')
+__all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
-# Return a raw buffer that is used for the low-level access of the underlying
+# Represent a raw buffer that is used for the low-level access of the underlying
 # ISAM library and can be created when required.
-def RecordBuffer(size):
-  'Return a rewritable area to represent a single record'
-  return create_string_buffer(size + 1)
+class RecordBuffer:
+  def __init__(self, size):
+    self.size = size + 1
+  def __call__(self):
+    'Return a rewritable area to represent a single record in ISAM'
+    return create_string_buffer(self.size)
 
 # Define the structures that are usually defined by the isam.h and decimal.h
 # header files.
@@ -40,39 +44,55 @@ class decimal(Structure):
               ('dgts', c_char * 16)]
 
 class keypart(Structure):
-  _fields_ = [('start', c_short),
-              ('leng', c_short),
-              ('type_', c_short)]
+  _fields_ = [('kp_start', c_short),
+              ('kp_leng', c_short),
+              ('kp_type', c_short)]
   def __str__(self):
-    return '({0.start}, {0.leng}, {0.type_})'.format(self)
+    return '({0.kp_start}, {0.kp_leng}, {0.kp_type})'.format(self)
 
 class keydesc(Structure):
-  _fields_ = [('flags', c_short),
-              ('nparts', c_short),
-              ('part', keypart * 8),
-              ('pad', c_char * 32)]      # NOTE: Makes structure pad to even boundary
+  _fields_ = [('k_flags', c_short),
+              ('k_nparts', c_short),
+              ('k_part', keypart * 8),
+              ('pad', c_char * 16)]      # NOTE: Makes structure pad to even boundary
+  def __getitem__(self, part):
+    'Return the specified keydesc part object'
+    if not isinstance(part, int):
+      raise ValueError('Expecting an integer index part number')
+    elif part < -self.k_nparts:
+      raise ValueError('Cannot refer beyond first index part')
+    elif part < 0:
+      part = self.k_nparts + part
+    elif part >= self.k_nparts:
+      raise ValueError('Cannot refer beyond last index part')
+    return self.k_part[part]
   def __eq__(self,other):
     '''Compare if the two keydesc structures are the same'''
-    if (self.flags & 1) ^ (other.flags & 1) or self.nparts != other.nparts:
+    if (self.k_flags & 1) ^ (other.k_flags & 1) or self.k_nparts != other.k_nparts:
       return False
-    for spart,opart in zip(self.part,other.part):
-      if spart.start != opart.start or spart.leng != opart.leng or spart.type_ != opart.type_:
+    for spart,opart in zip(self.k_part,other.k_part):
+      if spart.kp_start != opart.kp_start or spart.kp_leng != opart.kp_leng or spart.kp_type != opart.kp_type:
         return False
     return True
-  def __str__(self):
-    res = ['({0.nparts}, ['.format(self)]
-    res.append(', '.join([str(self.part[cpart]) for cpart in range(self.nparts)]))
-    res.append('], {0.flags})'.format(self))
+  def _dump(self):
+    'Generate a string representation of the underlying keydesc structure'
+    res = ['({0.k_nparts}, ['.format(self)]
+    res.append(', '.join([str(self.k_part[cpart]) for cpart in range(self.k_nparts)]))
+    res.append('], {0.k_flags})'.format(self))
     return ''.join(res)
+  __str__ = _dump
+  @property
+  def value(self):
+    return self       # Return ourselves as the value 
 
 class dictinfo(Structure):
-  _fields_ = [('nkeys', c_short),
-              ('recsize', c_short),
-              ('idxsize', c_short),
-              ('nrecords', c_long)]
+  _fields_ = [('di_nkeys', c_short),
+              ('di_recsize', c_short),
+              ('di_idxsize', c_short),
+              ('di_nrecords', c_long)]
   def __str__(self):
-    return 'NKEY: {0.nkeys}; RECSIZE: {0.recsize}; ' \
-           'IDXSIZE: {0.idxsize}; NREC: {0.nrecords}'.format(self)
+    return 'NKEY: {0.di_nkeys}; RECSIZE: {0.di_recsize}; ' \
+           'IDXSIZE: {0.di_idxsize}; NREC: {0.di_nrecords}'.format(self)
 
 # Decorator function that wraps the methods within the ISAMobject that
 # will perform the necessary actions on the first invocation of the ISAM
@@ -85,13 +105,13 @@ def ISAMfunc(*orig_args,**orig_kwd):
         real_func._seen = True
         if 'restype' in orig_kwd:
           real_func.restype = orig_kwd['restype']
-          if 'argtype' in orig_kwd:
-            real_func.argtypes = orig_kwd['argtype']
+          if 'argtypes' in orig_kwd:
+            real_func.argtypes = orig_kwd['argtypes']
           else:
             real_func.argtypes = orig_args if len(orig_args) > 0 else None
           real_func.errcheck = self._chkerror
-        elif 'argtype' in orig_kwd:
-          real_func.argtypes = orig_kwd['argtype']
+        elif 'argtypes' in orig_kwd:
+          real_func.argtypes = orig_kwd['argtypes']
           real_func.errcheck = self._chkerror
         elif len(orig_args) == 0:
           real_func.restype = real_func.argtypes = None
@@ -171,7 +191,7 @@ class ISAMobjectMixin:
   def isaudit(self,mode,audname=None):
     '''Perform audit trail related processing'''
     if self._isfd_ is None: raise IsamNotOpen
-    if not isinstance(mode, str): raise ValueError('Must provide a string value')
+    mode = ISAM_str(mode)  # Convert to a string in case a bytes object was passed
     if mode == 'AUDSETNAME':
       return self._isaudit(self,_isfd_,ISAM_bytes(audname),0)
     elif mode == 'AUDGETNAME':
@@ -187,7 +207,7 @@ class ISAMobjectMixin:
       self._isaudit(self._isfd_,resbuff,4)
       return resbuff[0] != '\0'
     elif mode == 'AUDRECVR':
-      pass
+      raise NotImplementedError('Audit recovery is not implemented')
     else:
       raise ValueError('Unhandled audit mode specified')
   @ISAMfunc()
@@ -393,44 +413,44 @@ class ISAMobjectMixin:
 
 class ISAMindexMixin:
   'This class provides the ctypes specific methods for ISAMindex'
-  def create_keydesc(self, tabobj, optimize=False):
+  def create_keydesc(self, record, optimize=False):
     'Create a new keydesc using the column information in tabobj'
     def _idxpart(idxcol):
-      colinfo = getattr(tabobj, idxcol.name)
+      colinfo = record.colinfo(idxcol.name)
       kpart = keypart()
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
-        kpart.start = colinfo._offset_
-        kpart.leng = colinfo._size_
+        kpart.kp_start = colinfo.offset
+        kpart.kp_leng = colinfo.size
       elif idxcol.offset is None:
         # Use the prefix part of column in the index
-        if idxcol.length > colinfo._size_:
+        if idxcol.length > colinfo.size:
           raise ValueError('Index part is larger than specified column')
-        kpart.start = colinfo._start_
-        kpart.leng = idxcol.length
+        kpart.kp_start = colinfo.start
+        kpart.kp_leng = idxcol.length
       else:
         # Use the length of column from the given offset in the index
-        if idxcol.offset + idxcol.length > colinfo._size:
+        if idxcol.offset + idxcol.length > colinfo.size:
           raise ValueError('Index part too long for the specified column')
-        kpart.start = colinfo._offset_ + idxcol.offset
-        kpart.leng = idxcol.length
-      kpart.type_ = colinfo._type_
+        kpart.kp_start = colinfo.offset + idxcol.offset
+        kpart.kp_leng = idxcol.length
+      kpart.kp_type = colinfo.type.value
       return kpart
     kdesc = keydesc()
-    kdesc.flags = IndexFlags.DUPS if self._dups_ else IndexFlags.NO_DUPS
-    if self._desc_: kdesc.flags += IndexFlags.DESCEND
+    kdesc.k_flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
+    if self.desc: kdesc.k_flags += IndexFlags.DESCEND
     kdesc_leng = 0
-    if isinstance(self._colinfo_, (tuple, list)):
+    if isinstance(self._colinfo, (tuple, list)):
       # Multi-part index comprising the given columns
-      kdesc.nparts = len(self._colinfo_)
-      for idxno, idxcol in enumerate(self._colinfo_):
-        kpart = kdesc.part[idxno] = _idxpart(idxcol)
-        kdesc_leng += kpart.leng
+      kdesc.k_nparts = len(self._colinfo)
+      for idxno, idxcol in enumerate(self._colinfo):
+        kpart = kdesc.k_part[idxno] = _idxpart(idxcol)
+        kdesc_leng += kpart.kp_leng
     else:
       # Single part index comprising the given column
-      kdesc.nparts = 1
-      kpart = kdesc.part[0] = _idxpart(self._colinfo_)
-      kdesc_leng = kpart.leng
+      kdesc.k_nparts = 1
+      kpart = kdesc.k_part[0] = _idxpart(self._colinfo)
+      kdesc_leng = kpart.kp_leng
     if optimize and kdesc_leng > 8:
-      kdesc.flags += IndexFlags.ALL_COMPRESS
+      kdesc.k_flags += IndexFlags.ALL_COMPRESS
     return kdesc

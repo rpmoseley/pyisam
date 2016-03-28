@@ -23,8 +23,13 @@ class IsamFunctionFailed(IsamException):
     self.errno = errno
     self.errstr = errstr
   def __str__(self):
-    if self.errstr is None:
-      return '{}: {}'.format(self.tabname, self.errno)
-    return '{}: {} ({})'.format(self.tabname, self.errstr, self.errno)
+    return '{0.tabname}: {0.errno}' if self.errstr is None else '{0.tabname}: {0.errstr} ({0.errno})'.format(self)
 class IsamNoRecord(IsamException):
   'Exception raised when no record was found'
+class IsamNoIndex(IsamException):
+  'Exception raised when an index is missing from a table instance'
+  def __init__(self, tabname, idxname):
+    self.tabname = tabname
+    self.idxname = idxname
+  def __str__(self):
+    return "Index '{0.idxname}' is not available on table '{0.tabname}'".format(self)

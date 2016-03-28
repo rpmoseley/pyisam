@@ -3,25 +3,29 @@ This is the CFFI specific implementation of the pyisam package
 
 This module provides a cffi based interface to the underlying IBM C-ISAM or VBISAM library and
 is designed to be a direct replacement for the ctypes based module in that it aims to provide
-the same objects and also functionality for situations when performance is required.
+the same classes for situations when performance is required.
 '''
 
 from ._isam_cffi import ffi, lib
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable
 from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
+from operator import attrgetter
 
 __all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
-# Return a raw buffer that is used for the low-level access of the underlying
+# Represent a raw buffer that is used for the low-level access of the underlying
 # ISAM library and can be created when required.
-def RecordBuffer(size):
-  'Return a rewritable array to represent a single record in ISAM'
-  return ffi.buffer(ffi.new('char[]', size + 1))
+class RecordBuffer:
+  def __init__(self, size):
+    self.size = size + 1
+  def __call__(self):
+    'Return a rewritable array to represent a single record in ISAM'
+    return ffi.buffer(ffi.new('char[]', self.size))
 
-# Provide same information as the ctypes version by wrapping the underlying implementation.
+# Provide same information as the ctypes backend provides
 class dictinfo:
-  'Class that provides the names expected by the rest of the package'
+  'Class that provides the dictinfo as expected by the rest of the package'
   def __init__(self, dinfo):
     self._dinfo = dinfo
   @property
@@ -40,19 +44,73 @@ class dictinfo:
     return 'NKEY: {0.nkeys}; RECSIZE: {0.recsize}; ' \
            'IDXSIZE: {0.idxsize}; NREC: {0.nrecords}'.format(self)
 
-class keydesc:
-  'Class that provides the names expected by the package using ctypes'
-  def __init__(self, kinfo):
-    self._kinfo = kinfo
-    print(dir(kinfo))  #DEBUG
+class keypart:
+  def __init__(self, kpart):
+    self.start = kpart.kp_start
+    self.leng  = kpart.kp_leng
+    self.type_ = kpart.kp_type
   def __str__(self):
-    out = ['(', ]
-    
+    return '({0.start}, {0.leng}, {0.type_})'.format(self)
+
+class keydesc:
+  'Class that provides the keydesc as expected by the rest of the package'
+  def __init__(self, kinfo=None):
+    self._kinfo = ffi.new('struct keydesc *') if kinfo is None else kinfo
+  @property
+  def nparts(self):
+    return self._kinfo.k_nparts
+  @nparts.setter
+  def nparts(self, nparts):
+    if 0 <= nparts < 9:
+      self._kinfo.k_nparts = nparts
+    else:
+      raise ValueError('An index can only have a maximum of 8 parts')
+  @property
+  def flags(self):
+    return self._kinfo.k_flags
+  @flags.setter
+  def flags(self, flags):
+    self._kinfo.k_flags = flags
+  def __getitem__(self, part):
+    if not isinstance(part, int):
+      raise ValueError('Expecting an integer key part number')
+    elif part < -self._kinfo.k_nparts:
+      raise ValueError('Cannot refer beyond first key part')
+    elif part < 0:
+      part = self._kinfo.k_nparts + part
+    elif part >= self._kinfo.k_nparts:
+      raise ValueError('Cannot refer beyond last key part')
+    return keypart(self._kinfo.k_part[part])
+  def __setitem__(self, part, kpart):
+    if not isinstance(part, int):
+      raise ValueError('Expecting an integer key part number')
+    elif part < -self._kinfo.k_nparts:
+      raise ValueError('Cannot refer beyond first key part')
+    elif part < 0:
+      part = self._kinfo.k_nparts + part
+    elif part >= self._kinfo.k_nparts:
+      raise ValueError('Cannot refer beyond last key part')
+    if not isinstance(kpart, keypart):
+      raise ValueError('Expecting an instance of keypart')
+    self._kinfo.k_part[part].kp_start = kpart.start
+    self._kinfo.k_part[part].kp_leng = kpart.length
+    self._kinfo.k_part[part].kp_type = kpart.type_
+  value = attrgetter('_kinfo')
+  def _dump(self):
+    'Generate a string representation of the underlying keydesc structure'
+    prt = []
+    for cpart in range(self._kinfo.k_nparts):
+      prt.append('({{0.k_part[{0}].kp_start}}, {{0.k_part[{0}].kp_leng}}, {{0.k_part[{0}].kp_type}})'.format(cpart))
+    res = '({{0.k_nparts}}, [{0}], {{0.k_flags}})'.format(', '.join(prt))
+    return res.format(self._kinfo)
+  __str__ = _dump 
+
 class ISAMobjectMixin:
   ''' This provides the interface to underlying ISAM libraries adding the context of the
       current file to avoid having to remember it separately.
   '''
   __slots__ = ()
+  #iserrno = attrgetter('lib.iserrno')
   @property
   def iserrno(self):
     return lib.iserrno
@@ -97,14 +155,14 @@ class ISAMobjectMixin:
     if errno is None:
       errno = self.iserrno
     if 100 <= errno < self.is_nerr:
-      return ISAM_str(self.is_errlist[errno - 100]) # NOTE: May need to review
+      return ISAM_str(ffi.string(lib.is_errlist[errno - 100]))
     else:
       return os.strerror(errno)
   def isaddindex(self, kdesc):
     'Add an index to an open ISAM table'
     if self._isfd_ is None: raise IsamNotOpen
     if not isinstance(kdesc, keydesc): raise ValueError('Must be an instance of keydesc')
-    self._chkerror(lib.isaddindex(self._isfd_, kdesc.raw))
+    self._chkerror(lib.isaddindex(self._isfd_, kdesc.value))
   def isaudit(self, mode, audname=None):
     'Perform audit trail related processing'
     if self._isfd_ is None: raise IsamNotOpen
@@ -167,7 +225,7 @@ class ISAMobjectMixin:
     'Remove the given index from the table'
     if self._isfd_ is None: raise IsamNotOpen
     if not isinstance(kdesc, keydesc): raise ValueError('Must provide an instance of keydesc')
-    self._chkerror(lib.isdelindex(self._isfd_, kdesc))
+    self._chkerror(lib.isdelindex(self._isfd_, kdesc.value))
   def isdictinfo(self):
     'Return the current dictionary information'
     if self._isfd_ is None: raise IsamNotOpen
@@ -197,7 +255,7 @@ class ISAMobjectMixin:
     if self._isfd_ is None: raise IsamNotOpen
     keyinfo = ffi.new('struct keydesc *')
     self._chkerror(lib.iskeyinfo(self._isfd_, keyinfo, keynum))
-    return keyinfo
+    return keydesc(keyinfo)
   def islangchk(self):
     'Switch on language checks'
     self._chkerror(lib.islangchk())
@@ -291,51 +349,47 @@ class ISAMobjectMixin:
 
 class ISAMindexMixin:
   'This class provides the cffi specific methods for ISAMindex'
-  def create_keydesc(self, tabobj, optimize=False):
+  def create_keydesc(self, record, optimize=False):
     'Create a new keydesc using the column information in tabobj'
     def _idxpart(idxno, idxcol):
-      colinfo = getattr(tabobj, idxcol.name)
-      print(colinfo) #DEBUG
+      colinfo = record.colinfo(idxcol.name)
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
-        kdesc.k_part[idxno].kp_start = colinfo._offset_
-        kdesc.k_part[idxno].kp_leng = colinfo._size_
+        kdesc.k_part[idxno].kp_start = colinfo.offset
+        kdesc.k_part[idxno].kp_leng = colinfo.size
       elif idxcol.offset is None:
         # Use the prefix part of column in the index
-        if idxcol.length > colinfo._size_:
+        if idxcol.length > colinfo._size:
           raise ValueError('Index part is larger than the specified column')
-        kdesc.k_part[idxno].kp_start = colinfo._start_
+        kdesc.k_part[idxno].kp_start = colinfo.start
         kdesc.k_part[idxno].kp_leng = idxcol.length
       else:
         # Use the length of column from the given offset in the index
-        if idxcol.offset + idxcol.length > colinfo._size_:
+        if idxcol.offset + idxcol.length > colinfo.size:
           raise ValueError('Index part too long for the specified column')
-        kdesc.k_part[idxno].kp_start = colinfo._offset_ + idxcol.offset
+        kdesc.k_part[idxno].kp_start = colinfo.offset + idxcol.offset
         kdesc.k_part[idxno].kp_leng = idxcol.length
-      kdesc.k_part[idxno].kp_type = colinfo._type_
+      kdesc.k_part[idxno].kp_type = colinfo.type.value
+      return kdesc.k_part[idxno].kp_leng
     kdesc = ffi.new('struct keydesc *')
-    kdesc.k_flags = IndexFlags.DUPS if self._dups_ else IndexFlags.NO_DUPS
-    if self.desc:
-      kdesc.k_flags += IndexFlags.DESCEND
-    kdesc_leng = 0
-    if isinstance(self._colinfo_, (tuple, list)):
+    kdesc.k_flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
+    if self.desc: kdesc.k_flags += IndexFlags.DESCEND
+    if isinstance(self._colinfo, (tuple, list)):
       # Multi-part index comprising the given columns
-      kdesc.k_nparts = len(self._colinfo_)
-      for idxno, idxcol in enumerate(self._colinfo_):
-        _idxpart(idxno, idxcol)
-        kdesc_leng += kdesc.k_part[idxno].kp_leng
+      kdesc_leng, kdesc.k_nparts = 0, len(self._colinfo)
+      for idxno, idxcol in enumerate(self._colinfo):
+        kdesc_leng += _idxpart(idxno, idxcol)
     else:
       # Single part index comprising the given column
       kdesc.k_nparts = 1
-      _idxpart(0, self._colinfo_)
-      kdesc_leng = kdesc.k_part[0].kp_leng
+      kdesc_leng = _idxpart(0, self._colinfo)
     if optimize and kdesc_leng > 8:
       kdesc.k_flags += IndexFlags.ALL_COMPRESS
-    return kdesc
+    return keydesc(kdesc)
 
   def match_keydesc(self, other, exact=True):
     'Check if the given OTHER keydesc matches ourselves'
-    kd1, kd2 = cls._kdesc_, other._kdesc_
+    kd1, kd2 = self._kdesc_, other._kdesc_
     if kd1.k_flags != kd2.k_flags:
       return False
     if kd1.k_nparts != kd2.k_nparts:

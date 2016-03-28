@@ -1,6 +1,6 @@
 *.o
 *.a
-*.so
+libifisam*.so
 *.wpu
 *.dat
 *.idx
@@ -10,4 +10,4 @@ __pycache__/
 *.db
 *.la
 *.lo
-_isam_cffi.c
+_isam_cffi.?
