@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 
-MAX_TEST = 10
+MAX_TEST = 9
 DEF_TEST = 1
 parser = argparse.ArgumentParser(prog='pyisam', description='PyISAM command line interface')
 parser.add_argument('--test', '-t',
