@@ -2,8 +2,6 @@
 *.a
 libifisam*.so
 *.wpu
-*.dat
-*.idx
 *.py[co]
 __pycache__/
 .??*.sw?

@@ -39,29 +39,27 @@ class ISAMtable:
     self._recsize_ = -1              # Length of record is given after table is opened
 
     # Define the indexes found in the definition object
-    for index in tabdefn._indexes_:
-      self._idxinfo_[index.name] = TableIndex(index.name,
-                                              *index.colinfo,
-                                              dups = index.dups,
-                                              desc = index.desc)
+    indexes = tabdefn._indexes_ if isinstance(tabdefn._indexes_, (tuple, list)) else [tabdefn._indexes_]
+    for index in indexes:
+      colinfo = index.colinfo if isinstance(index.colinfo, (tuple, list)) else [index.colinfo]
+      self._idxinfo_[index.name] = TableIndex(index.name, *colinfo, dups = index.dups, desc = index.desc)
   def __str__(self):
     return 'No data available' if self._row_ is None else str(self._row_)
   @property
   def _is_open(self):
     return self._isobj_._isfd_ is not None
-  ''' TODO: This will be enabled when context manager features are implemented:
-  def __enter__(self):
-    # Open the table using default mode, lock and paths
-    self._isobj_.isopen(self._name_, None, None)
-    return self
-  def __exit__(self, type_, value, traceback):
-    # Close the table
-    self._isobj_.isclose()
-  '''
+  # TODO: This will be enabled when context manager features are implemented:
+  # def __enter__(self):
+  #   # Open the table using default mode, lock and paths
+  #   self._isobj_.isopen(self._name_, None, None)
+  #   return self
+  # def __exit__(self, type_, value, traceback):
+  #   # Close the table
+  #   self._isobj_.isclose()
   def createrecord(self, fields=None, error=False):
     'Return a new instance of the record classs for this table'
     if self._recsize_ > 0:
-      return self._record_(self._name_, self._recsize_, fields)
+      return self._record_(self._name_, self._recsize_, fields=fields)
     if error:
       raise IsamException('Record size not known to generate a record buffer')
   def addindex(self, index):
@@ -137,7 +135,7 @@ class ISAMtable:
       _index.fill_fields(_record, *args, **kwd)
     
       # Issue the restart followed by the read of the record itself
-      self._isobj_.isstart(_index.as_keydesc(self), smode, _record._buffer)
+      self._isobj_.isstart(_index.as_keydesc(_record), smode, _record._buffer)
       self._isobj_.isread(_record._buffer, ReadMode.ISNEXT)
 
       # Make this the current index for the next invocation of the method
@@ -164,34 +162,55 @@ class ISAMtable:
     'Release all the locks on the underlying ISAM table'
   def dictinfo(self):
     'Return an instance of dictinfo for the underlying ISAM table'
+    return self._isobj_.isdictinfo()
   def indexinfo(self, idxnum):
     'Return an instance of ISAMindexInfo for the given IDXNUM on the underlying ISAM table'
+    keydesc = self._isobj_.iskeyinfo(idxnum)
   @property
   def uniqueid(self):
     'Get the current uniqueid from the underlying ISAM table (this autoincrements)'
   @uniqueid.setter
-  def _st_uniqueid(self, newval):
+  def uniqueid(self, newval):
     'Set the uniqueid for the underlying ISAM table'
   def _LookupIndex(self, name=None, flags=None):
     """Return the informtion for the index NAME populating the index cache (_idxinfo_) if
        required."""
     if name is None:
       # Handle special case situations
-      if flags == 'NEED_PRIMARY':
+      if (type(flags) == 'set' and 'NEED_PRIMARY' in flags) or flags == 'NEED_PRIMARY':
         for index in self._idxinfo_:
           if isinstance(index, PrimaryIndex):
             break
         else:
           raise AttributeError('No primary index defined for table')
-    index = self._idxinfo_.get(name)
-    if index is None:
-      raise IsamNoIndex(self._name_, name)
-    return index
+    elif isinstance(name, TableIndex):
+      return name
+    elif isinstance(name, str):
+      index = self._idxinfo_.get(name)
+      if index is None:
+        raise IsamNoIndex(self._name_, name)
+      return index
+    else:
+      raise ValueError('Unhandled type of index requested')
+  def _match_indexes(self):
+    '''Match the indexes found on the underlying table with those provided by the
+       table definition object'''
+    record = self.createrecord()
+    for idxnum in range(self._isobj_.isdictinfo().nkeys):
+      keydesc = self._isobj_.iskeyinfo(idxnum)
+      for idxchk in self._idxinfo_.values():
+        chkdesc = idxchk.as_keydesc(record, optimize=True)
+        if keydesc == chkdesc:
+          idxchk.keynum = idxnum
+    # for value in self._idxinfo_.values():
+    #   print('KEY: ({0.name}, {0.dups}, {0.desc}, {0.keynum}, {0._kdesc}, ['.format(value), end='')
+    #   print(', '.join([cval.name for cval in value._colinfo]), end='')
+    #   print('])')
   def _dump(self, ofd):
     # FIXME: This needs to be updated for the new version of the object
     ofd.write('Table: {}\n'.format(self.__class__.__name__))
     ofd.write('  Columns:\n')
-    for col in self._defn_._colinfo.items():
+    for col in self._defn_._colinfo.values():
       ofd.write('     {}\n'.format(col))
     ofd.write('  Indexes:\n')
     self._prepare_kdesc()

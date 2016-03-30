@@ -11,7 +11,7 @@ class IndexFlags(enum.IntEnum):
   DUP_COMPRESS = 0x02
   LDR_COMPRESS = 0x04
   TRL_COMPRESS = 0x08
-  ALL_COMPRESS = 0x10
+  ALL_COMPRESS = 0x0E
   CLUSTER      = 0x20
   DESCEND      = 0x80
 

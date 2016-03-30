@@ -85,7 +85,9 @@ class TextColumn(_BaseColumn):
   def __get__(self, inst, objtype):
     return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()
   def __set__(self, inst, value):
-    if value is not None:
+    if value is None:
+      value = self._nullval
+    else:
       value = value.encode('utf-8')
       if self._size < len(value):
         value = value[:self._size]
@@ -175,7 +177,7 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
     # application to have fewer fields, or have the fields in a different order, than the
     # actual underlying record in the ISAM table, but does not prevent the actual access
     # to all the fields available.
-    if 'fields' in kwds:
+    if 'fields' in kwds and kwds['fields'] is not None:
       kwd_fields = kwds['fields']
       if isinstance(kwd_fields, str):
         kwd_fields = kwd_fields.replace(',', ' ').split()

@@ -25,12 +25,12 @@ class TableIndexCol:
 
 class TableIndex(ISAMindexMixin):
   '''Class used to store index information in an instance of ISAMtable'''
-  __slots__ = 'name', 'dups', 'desc', 'knum', 'kdesc', 'colinfo'
+  __slots__ = 'name', 'dups', 'desc', 'keynum', '_kdesc', '_colinfo'
   def __init__(self, name, *colinfo, dups=True, desc=False, knum=-1, kdesc=None):
     self.name = name
     self.dups = dups
     self.desc = desc
-    self._knum = knum               # Stores the key number once matched
+    self.keynum = knum              # Stores the key number once matched
     self._kdesc = kdesc             # Stores the keydesc once prepared
     self._colinfo = []
     for col in colinfo:
@@ -66,7 +66,7 @@ class TableIndex(ISAMindexMixin):
     fld_argn = 0
     for col in self._colinfo:
       try:
-        record[col] = kwd[col.name]
+        record[col.name] = kwd[col.name]
       except KeyError:
-        record[col] = args[fld_argn] if fld_argn < len(args) else None
+        record[col.name] = args[fld_argn] if fld_argn < len(args) else None
         fld_argn += 1

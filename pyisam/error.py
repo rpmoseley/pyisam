@@ -32,4 +32,4 @@ class IsamNoIndex(IsamException):
     self.tabname = tabname
     self.idxname = idxname
   def __str__(self):
-    return "Index '{0.idxname}' is not available on table '{0.tabname}'".format(self)
+    return "Index '{0.idxname.name}' is not available on table '{0.tabname}'".format(self)

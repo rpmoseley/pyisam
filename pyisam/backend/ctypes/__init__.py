@@ -285,7 +285,7 @@ class ISAMobjectMixin:
     if keynum < 0:
       raise ValueError('Index must be a positive number or 0 for dictinfo')
     elif keynum > 0:
-      return self.iskeyinfo(keynum)
+      return self.iskeyinfo(keynum-1)
     else:
       return self.isdictinfo()
   @ISAMfunc(c_int,POINTER(keydesc),c_int)
@@ -293,7 +293,7 @@ class ISAMobjectMixin:
     'Return the keydesc for the specified key'
     if self._isfd_ is None: raise IsamNotOpen
     ptr = keydesc()
-    self._iskeyinfo(self._isfd_,ptr,keynum)
+    self._iskeyinfo(self._isfd_,ptr,keynum+1)
     return ptr
   @ISAMfunc(None)
   def islangchk(self):
