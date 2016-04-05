@@ -12,6 +12,15 @@ console.toolbox = [{'autosave': False,
                     'loc': u'/home/rmos/tmp/metaclass.py',
                     'pseudo_tty': False,
                     'raise_panel': True,
+                    'title': None},
+                   {'autosave': False,
+                    'id': 'cmd-SmYo661TcEu8Pw34',
+                    'io_encoding': None,
+                    'key_binding': None,
+                    'line_mode': True,
+                    'loc': u'/home/rmos/virtenv/cffi35/src/cffi/build.py',
+                    'pseudo_tty': False,
+                    'raise_panel': True,
                     'title': None}]
 proj.directory-list = [{'dirloc': loc('.'),
                         'excludes': [u'bin',
@@ -30,4 +39,3 @@ proj.directory-list = [{'dirloc': loc('.'),
                         'recursive': True,
                         'watch_for_changes': True}]
 proj.file-type = 'shared'
-proj.main-file = loc('run_wing.py')

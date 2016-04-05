@@ -123,19 +123,9 @@ class DoubleColumn(_BaseColumn):
 # descriptor lookup that would otherwise occur
 ColumnInfo = collections.namedtuple('ColumnInfo', 'name offset size type')
 
-# Create a variation of a tuple for the list of fields to permit comparing
-# using the field name alone without regard to the fact the elements of the
-# sequence are instances of ColumnInfo
-class _FieldTuple(tuple):
-  def __contains__(self, value):
-    for info in self:
-      if info.name == value:
-        return True
-    return False
-
 class _ISAMrecordMeta(type):
   '''Metaclass providing the special requirements of an ISAMrecord which includes
-     producing a list of the fields to maintian their order, plus the ability to
+     producing a list of the fields to maintain their order, plus the ability to
      return the actual column information without retrieving the underlying data'''
   @classmethod
   def __prepare__(metacls, name, bases, **kwds):
@@ -149,7 +139,7 @@ class _ISAMrecordMeta(type):
 
     # Process the field names to ensure they do not cause issues and also calculate the
     # offset for each field within the record buffer area.
-    fields, curoff = [], 0
+    fields, curoff = collections.OrderedDict(), 0
     for name, info in namespace.items():
       # Check if a dunder ('__X__') function
       if (name[:2] == '__' and name[-2:] == '__' and
@@ -161,8 +151,8 @@ class _ISAMrecordMeta(type):
         continue
       info._offset = curoff
       curoff += info._size
-      fields.append(ColumnInfo(name, info._offset, info._size, info._type))
-    result._fields = _FieldTuple(fields)
+      fields[name] = ColumnInfo(name, info._offset, info._size, info._type)
+    result._fields = fields
     result._recsize = curoff
     return result
 
@@ -186,7 +176,7 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
         tupfields = self._fields[0].name
       #D#print('TUP:', kwd_fields, '->', tupfields) # DEBUG
     else:
-      tupfields = [fld.name for fld in self._fields]
+      tupfields = [fld for fld in self._fields]
       #D#print('TUP:', tupfields) # DEBUG
     self._namedtuple = collections.namedtuple(recname, tupfields)
 
@@ -225,8 +215,8 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
     'Return the current values as a string'
     fldval = []
     for fld in self._namedtuple._fields:
-      if hasattr(fld, 'name'):
-        fldval.append('{}={}'.format(fld.name, getattr(self, fld.name)))
+      if self._fields[fld].type == ColumnType.CHAR:
+        fldval.append("{}='{}'".format(fld, getattr(self, fld)))
       else:
         fldval.append('{}={}'.format(fld, getattr(self, fld)))
     return ''.join(('{}({})'.format(self.__class__.__name__, ', '.join(fldval))))
@@ -242,10 +232,7 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
     return [getattr(self, fld.name) for fld in self._fields]
   def colinfo(self, colname):
     'Return the field information for the given COLNAME'
-    for info in self._fields:
-      if info.name == colname:
-        return info
-    return None
+    return self._fields[colname]
 
 # Define the templates used to generate the record definition class at runtime
 _record_class_template = """\
