@@ -64,7 +64,7 @@ class TableDefnMeta(type):
         indexes.append(name)
     result._fields_ = tuple(fields)
     result._indexes_ = tuple(indexes)
-    for name in '_tabname_ _prefix_ _database_'.split():
+    for name in ('_tabname_', '_prefix_', '_database_'):
       value = getattr(namespace, name, None)
       if value is not None:
         setattr(result, name, value)
