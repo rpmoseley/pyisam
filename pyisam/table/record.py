@@ -290,13 +290,8 @@ def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
   namespace = {
     '__name__'        : record_name,
     'ISAMrecordMixin' : ISAMrecordMixin,
-    'CharColumn'      : CharColumn,
-    'TextColumn'      : TextColumn,
-    'ShortColumn'     : ShortColumn,
-    'LongColumn'      : LongColumn,
-    'FloatColumn'     : FloatColumn,
-    'DoubleColumn'    : DoubleColumn
   } 
+  namespace.update(_column_mapping)      # NOTE Handle case when mapping changes automatically
   exec(record_definition, namespace)
   result = namespace[record_name]
   # TODO Be compatible with collections.namedtuple: result._source = record_definition
