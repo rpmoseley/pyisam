@@ -10,6 +10,7 @@ from .record import recordclass
 from ..enums import ReadMode, StartMode
 from ..error import IsamException, IsamOpened, IsamNoIndex
 from ..isam import ISAMobject
+from ..tabdefns import TableDefnIndex
 
 # Define the objects that are available using 'from .table import *'
 __all__ = 'ISAMtable'
@@ -39,10 +40,22 @@ class ISAMtable:
     self._recsize_ = -1              # Length of record is given after table is opened
 
     # Define the indexes found in the definition object
-    indexes = tabdefn._indexes_ if isinstance(tabdefn._indexes_, (tuple, list)) else [tabdefn._indexes_]
-    for index in indexes:
-      colinfo = index.colinfo if isinstance(index.colinfo, (tuple, list)) else [index.colinfo]
-      self._idxinfo_[index.name] = TableIndex(index.name, *colinfo, dups = index.dups, desc = index.desc)
+    self.add_indexes(tabdefn)
+  def add_indexes(self, tabdefn):
+    'Add the indexes defined in the table definition'
+    if isinstance(tabdefn._indexes_, dict):
+      for index in tabdefn._indexes_.values():
+        if isinstance(index, TableDefnIndex):
+          # Convert a table definition index into a real table index
+          colinfo = index.colinfo if isinstance(index.colinfo, (list, tuple)) else [index.colinfo]
+          self._idxinfo_[index.name] = TableIndex(index.name, *colinfo, dups=index.dups, desc=index.desc)
+        else:
+          raise NotImplementedError('Index type not currently supported')
+    else:
+      indexes = tabdefn._indexes_ if isinstance(tabdefn._indexes_, (tuple, list)) else [tabdefn._indexes_]
+      for index in indexes:
+        colinfo = index.colinfo if isinstance(index.colinfo, (tuple, list)) else [index.colinfo]
+        self._idxinfo_[index.name] = TableIndex(index.name, *colinfo, dups=index.dups, desc=index.desc)
   def __str__(self):
     return 'No data available' if self._row_ is None else str(self._row_)
   @property
@@ -67,11 +80,13 @@ class ISAMtable:
     if not isinstance(index, TableIndex):
       raise ValueError('Must provide an instance of TableIndex for the index to add')
     kd = index.as_keydesc(self)
+    # TODO Complete
   def delindex(self, index):
     'Remove the instance of TableIndex from the underlying ISAM table'
     if not isinstance(index, TableIndex):
       raise ValueError('Must provide an instance of TableIndex for the index to remove')
-    kd = index.as_keydesc(self) 
+    kd = index.as_keydesc(self)
+    # TODO Complete 
   def build(self, tabpath=None, **kwd):
     'Build a new ISAM table using the definition provided in the optional TABPATH'
     if self._isobj._isfd_ is not None: raise IsamOpened
@@ -85,10 +100,8 @@ class ISAMtable:
   def open(self, tabpath=None, mode=None, lock=None, **kwd):
     'Open an existing ISAM table with the specified mode, lock and TABPATH'
     if self._isobj_._isfd_ is not None: raise IsamOpened
-    if mode is None:
-      mode = getattr(self, '_mode_', None)
-    if lock is None:
-      lock = getattr(self, '_lock_', None)
+    if mode is None: mode = self._mode_
+    if lock is None: lock = self._lock_
     path = os.path.join(self._path_ if tabpath is None else tabpath, self._name_)
     self._isobj_.isopen(path, mode, lock)
     self._recsize_ = self._isobj_.isreclen  # Provided by the ISAM library
@@ -173,12 +186,12 @@ class ISAMtable:
   def uniqueid(self, newval):
     'Set the uniqueid for the underlying ISAM table'
   def _LookupIndex(self, name=None, flags=None):
-    """Return the informtion for the index NAME populating the index cache (_idxinfo_) if
+    """Return the information for the index NAME populating the index cache (_idxinfo_) if
        required."""
     if name is None:
       # Handle special case situations
       if (type(flags) == 'set' and 'NEED_PRIMARY' in flags) or flags == 'NEED_PRIMARY':
-        for index in self._idxinfo_:
+        for index in self._idxinfo_.values():
           if isinstance(index, PrimaryIndex):
             break
         else:
@@ -186,9 +199,12 @@ class ISAMtable:
     elif isinstance(name, TableIndex):
       return name
     elif isinstance(name, str):
-      index = self._idxinfo_.get(name)
-      if index is None:
-        raise IsamNoIndex(self._name_, name)
+      try:
+        index = self._idxinfo_[name]
+      except KeyError:
+        # Lookup the index using the table definition as not in the cache
+        index = self._defn_._indexes_.get(name)
+        #TODO:raise IsamNoIndex(self._name_, name)
       return index
     else:
       raise ValueError('Unhandled type of index requested')

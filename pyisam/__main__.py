@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 
-MAX_TEST = 9
+MAX_TEST = 10
 DEF_TEST = 1
 parser = argparse.ArgumentParser(prog='pyisam', description='PyISAM command line interface')
 parser.add_argument('--test', '-t',
@@ -101,5 +101,22 @@ elif opts.run_mode == 9:
   print('ERRSTR:', isobj.strerror(109))
 
 elif opts.run_mode == 10:
-  from .tabdefns.stxtables import DECOMPdefnT
-  dec = ISAMtable(DECOMPdefnT, tabpath='data')
+  from .tabdefns.dynamic import DynamicTableDefn
+  from .tabdefns import TextColumn, CharColumn, LongColumn
+  from .tabdefns import PrimaryIndex, UniqueIndex, DuplicateIndex
+  DECOMPdefn = DynamicTableDefn('decomp', error=True)
+  DECOMPdefn.append(TextColumn('comp',     9))
+  DECOMPdefn.append(CharColumn('comptyp'    ))
+  DECOMPdefn.append(TextColumn('sys',      9))
+  DECOMPdefn.append(TextColumn('prefix',   5))
+  DECOMPdefn.append(TextColumn('user',     4))
+  DECOMPdefn.extend([TextColumn('database', 6),
+                    TextColumn('release',  5),
+                    LongColumn('timeup'     ),
+                    LongColumn('specup'     )])
+  DECOMPdefn.add(PrimaryIndex('comp'))
+  DECOMPdefn.add(DuplicateIndex('prefix'))
+  DECOMPdefn.add(UniqueIndex('typkey', 'comptyp', 'comp'))
+  DECOMPdefn.add(UniqueIndex('syskey', 'sys', 'comptyp', 'comp'))
+  DECOMP = ISAMtable(DECOMPdefn, tabpath='data')
+  dump_record(DECOMP, 'comp', ReadMode.ISEQUAL, 'comp', 'decomp')

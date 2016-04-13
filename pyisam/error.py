@@ -2,10 +2,7 @@
 This module provides the exceptions raised by the package, this avoids a cyclic dependancy from being
 created between the vaious sub-modules.
 '''
-__all__ = ('IsamException', 'IsamNotOpen', 'IsamOpened', 'IsamNotWritable',
-           'IsamRecordMutable', 'IsamFuncFailed', 'IsamNoRecord')
 
-# Define the shared exceptions raised by the package
 class IsamException(Exception):
   'General exception raised by ISAM'
 class IsamNotOpen(IsamException):
@@ -29,7 +26,9 @@ class IsamNoRecord(IsamException):
 class IsamNoIndex(IsamException):
   'Exception raised when an index is missing from a table instance'
   def __init__(self, tabname, idxname):
-    self.tabname = tabname
-    self.idxname = idxname
+    self.tabname = tabname.name if hasattr(tabname, 'name') else tabname
+    self.idxname = idxname.name if hasattr(idxname, 'name') else idxname
   def __str__(self):
-    return "Index '{0.idxname.name}' is not available on table '{0.tabname}'".format(self)
+    return "Index '{0.idxname}' is not available on table '{0.tabname}'".format(self)
+class TableDefnError(IsamException):
+  'General exception raised during table definition'

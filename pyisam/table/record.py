@@ -256,7 +256,11 @@ _column_mapping = {
 def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
   'Create a new class for the given table definition'
   seen, fname, fdefn = set(), [], []
-  for fld in tabdefn._columns_:
+  if isinstance(tabdefn._columns_, collections.OrderedDict):
+    flds = list(tabdefn._columns_.values())
+  elif isinstance(tabdefn._columns_, (list, tuple)):
+    flds = tabdefn._columns_
+  for fld in flds:
     fldname = fld.name
 
     # Validate the field name using a similar rule to that in collections.namedtuple
@@ -276,7 +280,10 @@ def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
 
   # Provide the record template
   if recname is None:
-    fqname = [tabdefn._database_, tabdefn._prefix_, kwd.get('idname', None)]
+    fqname = []
+    fqname.append(getattr(tabdefn, '_database_', None))
+    fqname.append(getattr(tabdefn, '_prefix_', None))
+    fqname.append(kwd.get('idname', getattr(tabdefn, '_tabname_', None)))
     recname = '_'.join(filter(None, fqname))
   else:
     # TODO: Check the given record name is valid

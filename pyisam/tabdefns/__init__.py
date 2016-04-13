@@ -7,11 +7,11 @@ complexity of the table module.
 
 import collections
 
-__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
-           'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
-           'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
-           'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
-           'DescPrimaryIndex', 'TableDefnMeta')
+# __all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
+#            'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
+#            'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
+#            'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
+#            'DescPrimaryIndex', 'TableDefnMeta')
 
 class TableDefnMeta(type):
   'Metaclass for table definition classes that remembers the order of fields and indexes'
@@ -149,9 +149,9 @@ class TableDefnIndex:
     if isinstance(self.colinfo, TableIndexCol):
       out.append('{}'.format(self.colinfo))
     else:
-      for cinfo in self.colinfo_:
+      for cinfo in self.colinfo:
         out.append('{}'.format(cinfo))
-    out.append('dups={0._dups}, desc={0._desc})'.format(self))
+    out.append('dups={0.dups}, desc={0.desc})'.format(self))
     return ', '.join(out)
 
 # Provide an easier to read way of identifying the various key types
