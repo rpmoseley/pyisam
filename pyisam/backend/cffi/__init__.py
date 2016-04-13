@@ -74,11 +74,11 @@ class keydesc:
   def __getitem__(self, part):
     if not isinstance(part, int):
       raise ValueError('Expecting an integer key part number')
-    elif part < -self._kinfo.k_nparts:
-      raise ValueError('Cannot refer beyond first key part')
-    elif part < 0:
+    if part < 0:
       part = self._kinfo.k_nparts + part
-    elif part >= self._kinfo.k_nparts:
+      if self._kinfo.k_nparts < part:
+        raise ValueError('Cannot refer beyound first key part')
+    elif self._kinfo.k_nparts < part:
       raise ValueError('Cannot refer beyond last key part')
     return keypart(self._kinfo.k_part[part])
   def __setitem__(self, part, kpart):
