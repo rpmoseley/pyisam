@@ -13,7 +13,7 @@ parser.add_argument('--test', '-t',
                     dest='run_mode',
                     type=int,
                     help='Run a specific test instead of interactive mode',
-                    choices=range(1,MAX_TEST+1),
+                    choices=range(1, MAX_TEST+1),
                     default=DEF_TEST)
 opts = parser.parse_args()
 
@@ -119,4 +119,4 @@ elif opts.run_mode == 10:
   DECOMPdefn.add(UniqueIndex('typkey', 'comptyp', 'comp'))
   DECOMPdefn.add(UniqueIndex('syskey', 'sys', 'comptyp', 'comp'))
   DECOMP = ISAMtable(DECOMPdefn, tabpath='data')
-  dump_record(DECOMP, 'comp', ReadMode.ISEQUAL, 'comp', 'decomp')
+  dump_record(DECOMP, 'comp', ReadMode.ISEQUAL, 'comp', 'adpara')

@@ -7,11 +7,11 @@ complexity of the table module.
 
 import collections
 
-# __all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
-#            'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
-#            'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
-#            'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
-#            'DescPrimaryIndex', 'TableDefnMeta')
+__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
+           'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
+           'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
+           'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
+           'DescPrimaryIndex', 'TableDefnMeta')
 
 class TableDefnMeta(type):
   'Metaclass for table definition classes that remembers the order of fields and indexes'
