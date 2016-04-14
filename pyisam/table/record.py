@@ -214,7 +214,7 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
   def __str__(self):
     'Return the current values as a string'
     fldval = []
-    for fld in self._namedtuple._fields:
+    for fld in self._fields:
       if self._fields[fld].type == ColumnType.CHAR:
         fldval.append("{}='{}'".format(fld, getattr(self, fld)))
       else:
@@ -280,10 +280,9 @@ def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
 
   # Provide the record template
   if recname is None:
-    fqname = []
-    fqname.append(getattr(tabdefn, '_database_', None))
-    fqname.append(getattr(tabdefn, '_prefix_', None))
-    fqname.append(kwd.get('idname', getattr(tabdefn, '_tabname_', None)))
+    fqname = [getattr(tabdefn, '_database_', None),
+              getattr(tabdefn, '_prefix_', None),
+              kwd.get('idname', getattr(tabdefn, '_tabname_', None))]
     recname = '_'.join(filter(None, fqname))
   else:
     # TODO: Check the given record name is valid
