@@ -38,3 +38,68 @@ be defined for the use of a particular application, but are ignored by the pyisa
 * _database_
     Some applications expect certain ISAM tables to belong to a particular sub-directory under a central directory, if
     this is set then the pyisam package expects that the table will exist (or will be created) in this directory.
+
+Column Objects
+--------------
+These objects are used to both name and provide a type for the columns used within a table, all are based on TableDefnColumn, they are:
+
+CharColumn(name)
+    Name a column that will take a single character value, note that CISAM does not really have a single char type, this is
+    provided to enable applications to process single character values without having to create a buffer each time.
+
+TextColumn(name, length)
+    Name a column that will take a string of character values upto a maximum length. Values are extended to the required length
+    with blanks when writing to the ISAM table, and any trailing blanks are stripped before returning when reading.
+
+ShortColumn(name)
+    Name a column which takes a short integer, this is stored on the ISAM table as a 16-bit native value.
+
+LongColumn(name)
+    Name a column which takes a long integer, this is stored on the ISAM table as a 32-bit native value.
+
+FloatColumn(name)
+    Name a column which takes a float value, this is stored on the ISAM table as a native float value.
+
+DoubleColumn(name)
+    Name a column which takes a double value, this is stored on the ISAM table as a native double value.
+
+Index Objects
+~~~~~~~~~~~~~
+These objects are used to repesent indexes on the ISAMtable object, each index stores the list of columns
+that make up the index along with whether the index is descending and can accept duplicates, these are
+based on the TableDefnIndex class:
+
+PrimaryIndex
+    ISAM expects the first index to be the primary index, that is the default index used when a table is
+    first opened, it behaves like a 'UniqueIndex'.
+
+DuplicateIndex
+    This type of index permits the columns involved in the index to have values that result in a duplicate
+    reference into the ISAM data, the overall index value can duplicate an existing index entry.
+
+UniqueIndex
+    This type of index does not permit the columns involved in the index to have values that result in a
+    duplicate reference into the ISAM data, each entry in the index should consist of unique values when the
+    columns involved are used to generate the index, in other words, individual column values may be duplicated,
+    but the overall index value should be unique.
+
+The following variants are provided to convey whether the index is ascending, the default, or descending in
+order to improve readability:
+
+AscPrimaryIndex
+    This is used as an alias of PrimaryIndex to indicate that the index is specifically ascending.
+
+AscDuplicateIndex
+    This is used as an alias of DuplicateIndex to indicate that the index is specifically ascending.
+
+AscUniqueIndex
+    This is used as an alias of UniqueIndex to indicate that the index is specifically ascending.
+
+DescPrimaryIndex
+    This is used as an alias of PrimaryIndex to indicate that the index is specifically descending.
+
+DescDuplicateIndex
+    This is used as an alias of DuplicateIndex to indicate that the index is specifically descending.
+
+DescUniqueIndex
+    This is used as an alias of UniqueIndex to indicate that the index is specifically descending.
