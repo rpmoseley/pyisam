@@ -33,7 +33,7 @@ __all__ = 'CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn'
 
 class _BaseColumn:
   'Base class providing the shared functionality for columns'
-  __slots__ = '_struct', '_size', '_offset', '_nullval'
+  __slots__ = '_struct', '_size', '_offset', '_name', '_nullval'
   def __init__(self, size=None, offset=-1):
     if not hasattr(self, '_struct'):
       raise ValueError('No struct object provided for column')
@@ -45,43 +45,42 @@ class _BaseColumn:
       else:
         raise ValueError('Must provide a size for column')
     self._offset = offset          # Offset into record buffer
-  def _template(self):
-    return '{}()'.format(self.__class__.__name__)
-  def __str__(self):
-    return '({0._offset}, {0._size})'.format(self)
   def __get__(self, inst, objtype):
     if self._offset < 0:
       raise ValueError('Column offset not known')
     return self._struct.unpack_from(inst._buffer, self._offset)[0]
   def __set__(self, inst, value):
+    if self._offset < 0:
+      raise ValueError('Column offset not known')
     if value is None:
       if hasattr(self, '_nullval'):
         value = self._nullval
       elif hasattr(self, '_convnull'):
         value = self._convnull()
     self._struct.pack_into(inst._buffer, self._offset, value)
-
+  @classmethod
+  def _template(cls):
+    return ''
+  
 class CharColumn(_BaseColumn):
   __slots__ = ()
   _struct = struct.Struct('c')
   _nullval = b' '
   _type = ColumnType.CHAR
-  def __get__(self, obj, objtype):
-    return super().__get__(obj, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()
+  def __get__(self, inst, objtype):
+    return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()
   def __set__(self, obj, value):
     super().__set__(obj, value.encode('utf-8').replace(b'\x00', b' '))
-
+  
 class TextColumn(_BaseColumn):
   __slots__ = ()
   _type = ColumnType.CHAR
-  def __init__(self, length, size=None, offset=-1):
-    if length <= 0:
+  def __init__(self, size, offset=-1):
+    if size <= 0:
       raise ValueError("Must provide a positive length")
-    self._struct = struct.Struct('{}s'.format(length))
-    super().__init__(size, offset)
-    self._nullval = b' ' * self._size 
-  def _template(self):
-    return '{0.__class__.__name__}({0._size})'.format(self)
+    self._struct = struct.Struct('{}s'.format(size))
+    _BaseColumn.__init__(self, size, offset)
+    self._nullval = b' ' * self._size
   def __get__(self, inst, objtype):
     return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()
   def __set__(self, inst, value):
@@ -94,7 +93,10 @@ class TextColumn(_BaseColumn):
       elif len(value) < self._size:
         value += self._nullval[:self._size - len(value)]
     super().__set__(inst, value.replace(b'\x00', b' '))
-
+  @classmethod
+  def _template(cls):
+    return '{0.length}'   # NOTE This refers to the table definition class attributes
+  
 class ShortColumn(_BaseColumn):
   __slots__ = ()
   _struct = struct.Struct('>h')
@@ -131,7 +133,7 @@ class _ISAMrecordMeta(type):
   def __prepare__(metacls, name, bases, **kwds):
     return collections.OrderedDict()
   def __new__(cls, name, bases, namespace, **kwds):
-    result = super().__new__(cls, name, bases, dict(namespace))
+    result = type.__new__(cls, name, bases, dict(namespace))
 
     # Don't process any further if the object being created is the Mixin class itself
     if name == 'ISAMrecordMixin':
@@ -174,10 +176,8 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
       tupfields = [fld for fld in kwd_fields if fld in self._fields]
       if len(tupfields) < 1:
         tupfields = self._fields[0].name
-      #D#print('TUP:', kwd_fields, '->', tupfields) # DEBUG
     else:
       tupfields = [fld for fld in self._fields]
-      #D#print('TUP:', tupfields) # DEBUG
     self._namedtuple = collections.namedtuple(recname, tupfields)
 
     # Create a record buffer which will produce suitable instances for this table when
@@ -220,12 +220,6 @@ class ISAMrecordMixin(metaclass=_ISAMrecordMeta):
       else:
         fldval.append('{}={}'.format(fld, getattr(self, fld)))
     return ''.join(('{}({})'.format(self.__class__.__name__, ', '.join(fldval))))
-  #1#def __bytes__(self):
-  #1#  if hasattr(self._buffer, 'raw'):
-  #1#    return self._buffer.raw  # NOTE: This assumes that the interface is meant for providing a raw view of record
-  #1#  else:
-  #1#    print('BUF:', str(self._buffer))
-  #1#    return self._buffer.__str__()
   @property
   def cur_value(self):
     'Return the current values of all fields in the record'
@@ -240,28 +234,31 @@ class {rec_name}(ISAMrecordMixin):
 {fld_defn}
 """
 _record_field_template = """\
-  {name} = {defn}
+  {name} = {klassname}({defn})
 """
 
-# Define the mapping from column name to descriptor objects
-_column_mapping = {
-  'CharColumn'   : CharColumn,
-  'TextColumn'   : TextColumn,
-  'ShortColumn'  : ShortColumn,
-  'LongColumn'   : LongColumn,
-  'FloatColumn'  : FloatColumn,
-  'DoubleColumn' : DoubleColumn
+# Define the default namespace that is always used for new record instances
+_record_namespace = {
+    'CharColumn'      : CharColumn,
+    'TextColumn'      : TextColumn,
+    'ShortColumn'     : ShortColumn,
+    'LongColumn'      : LongColumn,
+    'FloatColumn'     : FloatColumn,
+    'DoubleColumn'    : DoubleColumn
 }
 
-def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
+def recordclass(tabdefn, recname=None, *args, **kwd):
   'Create a new class for the given table definition'
-  seen, fname, fdefn = set(), [], []
+  seen, fdefn = set(), []
   if isinstance(tabdefn._columns_, collections.OrderedDict):
     flds = list(tabdefn._columns_.values())
   elif isinstance(tabdefn._columns_, (list, tuple)):
     flds = tabdefn._columns_
+  else:
+    raise ValueError('Unhandled column information encountered')
   for fld in flds:
     fldname = fld.name
+    klassname = fld.__class__.__name__
 
     # Validate the field name using a similar rule to that in collections.namedtuple
     if not fldname.isidentifier() or iskeyword(fldname) or fldname.startswith('_'):
@@ -269,14 +266,16 @@ def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
     elif fldname in seen:
       raise NameError("Field '{}' already present in definition".format(fldname))
     seen.add(fldname)
-    fname.append(fldname)
 
-    # Calculate the field offset in the record buffer
-    klassobj = _column_mapping[fld.__class__.__name__]
-    klass = klassobj(length=fld.length) if hasattr(fld, 'length') else klassobj()
+    # Generate the template for the particular type of field
+    fld_template = _record_namespace[klassname]._template()
+    if '{' in fld_template:
+      fld_template = fld_template.format(fld)
 
-    # Create the field template with the calculated offset
-    fdefn.append(_record_field_template.format(name=fldname, defn=klass._template()))
+    # Create the field template (the offset is calculated by the metaclass)
+    fdefn.append(_record_field_template.format(name=fldname,
+                                               klassname=klassname,
+                                               defn=fld_template))
 
   # Provide the record template
   if recname is None:
@@ -297,12 +296,10 @@ def recordclass(tabdefn, recname=None, verbose=False, *args, **kwd):
     '__name__'        : record_name,
     'ISAMrecordMixin' : ISAMrecordMixin,
   } 
-  namespace.update(_column_mapping)      # NOTE Handle case when mapping changes automatically
+  namespace.update(_record_namespace)
   exec(record_definition, namespace)
   result = namespace[record_name]
-  # TODO Be compatible with collections.namedtuple: result._source = record_definition
-  if verbose:
-    print(record_definition)
+  result._source = record_definition
   return result
       
 if __name__ == '__main__':
