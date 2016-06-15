@@ -6,16 +6,53 @@ import argparse
 import os
 import sys
 
-MAX_TEST = 10
-DEF_TEST = 1
-parser = argparse.ArgumentParser(prog='pyisam', description='PyISAM command line interface')
-parser.add_argument('--test', '-t',
+MAX_TEST = 8
+DEF_TEST = 8
+parser = argparse.ArgumentParser(prog='pyisam',
+                                 description='PyISAM command line interface',
+                                 argument_default=False)
+parser.add_argument('-n', '--dry-run',
+                    dest='dry_run',
+                    action='store_true',
+                    help="Perform the tests that read data, don't run any that update data")
+parser.add_argument('-V', '--version',
+                    dest='version',
+                    action='store_true',
+                    help='Give the version of the program and library')
+parser.add_argument('-i', '--interactive',
+                    dest='interactive',
+                    action='store_true',
+                    help='Run an interactive shell like interface')
+parser.add_argument('-t', '--test',
                     dest='run_mode',
                     type=int,
-                    help='Run a specific test instead of interactive mode',
+                    help='Run a specific test',
                     choices=range(1, MAX_TEST+1),
                     default=DEF_TEST)
+parser.add_argument('-v', '--verbose',
+                    dest='verbose',
+                    action='store_true',
+                    help='Produce verbose information about the progress')
+parser.add_argument('-d', '--debug',
+                    dest='debug',
+                    type=int,
+                    help='Provide debug information',
+                    default=0)
+parser.add_argument('-e', '--error', '-Werror',
+                    dest='error_raise',
+                    action='store_true',
+                    help='Raise an error instead of continuing',
+                    default=True)
 opts = parser.parse_args()
+
+# Give the version if requested and finish without further processing
+if opts.version:
+  print('pyisam early version 0.02')
+  sys.exit(1)
+
+# Switch off the testing if running in interactive mode
+if opts.interactive:
+  opts.run_mode = None
 
 def dump_record(tabobj, idxkey, mode, colname, colval):
   record = tabobj.read(idxkey, mode, colval)
@@ -24,6 +61,8 @@ def dump_record(tabobj, idxkey, mode, colname, colval):
     record = tabobj.read()
 
 if opts.run_mode in (1,5):
+  # Test 01: Dump the contents of the defile table for itself.
+  # Test 05: Dump the contents of the dekeys/decomp tables for defile in addition.
   DEFILE = ISAMtable(DEFILEdefn, tabpath='data')
   def_rec = DEFILE.read('key', ReadMode.ISGREAT, 'defile')
   while def_rec.filename == 'defile':
@@ -40,19 +79,23 @@ if opts.run_mode in (1,5):
     print(dec_rec)
 
 elif opts.run_mode == 2:
+  # Test 02: Dump the list of error codes and meanings from the ISAM library
   isamobj = ISAMobject()
   for errno in range(100,isamobj.is_nerr):
     print(errno,isamobj.strerror(errno))
 
 elif opts.run_mode == 3:
+  # Test 03: Print the version string from the ISAM library
   isamobj = ISAMobject()
   print(ISAM_str(isamobj.isversnumber))
 
 elif opts.run_mode == 4:
+  # Test 04: Check how the new enums modules works with duplicate values
   isamobj = ISAMobject()
   print(OpenMode.ISFIXLEN.value,OpenMode.ISFIXLEN.name)
 
 elif opts.run_mode == 6:
+  # Test 06: Dump the complete definition of a table using a function
   DEFILE = ISAMtable(DEFILEdefn, tabpath='data')
   dump_record(DEFILE, 'key', ReadMode.ISGREAT, 'filename', 'defile')
   DEKEYS = ISAMtable(DEKEYSdefn, tabpath='data')
@@ -63,60 +106,33 @@ elif opts.run_mode == 6:
   dump_record(DEITEM, 'usekey', ReadMode.ISGREAT, 'comp', 'defile')
 
 elif opts.run_mode == 7:
-  from .table import recordclass
-  DECOMPrec = recordclass(DECOMPdefn)
-  DR1 = DECOMPrec('DECOMP')
-  print('DR1:', DR1)
-  from .table.record import ISAMrecordMixin,TextColumn,CharColumn,LongColumn
-  class RecordDECOMPM(ISAMrecordMixin):
-    comp = TextColumn(9)
-    comptyp = CharColumn()
-    sys = TextColumn(9)
-    prefix = TextColumn(5)
-    user = TextColumn(4)
-    database = TextColumn(6)
-    release = TextColumn(5)
-    timeup = LongColumn()
-    specup = LongColumn()
-  DR2 = RecordDECOMPM('DECOMPM')
-  print('DR2:', DR2)
-
-elif opts.run_mode == 8:
-  # Test keydesc creation
-  from .table.index import TableIndex,TableIndexCol
-  from .table.record import ISAMrecordMixin,TextColumn,LongColumn
-  class Record(ISAMrecordMixin):
-    __slots__ = ()
-    col1 = TextColumn(9)
-    col2 = LongColumn()
-  recobj = Record('tab1', 16)
-  idx = TableIndex('primkey',
-                   TableIndexCol('col1'),
-                   'col2',
-                   dups=False)
-  print(idx.as_keydesc(recobj))
-
-elif opts.run_mode == 9:
+  # Test 07: Dump a specific error message
   isobj = ISAMobject()
   print('ERRSTR:', isobj.strerror(109))
 
-elif opts.run_mode == 10:
+elif opts.run_mode == 8:
+  # Test 08: Define a table at runtime using the dynamic table support
   from .tabdefns.dynamic import DynamicTableDefn
   from .tabdefns import TextColumn, CharColumn, LongColumn
   from .tabdefns import PrimaryIndex, UniqueIndex, DuplicateIndex
-  DECOMPdefn = DynamicTableDefn('decomp', error=True)
+  DECOMPdefn = DynamicTableDefn('decomp', error=opts.error_raise)
   DECOMPdefn.append(TextColumn('comp',     9))
   DECOMPdefn.append(CharColumn('comptyp'    ))
   DECOMPdefn.append(TextColumn('sys',      9))
   DECOMPdefn.append(TextColumn('prefix',   5))
   DECOMPdefn.append(TextColumn('user',     4))
   DECOMPdefn.extend([TextColumn('database', 6),
-                    TextColumn('release',  5),
-                    LongColumn('timeup'     ),
-                    LongColumn('specup'     )])
-  DECOMPdefn.add(PrimaryIndex('comp'))
-  DECOMPdefn.add(DuplicateIndex('prefix'))
-  DECOMPdefn.add(UniqueIndex('typkey', 'comptyp', 'comp'))
-  DECOMPdefn.add(UniqueIndex('syskey', 'sys', 'comptyp', 'comp'))
+                     TextColumn('release',  5),
+                     LongColumn('timeup'     ),
+                     LongColumn('specup'     )])
+  DECOMPdefn.add_index(PrimaryIndex('comp'))
+  DECOMPdefn.add_index(DuplicateIndex('prefix'))
+  DECOMPdefn.add_index(UniqueIndex('typkey', 'comptyp', 'comp'))
+  DECOMPdefn.add_index(UniqueIndex('syskey', ['sys', 'comptyp', 'comp']))
   DECOMP = ISAMtable(DECOMPdefn, tabpath='data')
   dump_record(DECOMP, 'comp', ReadMode.ISEQUAL, 'comp', 'adpara')
+
+elif opts.run_mode == 9:
+  # Test 09: 
+  from .tabdefns.dynamic import DynamicTableDefn
+  from .tabdefns import TextColumn, CharColumn, LongColumn
