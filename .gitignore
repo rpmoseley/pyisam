@@ -14,3 +14,5 @@ _isam_cffi.?
 /lib
 /lib32
 /lib64
+/pip-selfcheck.json
+/pyvenv.cfg
