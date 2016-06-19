@@ -79,7 +79,7 @@ class CharColumn(TableDefnColumn):
 class TextColumn(TableDefnColumn):
   def __init__(self, name, length, *args, **kwd):
     self.length = length
-    TableDefnColumn.__init__(self, name, *args, **kwd)
+    super().__init__(self, name, *args, **kwd)
 class ShortColumn(TableDefnColumn):
   pass
 class LongColumn(TableDefnColumn):
@@ -163,33 +163,33 @@ class TableDefnIndex:
 class DuplicateIndex(TableDefnIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo, desc=False):
-    TableDefnIndex.__init__(self, name, *colinfo, dups=True, desc=desc)
+    super().__init__(self, name, *colinfo, dups=True, desc=desc)
 class UniqueIndex(TableDefnIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo, desc=False):
-    TableDefnIndex.__init__(self, name, *colinfo, dups=False, desc=desc)
+    super().__init__(self, name, *colinfo, dups=False, desc=desc)
 class PrimaryIndex(UniqueIndex):
   __slots__ = ()
   pass
 class AscDuplicateIndex(DuplicateIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
-    DuplicateIndex.__init__(self, name, *colinfo, desc=False)
+    super().__init__(self, name, *colinfo, desc=False)
 class AscUniqueIndex(UniqueIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
-    UniqueIndex.__init__(self, name, *colinfo, desc=False)
+    super().__init__(self, name, *colinfo, desc=False)
 class AscPrimaryIndex(AscUniqueIndex):
   __slots__ = ()
   pass
 class DescDuplicateIndex(DuplicateIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
-    DuplicateIndex.__init__(self, name, *colinfo, desc=True)
+    super().__init__(self, name, *colinfo, desc=True)
 class DescUniqueIndex(UniqueIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
-    UniqueIndex.__init__(self, name, *colinfo, desc=True)
+    super().__init__(self, name, *colinfo, desc=True)
 class DescPrimaryIndex(DescUniqueIndex):
   __slots__ = ()
   pass

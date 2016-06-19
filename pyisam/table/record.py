@@ -61,6 +61,15 @@ class _BaseColumn:
   @classmethod
   def _template(cls):
     return ''
+  # Rich comparision methods
+  def __eq__(self, other):
+    print(self, '==', other)
+  def __ne__(self, other):
+    print(self, '!=', other)
+  def __lt__(self, other):
+    print(self, '<', other)
+  def __gt__(self, other):
+    print(self, '>', other)
   
 class CharColumn(_BaseColumn):
   __slots__ = ()
@@ -79,7 +88,7 @@ class TextColumn(_BaseColumn):
     if size <= 0:
       raise ValueError("Must provide a positive length")
     self._struct = struct.Struct('{}s'.format(size))
-    _BaseColumn.__init__(self, size, offset)
+    super().__init__(self, size, offset)
     self._nullval = b' ' * self._size
   def __get__(self, inst, objtype):
     return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()

@@ -15,7 +15,7 @@ __all__ = ('AppcodeColumn', 'AppdescColumn',
 class AppcodeColumn(CharColumn):
   __slots__ = ('_appcode',)
   def __init__(self, name, appcode=None, **kwd):
-    CharColumn.__init__(self, name, **kwd)
+    super().__init__(self, name, **kwd)
     if appcode is not None:
       self._appcode = appcode
   @property
@@ -27,7 +27,7 @@ class AppcodeColumn(CharColumn):
 class AppdescColumn(CharColumn):
   __slots__ = ('_appdesc',)
   def __init__(self, name, appdesc=None, **kwd):
-    CharColumn.__init__(self, name, **kwd)
+    super().__init__(self, name, **kwd)
     if appdesc is not None:
       self._appdesc = appdesc
   @property

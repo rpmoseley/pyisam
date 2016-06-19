@@ -79,33 +79,33 @@ types of index when required.
 '''
 class UniqueIndex(TableIndex):
   def __init__(self, name, *colinfo, desc=False, knum=-1, kdesc=None):
-    TableIndex.__init__(self, name, *colinfo, dups=False, desc=desc, knum=knum, kdesc=kdesc)
+    super().__init__(self, name, *colinfo, dups=False, desc=desc, knum=knum, kdesc=kdesc)
 
 class PrimaryIndex(UniqueIndex):
   pass
 
 class DuplicateIndex(TableIndex):
   def __init__(self, name, *colinfo, desc=False, knum=-1, kdesc=None):
-    TableIndex.__init__(self, name, *colinfo, dups=True, desc=desc, knum=knum, kdesc=kdesc)
+    super().__init__(self, name, *colinfo, dups=True, desc=desc, knum=knum, kdesc=kdesc)
 
 class AscUniqueIndex(UniqueIndex):
   def __init__(self, name, *colinfo, knum=-1, kdesc=None):
-    UniqueIndex.__init__(self, name, *colinfo, desc=False, knum=knum, kdesc=kdesc)
+    super().__init__(self, name, *colinfo, desc=False, knum=knum, kdesc=kdesc)
 
 class AscPrimaryIndex(AscUniqueIndex):
   pass
 
 class AscDuplicateIndex(DuplicateIndex):
   def __init__(self, name, *colinfo, knum=-1, kdesc=None):
-    DuplicateIndex.__init__(self, name, *colinfo, desc=False, knum=knum, kdesc=kdesc)
+    super().__init__(self, name, *colinfo, desc=False, knum=knum, kdesc=kdesc)
 
 class DescUniqueIndex(UniqueIndex):
   def __init__(self, name, *colinfo, knum=-1, kdesc=None):
-    UniqueIndex.__init__(self, name, *colinfo, desc=True, knum=knum, kdesc=kdesc)
+    super().__init__(self, name, *colinfo, desc=True, knum=knum, kdesc=kdesc)
 
 class DescPrimaryIndex(DescUniqueIndex):
   pass
 
 class DescDuplicateIndex(DuplicateIndex):
   def __init__(self, name, *colinfo, knum=-1, kdesc=None):
-    DuplicateIndex.__init__(self, name, *colinfo, desc=True, knum=knum, kdesc=kdesc)
+    super().__init__(self, name, *colinfo, desc=True, knum=knum, kdesc=kdesc)
