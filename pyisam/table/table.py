@@ -33,7 +33,7 @@ class ISAMtable:
     self._isobj_ = isobj if isinstance(isobj, ISAMobject) else ISAMobject(**kwd)
     self._database_ = getattr(tabdefn, '_database_', None)
     self._prefix_ = getattr(tabdefn, '_prefix_', None)
-    self._record_ = kwd.get('recordclass', recordclass(tabdefn, verbose=True))
+    self._record_ = kwd.get('recordclass', recordclass(tabdefn))
     self._idxinfo_ = dict()          # Dictionary of indexes on this table's object
     self._curindex_ = None           # Current index being used in isread/isstart
     self._row_ = None                # Cannot allocate record until table is opened
@@ -58,9 +58,6 @@ class ISAMtable:
         self._idxinfo_[index.name] = TableIndex(index.name, *colinfo, dups=index.dups, desc=index.desc)
   def __str__(self):
     return 'No data available' if self._row_ is None else str(self._row_)
-  @property
-  def _is_open(self):
-    return self._isobj_._isfd_ is not None
   # TODO: This will be enabled when context manager features are implemented:
   # def __enter__(self):
   #   # Open the table using default mode, lock and paths
@@ -100,8 +97,8 @@ class ISAMtable:
     path = os.path.join(self._path_ if tabpath is None else tabpath, self._name_)
     varlen = kwd.get('varlen', None)
     if varlen is not None:
-      self._isobj.isreclen = int(varlen)
-    self._isobj.isbuild(path, reclen, index.as_keydesc(self))
+      self._isobj_.isreclen = int(varlen)
+    self._isobj_.isbuild(path, reclen, index.as_keydesc(self))
   def open(self, tabpath=None, mode=None, lock=None, **kwd):
     'Open an existing ISAM table with the specified mode, lock and TABPATH'
     if self._isobj_._isfd_ is not None:

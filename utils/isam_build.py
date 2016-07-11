@@ -22,15 +22,17 @@ else:
   libdir = 'lib32'
   incdir = 'include/isam32'
 
+# Build the library directly into the path expected by the pyisam package
 ffi = FFI()
 lib = ffi.set_source(
-  '_isam_cffi',
+  'pyisam.backend.cffi._isam_cffi',
   '#include "isam.h"',
   library_dirs = [libdir],
   runtime_library_dirs = ['$ORIGIN/../lib'],
   libraries = ['ifisam','ifisamx'],
   include_dirs = [incdir],
 )
+
 # Define items found in decimal.h
 ffi.cdef('''
 struct decimal;
@@ -55,6 +57,7 @@ void dectrunc(struct decimal *, int);
 int deccvflt(double, struct decimal *);
 int dectoflt(struct decimal *, float *);
 '''.format(longsz=long32))
+
 # Define items found in isam.h
 ffi.cdef('''
 #define NPARTS 8
@@ -126,5 +129,6 @@ int    isunlock(int);
 int    iswrcurr(int, char *);
 int    iswrite(int, char *);
 '''.format(longsz=long32))
+
 if __name__ == '__main__':
   ffi.compile()   # NOTE Passing tmpdir moves ALL relative paths as well!

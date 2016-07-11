@@ -15,12 +15,9 @@ __all__ = ('AppcodeColumn', 'AppdescColumn',
 class AppcodeColumn(CharColumn):
   __slots__ = ('_appcode',)
   def __init__(self, name, appcode=None, **kwd):
-    super().__init__(self, name, **kwd)
+    super().__init__(name, **kwd)
     if appcode is not None:
       self._appcode = appcode
-  @property
-  def _template(self):
-    return super()._template('{0._appcode}'.format(self))
 
 # Provide a variant of the CharColumn that adds the support of appdesc specific to the
 # Strategix/OneOffice product
@@ -30,9 +27,6 @@ class AppdescColumn(CharColumn):
     super().__init__(self, name, **kwd)
     if appdesc is not None:
       self._appdesc = appdesc
-  @property
-  def _template(self):
-    return super()._template('{0._appdesc}'.format(self))
 
 # Examples of the usage of ISAMtable and ISAMtableDefn
 class DECOMPdefn:

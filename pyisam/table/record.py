@@ -88,7 +88,7 @@ class TextColumn(_BaseColumn):
     if size <= 0:
       raise ValueError("Must provide a positive length")
     self._struct = struct.Struct('{}s'.format(size))
-    super().__init__(self, size, offset)
+    super().__init__(offset)
     self._nullval = b' ' * self._size
   def __get__(self, inst, objtype):
     return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()

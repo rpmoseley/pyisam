@@ -60,6 +60,12 @@ def dump_record(tabobj, idxkey, mode, colname, colval):
     print(record)
     record = tabobj.read()
 
+def dump_record_v2(tabobj, idxkey, mode, colname, colval):
+  record = tabobj.read(idxkey, mode, getattr(tabobj._row_, colname) == colval)
+  while getattr(record, colname) == colval:
+    print(record)
+    record = tabobj.read()
+
 if opts.run_mode in (1,5):
   # Test 01: Dump the contents of the defile table for itself.
   # Test 05: Dump the contents of the dekeys/decomp tables for defile in addition.
