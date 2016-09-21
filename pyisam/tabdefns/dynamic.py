@@ -7,7 +7,7 @@ object and then manually add the required fields and indexes before then
 calling the table.ISAMtable object passing the dynamic table definition.
 '''
 
-from . import TableDefnColumn, TableDefnIndex, TableIndexCol
+from . import TableDefnColumn, TableDefnIndex, TableDefnIndexCol
 from collections import OrderedDict
 from ..error import TableDefnError
 
@@ -77,14 +77,14 @@ class DynamicTableDefn:
       if self._raise_error(error):
         raise TableDefnError('Index already present in the table definition')
     if not isinstance(index.colinfo, (list, tuple)):
-      if not isinstance(index.colinfo, TableIndexCol):
-        raise TableDefnError('Index column should be instance of TableIndexCol')
+      if not isinstance(index.colinfo, TableDefnIndexCol):
+        raise TableDefnError('Index column should be instance of TableDefnIndexCol')
       if index.colinfo.name not in self._columns_:
         raise TableDefnError('Index contains a column not present in the table definition')
     else:
       for col in index.colinfo:
-        if not isinstance(col, TableIndexCol):
-          raise TableDefn('Index column should be an instance of TableIndexCol')
+        if not isinstance(col, TableDefnIndexCol):
+          raise TableDefn('Index column should be an instance of TableDefnIndexCol')
         if col.name not in self._columns_:
           raise TableDefnError('Index contains a column not present in the table definition')
     self._indexes_[index.name] = index

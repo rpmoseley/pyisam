@@ -4,8 +4,16 @@ This module provides all the various flags stored as enum objects.
 
 import enum
 
+# Make use of IntFlags supported by 3.6+ which is intended for bitmap values
+if hasattr(enum, 'IntFlag'):
+  _IntFlag = enum.IntFlag
+  _Flag = enum.Flag
+else:
+  _IntFlag = enum.IntEnum
+  _Flag = enum.Enum
+
 # Define the types that can be applied to the keydesc.flags field
-class IndexFlags(enum.IntEnum):
+class IndexFlags(_IntFlag):
   NO_DUPS      = 0x00
   DUPS         = 0x01
   DUP_COMPRESS = 0x02
@@ -17,7 +25,7 @@ class IndexFlags(enum.IntEnum):
 
 # The OpenMode and LockMode enums provide the available modes used
 # when using the isbuild or isopen methods.
-class OpenMode(enum.Enum):
+class OpenMode(_Flag):
   ISINPUT    = 0x000
   ISOUTPUT   = 0x001
   ISINOUT    = 0x002
@@ -27,7 +35,7 @@ class OpenMode(enum.Enum):
   ISSPECAUTH = 0x020
   ISFIXLEN   = 0x000
   ISNOCKLOG  = 0x080
-class LockMode(enum.IntEnum):
+class LockMode(_IntFlag):
   ISAUTOLOCK = 0x200
   ISMANULOCK = 0x400
   ISEXCLLOCK = 0x800
@@ -64,7 +72,7 @@ class StartMode(enum.IntEnum):
   ISKEEPLOCK = 0x800
 
 # The types of column supported by the package
-class ColumnType(enum.Enum):
+class ColumnType(enum.IntEnum):
   CHAR   = 0
   SHORT  = 1
   LONG   = 2

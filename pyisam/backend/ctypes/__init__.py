@@ -66,20 +66,41 @@ class keydesc(Structure):
     elif part >= self.nparts:
       raise ValueError('Cannot refer beyond last index part')
     return self.part[part]
+  def __setitem__(self, part, kpart):
+    'Set the specified key part to the definition provided'
+    if not isinstance(part, int):
+      raise ValueError('Expecting an integer key part number')
+    elif part < -self.nparts:
+      raise ValueError('Cannot refer beyond first index part')
+    elif part < 0:
+      part = self.npart + part
+    elif part >= self.nparts:
+      raise ValueError('Cannot refer beyond last index part')
+    if not isinstance(kpart, keypart):
+      raise ValueError('Expecting an instance of keypart')
+    self.part[part].start = kpart.start
+    self.part[part].leng = kpart.length
+    self.part[part].type = kpart.type
   def __eq__(self,other):
     '''Compare if the two keydesc structures are the same'''
-    if (self.flags & 1) ^ (other.flags & 1) or self.nparts != other.nparts:
+    if (self.flags & IndexFlags.DUPS) ^ (other.flags & IndexFlags.DUPS):
       return False
-    for spart,opart in zip(self.part,other.part):
-      if spart.start != opart.start or spart.leng != opart.leng or spart.type != opart.type:
+    if self.nparts != other.nparts:
+      return False
+    for spart,opart in zip(self.part, other.part):
+      if spart.start != opart.start:
+        return False
+      if spart.leng != opart.leng:
+        return False
+      if spart.type != opart.type:
         return False
     return True
   def _dump(self):
     'Generate a string representation of the underlying keydesc structure'
-    res = ['({0.nparts}, ['.format(self)]
+    res = ['({0.nparts}, [']
     res.append(', '.join([str(self.part[cpart]) for cpart in range(self.nparts)]))
-    res.append('], {0.flags})'.format(self))
-    return ''.join(res)
+    res.append('], 0x{0.flags:02x})')
+    return ''.join(res).format(self)
   __str__ = _dump
   @property
   def value(self):
@@ -414,9 +435,9 @@ class ISAMobjectMixin:
 class ISAMindexMixin:
   'This class provides the ctypes specific methods for ISAMindex'
   def create_keydesc(self, record, optimize=False):
-    'Create a new keydesc using the column information in tabobj'
+    'Create a new keydesc using the column information in RECORD'
     def _idxpart(idxcol):
-      colinfo = record.colinfo(idxcol.name)
+      colinfo = record._colinfo(idxcol.name)
       kpart = keypart()
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index

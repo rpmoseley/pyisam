@@ -89,7 +89,7 @@ class FloatColumn(TableDefnColumn):
 class DoubleColumn(TableDefnColumn):
   pass
 
-class TableIndexCol:
+class TableDefnIndexCol:
   'This class represents a column within an index definition'
   __slots__ = 'name', 'offset', 'length'
   def __init__(self, name, offset=None, length=None):
@@ -97,7 +97,7 @@ class TableIndexCol:
     self.offset = offset
     self.length = length
   def __str__(self):
-    out = ['TableIndexCol({0.name}']
+    out = ['TableDefnIndexCol({0.name}']
     if self.length is not None:
       out.append(', 0' if self.offset is None else ', {0.offset}')
       out.append(', {0.length}')
@@ -121,11 +121,11 @@ class TableDefnIndex:
   def _colinfo(self, colinfo):
     'Internal method to convert colinfo into a suitable class'
     if len(colinfo) < 1:
-      return TableIndexCol(self.name)
+      return TableDefnIndexCol(self.name)
     elif len(colinfo) == 1:
       if isinstance(colinfo[0], str):
-        return TableIndexCol(colinfo[0])
-      elif isinstance(colinfo[0], TableIndexCol):
+        return TableDefnIndexCol(colinfo[0])
+      elif isinstance(colinfo[0], TableDefnIndexCol):
         return colinfo[0]
       elif isinstance(colinfo[0], (list, tuple)):
         return self._colinfo(colinfo[0])
@@ -135,23 +135,23 @@ class TableDefnIndex:
       newinfo = list()
       for col in colinfo:
         if isinstance(col, str):
-          newinfo.append(TableIndexCol(col))
+          newinfo.append(TableDefnIndexCol(col))
         elif isinstance(col, (tuple, list)):
           if len(col) < 2:
-            newinfo.append(TableIndexCol(col[0]))
+            newinfo.append(TableDefnIndexCol(col[0]))
           elif len(col) < 3:
-            newinfo.append(TableIndexCol(col[0], col[1]))
+            newinfo.append(TableDefnIndexCol(col[0], col[1]))
           elif len(col) < 4:
-            newinfo.append(TableIndexCol(col[0], col[1], col[2]))
+            newinfo.append(TableDefnIndexCol(col[0], col[1], col[2]))
           else:
             raise ValueError('Column definition is not correctly formatted')
-        elif isinstance(col, TableIndexCol):
+        elif isinstance(col, TableDefnIndexCol):
           newinfo.append(col)
       return newinfo
   def __str__(self):
     'Provide a readable form of the information in the index'
     out = ['{}({}'.format(self.__class__.__name__, self.name)]
-    if isinstance(self.colinfo, TableIndexCol):
+    if isinstance(self.colinfo, TableDefnIndexCol):
       out.append('{}'.format(self.colinfo))
     else:
       for cinfo in self.colinfo:
