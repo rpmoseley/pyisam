@@ -20,7 +20,7 @@ class DynamicTableDefn:
     self._indexes_ = dict()
     self._error = error    # Store fact that errors raise an exception
     self.bad = ([], [])    # Bad elements: [0] = field, [1] = indexes
-    if fields is not None:
+    if isinstance(fields, (list, tuple)):
       self.extend(fields)
     if isinstance(indexes, (list, tuple)):
       for idx in indexes:
@@ -32,6 +32,7 @@ class DynamicTableDefn:
         self.add(indexes[idx], error=error)
     elif indexes is not None:
       raise TableDefnError('Indexes must be derived from TableDefnIndex')
+
   def _raise_error(self, error, field, bad, excptlass):
     '''Check whether to an error should raise an Exception, if so then
        raised the EXCLASS, otherwise add to BAD'''
@@ -40,11 +41,13 @@ class DynamicTableDefn:
       raise excptclass
     else:
       bad.append(field)
+
   def check(self):
     'Check if the table definition has any problems'
     if self.bad[0] or self.bad[1]:
       return True
     return False
+
   def append(self, field, error=None):
     'Add a field to the table definition which should be an instance of TableDefnColumn'
     if not isinstance(field, TableDefnColumn):
@@ -54,6 +57,7 @@ class DynamicTableDefn:
       self._raise_error(error, field, self._bad[0],
                         TableDefnError('Field already present in the table definition'))
     self._columns_[field.name] = field
+
   def extend(self, fields, error=None):
     'Add a sequence of fields to the table definition'
     if isinstance(fields, (list, tuple)):
@@ -68,6 +72,7 @@ class DynamicTableDefn:
       raise TableDefnError('Fields must be retrievable in order on table, use an OrderedDict')
     elif fields is not None:
       raise TableDefnError('Only sequences and OrderedDict can be given to define fields')
+
   def add_index(self, index, error=None):
     'Add an index to the table definition which should be an instance of TableDefnIndex'
     if not isinstance(index, TableDefnIndex):

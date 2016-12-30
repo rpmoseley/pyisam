@@ -28,23 +28,10 @@ class RecordBuffer:
 class dictinfo:
   'Class that provides the dictinfo as expected by the rest of the package'
   def __init__(self, dinfo):
-    self._dinfo = dinfo
-
-  @property
-  def nkeys(self):
-    return self._dinfo.di_nkeys
-
-  @property
-  def recsize(self):
-    return self._dinfo.di_recsize
-
-  @property
-  def idxsize(self):
-    return self._dinfo.di_idxsize
-
-  @property
-  def nrecords(self):
-    return self._dinfo.di_nrecords
+    self.nkeys = dinfo.di_nkeys
+    self.recsize = dinfo.di_recsize
+    self.idxsize = dinfo.di_idxsize
+    self.nrecords = dinfo.di_nrecords
 
   def __str__(self):
     return 'NKEY: {0.nkeys}; RECSIZE: {0.recsize}; ' \
@@ -468,6 +455,14 @@ class ISAMindexMixin:
   'This class provides the cffi specific methods for ISAMindex'
   def create_keydesc(self, record, optimize=False):
     'Create a new keydesc using the column information in RECORD'
+    # NOTE: The information stored in an instance of _TableIndexCol
+    #       is relative to the associated column within in the
+    #       record object not to the overall record in general, thus
+    #       an offset of 0 indicates that the key starts at the start
+    #       of the column and length indicates how much of the column
+    #       is involved in the index, permitting a part of the column
+    #       to be stored in the index. An offset and length of None
+    #       implies the complete column is involved in the index.
     def _idxpart(idxno, idxcol):
       colinfo = record._colinfo(idxcol.name)
       if idxcol.length is None and idxcol.offset is None:
@@ -478,7 +473,7 @@ class ISAMindexMixin:
         # Use the prefix part of column in the index
         if idxcol.length > colinfo._size:
           raise ValueError('Index part is larger than the specified column')
-        kdesc.k_part[idxno].kp_start = colinfo.start
+        kdesc.k_part[idxno].kp_start = colinfo.offset
         kdesc.k_part[idxno].kp_leng = idxcol.length
       else:
         # Use the length of column from the given offset in the index

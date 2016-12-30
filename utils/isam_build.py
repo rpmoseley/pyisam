@@ -10,27 +10,22 @@ TODO: Update this script to perform all the necessary copies of the libraries an
 '''
 import platform
 from cffi import FFI
+from os.path import join
 
 # Determine whether this a 32- or 64-bit architecture
 on_64bit = platform.architecture()[0] == '64bit'
-if on_64bit:
-  long32 = 'int'
-  libdir = 'lib64'
-  incdir = 'include/isam64'
-else:
-  long32 = 'long'
-  libdir = 'lib32'
-  incdir = 'include/isam32'
+long32 = 'int' if on_64bit else 'long'
+szlong = '64'  if on_64bit else '32'
 
 # Build the library directly into the path expected by the pyisam package
 ffi = FFI()
-lib = ffi.set_source(
+ffi.set_source(
   'pyisam.backend.cffi._isam_cffi',
   '#include "isam.h"',
-  library_dirs = [libdir],
+  library_dirs = [join('libisam', szlong)],
   runtime_library_dirs = ['$ORIGIN/../lib'],
-  libraries = ['ifisam','ifisamx'],
-  include_dirs = [incdir],
+  libraries = ['ifisam', 'ifisamx'],
+  include_dirs = [join('libisam', szlong, 'include')],
 )
 
 # Define items found in decimal.h
@@ -45,7 +40,7 @@ void deccopy(struct decimal *, struct decimal *);
 int deccvasc(char *, int, struct decimal *);
 int deccvdbl(double, struct decimal *);
 int deccvint(int, struct decimal *);
-int deccvlong(long, struct decimal *);
+int deccvlong({longsz}, struct decimal *);
 char *dececvt(struct decimal *, int, int *, int *);
 char *decfcvt(struct decimal *, int, int *, int *);
 void decround(struct decimal *, int);

@@ -8,8 +8,11 @@ from .isam import ISAMobject
 from .enums import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
 from .error import IsamException, IsamNotOpen, IsamOpened, IsamNotWritable, IsamRecordMutable, IsamFunctionFailed, IsamNoRecord
 
+MaxKeyParts = 8  # Define the maximum number of parts a key may contain
+
 __all__ = ('ISAMobject', 
            'IndexFlags', 'LockMode', 'OpenMode', 'ReadMode', 'StartMode',
            'IsamException', 'IsamNotOpen', 'IsamOpened', 'IsamNotWritable',
-           'IsamRecordMutable', 'IsamFunctionFailed', 'IsamNoRecord'
+           'IsamRecordMutable', 'IsamFunctionFailed', 'IsamNoRecord',
+           'MaxKeyParts',
           )

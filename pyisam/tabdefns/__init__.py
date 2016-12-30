@@ -18,6 +18,7 @@ class TableDefnMeta(type):
   @classmethod
   def __prepare__(metacls, name, bases, **kwds):
     return collections.OrderedDict()
+
   def __new__(cls, name, bases, namespace, **kwds):
     result = super().__new__(cls, name, bases, dict(namespace))
     fields, indexes = [], []
@@ -74,18 +75,24 @@ class TableDefnColumn:
   'Base class for all the column based classes used in definitions'
   def __init__(self, name, *args, **kwd):
     self.name = name
+
 class CharColumn(TableDefnColumn):
   pass
+
 class TextColumn(TableDefnColumn):
   def __init__(self, name, length, *args, **kwd):
     self.length = length
     super().__init__(name, *args, **kwd)
+
 class ShortColumn(TableDefnColumn):
   pass
+
 class LongColumn(TableDefnColumn):
   pass
+
 class FloatColumn(TableDefnColumn):
   pass
+
 class DoubleColumn(TableDefnColumn):
   pass
 
@@ -96,6 +103,7 @@ class TableDefnIndexCol:
     self.name = name
     self.offset = offset
     self.length = length
+
   def __str__(self):
     out = ['TableDefnIndexCol({0.name}']
     if self.length is not None:
@@ -118,6 +126,7 @@ class TableDefnIndex:
     self.dups = dups
     self.desc = desc
     self.colinfo = self._colinfo(colinfo)
+
   def _colinfo(self, colinfo):
     'Internal method to convert colinfo into a suitable class'
     if len(colinfo) < 1:
@@ -148,6 +157,7 @@ class TableDefnIndex:
         elif isinstance(col, TableDefnIndexCol):
           newinfo.append(col)
       return newinfo
+
   def __str__(self):
     'Provide a readable form of the information in the index'
     out = ['{}({}'.format(self.__class__.__name__, self.name)]
@@ -164,32 +174,40 @@ class DuplicateIndex(TableDefnIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo, desc=False):
     super().__init__(name, *colinfo, dups=True, desc=desc)
+
 class UniqueIndex(TableDefnIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo, desc=False):
     super().__init__(name, *colinfo, dups=False, desc=desc)
+
 class PrimaryIndex(UniqueIndex):
   __slots__ = ()
   pass
+
 class AscDuplicateIndex(DuplicateIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
     super().__init__(name, *colinfo, desc=False)
+
 class AscUniqueIndex(UniqueIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
     super().__init__(name, *colinfo, desc=False)
+
 class AscPrimaryIndex(AscUniqueIndex):
   __slots__ = ()
   pass
+
 class DescDuplicateIndex(DuplicateIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
     super().__init__(name, *colinfo, desc=True)
+
 class DescUniqueIndex(UniqueIndex):
   __slots__ = ()
   def __init__(self, name, *colinfo):
     super().__init__(name, *colinfo, desc=True)
+
 class DescPrimaryIndex(DescUniqueIndex):
   __slots__ = ()
   pass
