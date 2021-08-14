@@ -5,10 +5,10 @@ This module provides all the various flags stored as enum objects.
 import enum
 
 # Make use of IntFlags supported by 3.6+ which is intended for bitmap values
-if hasattr(enum, 'IntFlag'):
+try:
   _IntFlag = enum.IntFlag
   _Flag = enum.Flag
-else:
+except AttributeError:
   _IntFlag = enum.IntEnum
   _Flag = enum.Enum
 
