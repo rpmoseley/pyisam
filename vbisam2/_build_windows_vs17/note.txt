@@ -1,0 +1,1 @@
+This is vbisam-2.0 with minor modification in 'vbisam.h'.

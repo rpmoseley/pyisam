@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>vbisam</ProjectName>
+    <ProjectGuid>{924DB760-86F4-4B70-9000-0E883630ED00}</ProjectGuid>
+    <RootNamespace>vbisam</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <CharacterSet>MultiByte</CharacterSet>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <AdditionalIncludeDirectories>.\;..\;..\..\;..\..\;..\..\libvbisam\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>VBISAM_LIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DisableSpecificWarnings>4101;4018;4244;4267</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>false</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\libvbisam\isaudit.c" />
+    <ClCompile Include="..\..\libvbisam\isbuild.c" />
+    <ClCompile Include="..\..\libvbisam\ischeck.c" />
+    <ClCompile Include="..\..\libvbisam\iscommon.c" />
+    <ClCompile Include="..\..\libvbisam\isdecimal.c" />
+    <ClCompile Include="..\..\libvbisam\isdelete.c" />
+    <ClCompile Include="..\..\libvbisam\ishelper.c" />
+    <ClCompile Include="..\..\libvbisam\isopen.c" />
+    <ClCompile Include="..\..\libvbisam\isread.c" />
+    <ClCompile Include="..\..\libvbisam\isrecover.c" />
+    <ClCompile Include="..\..\libvbisam\isrewrite.c" />
+    <ClCompile Include="..\..\libvbisam\istrans.c" />
+    <ClCompile Include="..\..\libvbisam\iswrite.c" />
+    <ClCompile Include="..\..\libvbisam\vbdataio.c" />
+    <ClCompile Include="..\..\libvbisam\vbindexio.c" />
+    <ClCompile Include="..\..\libvbisam\vbkeysio.c" />
+    <ClCompile Include="..\..\libvbisam\vblocking.c" />
+    <ClCompile Include="..\..\libvbisam\vblowlevel.c" />
+    <ClCompile Include="..\..\libvbisam\vbmemio.c" />
+    <ClCompile Include="..\..\libvbisam\vbnodememio.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\libvbisam\ChangeLog" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
