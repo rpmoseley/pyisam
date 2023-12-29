@@ -9,9 +9,10 @@ performance is required.
 
 from ._isam_cffi import ffi, lib
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable
-from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
+from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
 from operator import attrgetter
+import os
 
 __all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 

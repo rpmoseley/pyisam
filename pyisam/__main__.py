@@ -3,7 +3,7 @@ from . import ISAMobject, ReadMode, OpenMode, LockMode
 from .table import ISAMtable
 from .utils import ISAM_str
 from .tabdefns.stxtables import DEFILEdefn, DEKEYSdefn, DECOMPdefn, DEITEMdefn
-from .autoselect import dump_record_imp
+from .dumprec import dump_record_imp, dump_record_exp_eq
 import argparse
 import os
 import sys
@@ -61,13 +61,6 @@ if opts.interactive:
   opts.run_mode = 0
 else:
   print('TEST:', opts.run_mode)
-
-def dump_record_exp_eq(tabobj, idxkey, mode, colname, colval):
-  'Dump records using explicit read MODE and check COLNAME=COLVAL'
-  record = tabobj.read(idxkey, mode, colval)
-  while getattr(record, colname) == colval:
-    print(record)
-    record = tabobj.read()
 
 if opts.run_mode == 1:
   # Test 01: Dump the list of error codes and meanings from the ISAM library

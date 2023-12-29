@@ -5,7 +5,7 @@ definitions and the idea of rowsets to the underlying library of choice.
 '''
 
 from .isam import ISAMobject
-from .enums import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
+from .constants import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
 from .error import IsamException, IsamNotOpen, IsamOpened, IsamNotWritable, IsamRecordMutable, IsamFunctionFailed, IsamNoRecord
 
 MaxKeyParts = 8  # Define the maximum number of parts a key may contain

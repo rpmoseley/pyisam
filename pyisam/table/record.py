@@ -27,7 +27,7 @@ import struct
 import sys
 from keyword import iskeyword
 from ..backend import RecordBuffer
-from ..enums import ColumnType
+from ..constants import ColumnType
 
 __all__ = 'CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn', 'DoubleColumn', 'recordclass'
 

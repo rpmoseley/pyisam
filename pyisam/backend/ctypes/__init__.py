@@ -19,7 +19,7 @@ import functools
 import os
 import struct
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable, IsamNotWritable
-from ...enums import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
+from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
 ##import platform
 

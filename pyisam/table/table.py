@@ -7,7 +7,7 @@ import os
 from .index import TableIndex, PrimaryIndex, DuplicateIndex, UniqueIndex
 from .index import create_TableIndex
 from .record import recordclass, ISAMrecordBase
-from ..enums import ReadMode, StartMode
+from ..constants import ReadMode, StartMode
 from ..error import IsamException, IsamOpened, IsamNoIndex
 from ..isam import ISAMobject
 from ..tabdefns import TableDefnIndex

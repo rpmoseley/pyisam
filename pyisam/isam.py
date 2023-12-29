@@ -4,7 +4,7 @@ This module will load the backend that is currently configured for the underlyin
 
 __all__ = 'ISAMobject', 'dictinfo', 'keydesc', 'ISAMindexMixin'
 
-from .enums import OpenMode, LockMode
+from .constants import OpenMode, LockMode
 from .backend import ISAMobjectMixin, ISAMindexMixin, dictinfo, keydesc
 
 # Stub for the actual ISAMobject which maintains existing usage

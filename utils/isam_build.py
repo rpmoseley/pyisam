@@ -10,12 +10,14 @@ TODO: Update this script to perform all the necessary copies of the libraries an
 '''
 import platform
 from cffi import FFI
-from os.path import join
+import os
+import shutil
 
 # Determine whether this a 32- or 64-bit architecture
 on_64bit = platform.architecture()[0] == '64bit'
 long32 = 'int' if on_64bit else 'long'
 szlong = '64'  if on_64bit else '32'
+join = os.path.join
 
 # Build the library directly into the path expected by the pyisam package
 ffi = FFI()
@@ -127,3 +129,5 @@ extern int    iswrite(int, char *);
 
 if __name__ == '__main__':
   ffi.compile()   # NOTE Passing tmpdir moves ALL relative paths as well!
+  shutil.copyfile(join('libisam', szlong, 'libifisam.so'), 'pyisam/backend/lib/libifisam.so')
+  shutil.copyfile(join('libisam', szlong, 'libifisamx.so'), 'pyisam/backend/lib/libifisamx.so')

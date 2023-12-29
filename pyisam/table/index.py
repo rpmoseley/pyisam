@@ -11,7 +11,7 @@ __all__ = ('TableIndex', 'PrimaryIndex', 'DuplicateIndex', 'UniqueIndex',
 
 from .. import MaxKeyParts
 from ..isam import ISAMindexMixin, keydesc
-from ..enums import IndexFlags
+from ..constants import IndexFlags
 from ..tabdefns import TableDefnIndexCol
 from .record import ColumnInfo
 
