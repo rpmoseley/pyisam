@@ -19,6 +19,8 @@ long32 = 'int' if on_64bit else 'long'
 szlong = '64'  if on_64bit else '32'
 join = os.path.join
 
+# Define the location of the libraries according to the bit size
+libdir = join('libisam', szlong')
 # Build the library directly into the path expected by the pyisam package
 ffi = FFI()
 ffi.set_source(
@@ -27,7 +29,7 @@ ffi.set_source(
   library_dirs = [join('libisam', szlong)],
   runtime_library_dirs = ['$ORIGIN/../lib'],
   libraries = ['ifisam', 'ifisamx'],
-  include_dirs = [join('libisam', szlong, 'include')],
+  include_dirs = [join(libdir, 'include')],
 )
 
 # Define items found in decimal.h
@@ -129,5 +131,5 @@ extern int    iswrite(int, char *);
 
 if __name__ == '__main__':
   ffi.compile()   # NOTE Passing tmpdir moves ALL relative paths as well!
-  shutil.copyfile(join('libisam', szlong, 'libifisam.so'), 'pyisam/backend/lib/libifisam.so')
-  shutil.copyfile(join('libisam', szlong, 'libifisamx.so'), 'pyisam/backend/lib/libifisamx.so')
+  shutil.copyfile(join(libdir, 'libifisam.so'), 'pyisam/backend/lib/libifisam.so')
+  shutil.copyfile(join(libdir, 'libifisamx.so'), 'pyisam/backend/lib/libifisamx.so')
