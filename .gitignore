@@ -1,6 +1,5 @@
 *.o
 *.a
-libifisam*.so
 *.wpu
 *.py[co]
 __pycache__/
@@ -16,3 +15,4 @@ _isam_cffi.?
 /lib64
 /pip-selfcheck.json
 /pyvenv.cfg
+.venv/

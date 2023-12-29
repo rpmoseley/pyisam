@@ -68,12 +68,20 @@ isflush (const int ihandle)
 		iserrno = ENOTOPEN;
 		return -1;
 	}
+/*
 	if (psvbptr->iindexhandle >= 0) {
 		fsync (psvbptr->iindexhandle);
 	}
 	if (psvbptr->idatahandle >= 0) {
 		fsync (psvbptr->idatahandle);
 	}
+*/
+  	if (psvbptr->iindexhandle >= 0) {
+  		fsync (svbfile[psvbptr->iindexhandle].ihandle);
+  	}
+  	if (psvbptr->idatahandle >= 0) {
+  		fsync (svbfile[psvbptr->idatahandle].ihandle);
+  	}
 	return 0;
 }
 
@@ -144,7 +152,7 @@ isrelease (const int ihandle)
 }
 
 int
-isrelrec (const int ihandle, const off_t trownumber)
+isrelrec (const int ihandle, const vbisam_off_t trownumber)
 {
 	struct DICTINFO	*psvbptr;
 
@@ -192,7 +200,7 @@ renameexit:
 }
 
 int
-issetunique (const int ihandle, const off_t tuniqueid)
+issetunique (const int ihandle, const vbisam_off_t tuniqueid)
 {
 	struct DICTINFO *psvbptr;
 	off_t		tvalue;
@@ -223,7 +231,7 @@ issetunique (const int ihandle, const off_t tuniqueid)
 }
 
 int
-isuniqueid (const int ihandle, off_t *ptuniqueid)
+isuniqueid (const int ihandle, vbisam_off_t *ptuniqueid)
 {
 	struct DICTINFO *psvbptr;
 	off_t		tvalue;
@@ -477,7 +485,7 @@ stfloat (double dsource, void *pcdestination)
 {
 	float ffloat;
 
-	ffloat = dsource;
+	ffloat = (float)(dsource);
 	memcpy (pcdestination, &ffloat, FLOATSIZE);
 }
 

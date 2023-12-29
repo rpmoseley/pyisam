@@ -27,6 +27,38 @@ int	ivbmaxusedhandle = -1;		/* The highest opened file handle */
 
 /* Local functions */
 
+/* the follwing function is part of a patch by Sergey */
+static int
+ilockexist (const int ihandle, const off_t trownumber)
+{
+	struct DICTINFO	*psvbptr;
+	struct VBLOCK	*psnewlock = NULL, *pslock;
+	int		iindexhandle;
+
+	psvbptr = psvbfile[ihandle];
+	iindexhandle = psvbptr->iindexhandle;
+	pslock = svbfile[iindexhandle].pslockhead;
+	/* Head of list */
+	if (pslock == NULL || trownumber < pslock->trownumber) {
+		return 0;
+	}
+	/* Tail of list */
+	if (trownumber > svbfile[iindexhandle].pslocktail->trownumber) {
+		return 0;
+	}
+	/* Position pslock to insertion point (Keep in mind, we insert AFTER) */
+	while (pslock->psnext && trownumber >= pslock->psnext->trownumber) {
+		pslock = pslock->psnext;
+	}
+	/* Already locked? */
+	if (pslock->trownumber == trownumber) {
+		if (pslock->ihandle == ihandle) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static int
 ilockinsert (const int ihandle, const off_t trownumber)
 {
@@ -65,7 +97,11 @@ ilockinsert (const int ihandle, const off_t trownumber)
 		return 0;
 	}
 	/* Position pslock to insertion point (Keep in mind, we insert AFTER) */
-	while (pslock->psnext && trownumber > pslock->psnext->trownumber) {
+	/* Patched by Sergey 
+	while (pslock->psnext && trownumber >  pslock->psnext->trownumber) {
+	*/
+	while (pslock->psnext && trownumber >= pslock->psnext->trownumber) {
+	// end of patch
 		pslock = pslock->psnext;
 	}
 	/* Already locked? */
@@ -303,11 +339,11 @@ ivbexit (const int ihandle)
 	}
 	ttransnumber = inl_ldquad (psvbptr->sdictnode.ctransnumber);
 	psvbptr->ttranslast = ttransnumber;
-/* RXW
+// this comment-start is taken back by Sergey as a patch /* RXW
 	if (psvbptr->iopenmode & ISEXCLLOCK) {
 		return 0;
 	}
-*/
+// this comment-end   is taken back by Sergey as a patch*/
 	if (psvbptr->iisdictlocked & 0x02) {
 		if (!(psvbptr->iisdictlocked & 0x04)) {
 			psvbptr->ttranslast = ttransnumber + 1;
@@ -465,7 +501,11 @@ ivbdatalock (const int ihandle, const int imode, const off_t trownumber)
 	} else if (imode == VBUNLOCK) {
 		iresult = ilockdelete (ihandle, trownumber);
 	}
+	/* Patched by Sergey
 	if (!iresult) {
+	*/
+	if (!iresult && (imode == VBUNLOCK || !ilockexist (ihandle, trownumber))) {
+    // end of patch
 		toffset = VB_OFFLEN_40;
 		iresult = ivblock (psvbptr->iindexhandle, toffset + trownumber,
 				tlength, imode);

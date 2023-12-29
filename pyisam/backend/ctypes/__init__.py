@@ -515,6 +515,7 @@ class ISAMindexMixin:
         kpart.leng = idxcol.length
       kpart.type = colinfo.type.value
       return kpart
+
     kdesc = keydesc()
     kdesc.flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc: kdesc.flags += IndexFlags.DESCEND

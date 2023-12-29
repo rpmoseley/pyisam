@@ -431,7 +431,7 @@ dectoflt (dec_t *dp, float *fltp)
 	int status;
 
 	status = dectoreal (dp, &dbl, 8);
-	*fltp = dbl;
+	*fltp = (float)(dbl);
 	return status;
 }
 

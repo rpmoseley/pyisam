@@ -1,9 +1,10 @@
 '''
 This is the CFFI specific implementation of the pyisam package
 
-This module provides a cffi based interface to the underlying IBM C-ISAM or VBISAM library and
-is designed to be a direct replacement for the ctypes based module in that it aims to provide
-the same classes for situations when performance is required.
+This module provides a cffi based interface to the underlying IBM C-ISAM or
+VBISAM library and is designed to be a direct replacement for the ctypes based
+module in that it aims to provide the same classes for situations when
+performance is required.
 '''
 
 from ._isam_cffi import ffi, lib
@@ -483,6 +484,7 @@ class ISAMindexMixin:
         kdesc.k_part[idxno].kp_leng = idxcol.length
       kdesc.k_part[idxno].kp_type = colinfo.type.value
       return kdesc.k_part[idxno].kp_leng
+
     kdesc = ffi.new('struct keydesc *')
     kdesc.k_flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc: kdesc.k_flags |= IndexFlags.DESCEND

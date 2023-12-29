@@ -331,8 +331,8 @@ ivbkeycompare (const int ihandle, const int ikeynumber, int ilength,
 
 		case FLOATTYPE:
 			while (ilengthtocompare >= FLOATSIZE) {
-				fvalue1 = ldfloat (pckey1);
-				fvalue2 = ldfloat (pckey2);
+				fvalue1 = (float)(ldfloat (pckey1));
+				fvalue2 = (float)(ldfloat (pckey2));
 				if (fvalue1 < fvalue2) {
 					return -idescbias;
 				}
@@ -682,7 +682,8 @@ vvbkeyvalueset (const int ihigh, struct keydesc *pskeydesc, unsigned char *pckey
 		case LONGTYPE:
 			iremainder = pskptr->kp_leng;
 			while (iremainder > 0) {
-				inl_stlong (ihigh ? LONG_MAX : LONG_MIN, pckeyvalue);
+//				inl_stlong (ihigh ? LONG_MAX : LONG_MIN, pckeyvalue);
+				inl_stlong (ihigh ? INT_MAX : INT_MIN, pckeyvalue);
 				pckeyvalue += LONGSIZE;
 				iremainder -= LONGSIZE;
 			}
