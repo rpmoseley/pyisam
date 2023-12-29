@@ -12,16 +12,16 @@ causing issues with the original method (the underlying library functions are
 added prefixed with an underscore, isopen -> _isopen).
 '''
 
-from ctypes import c_short, c_char, c_char_p, c_longlong, c_long, c_int, c_void_p
+from ctypes import c_short, c_char, c_char_p, c_int, c_int32
 from ctypes import Structure, POINTER, _SimpleCData, _CFuncPtr, Array, CDLL, _dlopen
 from ctypes import create_string_buffer
 import functools
 import os
 import struct
-from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable, IsamNotWritable
+from ..common import _checkpart, MAXKPART, MAXKLENG
+from ...error import IsamNotOpen, IsamOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable, IsamNotWritable
 from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
-##import platform
 
 __all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
@@ -54,33 +54,18 @@ class keypart(Structure):
 class keydesc(Structure):
   _fields_ = [('flags', c_short),
               ('nparts', c_short),
-              ('part', keypart * 8),
+              ('part', keypart * MAXKPART),
+              ('length', c_short),        # Total length of key
               ('_pad', c_char * 16)]      # NOTE: Allow for additional internal information
 
   def __getitem__(self, part):
     'Return the specified keydesc part object'
-    if not isinstance(part, int):
-      raise ValueError('Expecting an integer index part number')
-    elif part < -self.nparts:
-      raise ValueError('Cannot refer beyond first index part')
-    elif part < 0:
-      part = self.nparts + part
-    elif part >= self.nparts:
-      raise ValueError('Cannot refer beyond last index part')
+    part = _checkpart(self, part)
     return self.part[part]
 
   def __setitem__(self, part, kpart):
     'Set the specified key part to the definition provided'
-    if not isinstance(part, int):
-      raise ValueError('Expecting an integer key part number')
-    elif part < -self.nparts:
-      raise ValueError('Cannot refer beyond first index part')
-    elif part < 0:
-      part = self.npart + part
-    elif part >= self.nparts:
-      raise ValueError('Cannot refer beyond last index part')
-    if not isinstance(kpart, keypart):
-      raise ValueError('Expecting an instance of keypart')
+    part = _checkpart(self, part)
     self.part[part].start = kpart.start
     self.part[part].leng = kpart.length
     self.part[part].type = kpart.type
@@ -117,7 +102,7 @@ class dictinfo(Structure):
   _fields_ = [('nkeys', c_short),
               ('recsize', c_short),
               ('idxsize', c_short),
-              ('nrecords', c_long)]
+              ('nrecords', c_int32)]
 
   def __str__(self):
     return 'NKEY: {0.nkeys}; RECSIZE: {0.recsize}; ' \
@@ -126,27 +111,36 @@ class dictinfo(Structure):
 # Decorator function that wraps the methods within the ISAMobject that
 # will perform the necessary actions on the first invocation of the ISAM
 # function before calling the method itself.
-def ISAMfunc(*orig_args,**orig_kwd):
+# ORIG_ARGS is the list of parameters passed to the underlying ISAM library
+# including the file descriptor. ORIG_KWD is an alternative way of passing
+# both the return type and arguments of the underlying ISAM library routine
+# when the later does not return an 'int', as expected by the ctypes module,
+# in this case the 'restype' is the return type and 'argtypes' is the same
+# list of arguments including the file descriptor passed to the underlying ISAM
+# function.
+def ISAMfunc(*orig_args, **orig_kwd):
   def call_wrapper(func):
-    def wrapper(self,*args,**kwd):
-      real_func = getattr(self._lib_, func.__name__)
-      if not hasattr(real_func, '_seen'):
-        real_func._seen = True
+    def wrapper(self, *args, **kwd):
+      try:
+        return getattr(self, f'_{func.__name__}')
+      except AttributeError:
+        lib_func = getattr(self._lib_, func.__name__)
+        setattr(self, f'_{func.__name__}', lib_func)
         if 'restype' in orig_kwd:
-          real_func.restype = orig_kwd['restype']
+          lib_func.restype = orig_kwd['restype']
           if 'argtypes' in orig_kwd:
-            real_func.argtypes = orig_kwd['argtypes']
+            lib_func.argtypes = orig_kwd['argtypes']
           else:
-            real_func.argtypes = orig_args if orig_args else None
-          real_func.errcheck = self._chkerror
+            lib_func.argtypes = orig_args if orig_args else None
+          lib_func.errcheck = self._chkerror
         elif 'argtypes' in orig_kwd:
-          real_func.argtypes = orig_kwd['argtypes']
-          real_func.errcheck = self._chkerror
+          lib_func.argtypes = orig_kwd['argtypes']
+          lib_func.errcheck = self._chkerror
         elif not orig_args:
-          real_func.restype = real_func.argtypes = None
+          lib_func.restype = lib_func.argtypes = None
         else:
-          real_func.argtypes = None if orig_args[0] is None else orig_args 
-          real_func.errcheck = self._chkerror
+          lib_func.argtypes = orig_args if orig_args[0] else None
+          lib_func.errcheck = self._chkerror
       return func(self, *args, **kwd)
     return functools.wraps(func)(wrapper)
   return call_wrapper
@@ -157,15 +151,17 @@ class ISAMobjectMixin:
      prefix of an underscore, so isopen becomes _isopen.
   '''
   __slots__ = ()
+  
   # The _const_ dictionary initially consists of the ctypes type
   # which will be mapped to the correct variable when accessed.
   _const_ = {
     'iserrno'      : c_int,    'iserrio'      : c_int,
-    'isrecnum'     : c_long,   'isreclen'     : c_int,
+    'isrecnum'     : c_int32,  'isreclen'     : c_int,
     'isversnumber' : c_char_p, 'iscopyright'  : c_char_p,
     'isserial'     : c_char_p, 'issingleuser' : c_int,
     'is_nerr'      : c_int,    'is_errlist'   : None
   }
+  
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
   _lib_ = CDLL('libpyisam', handle=_dlopen(os.path.normpath(os.path.join(os.path.dirname(__file__), 'libpyisam.so')))) # FIXME: Make 32/64-bit correct
@@ -173,7 +169,7 @@ class ISAMobjectMixin:
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library
        or define and return the numeric equivalent'''
-    if not isinstance(name,str):
+    if not isinstance(name, str):
       raise AttributeError(name)
     elif name.startswith('_is'):
       return getattr(self._lib_, name[1:])
@@ -192,7 +188,7 @@ class ISAMobjectMixin:
         val = self._const_[name] = val.in_dll(self._lib_, name)
     return val.value if hasattr(val,'value') else val
 
-  def _chkerror(self,result=None,func=None,args=None):
+  def _chkerror(self, result=None, func=None, args=None):
     '''Perform checks on the running of the underlying ISAM function by
        checking the iserrno provided by the ISAM library, if ARGS is
        given return that on successfull completion of this method'''
@@ -215,54 +211,54 @@ class ISAMobjectMixin:
     else:
       return os.strerror(errno)
 
-  @ISAMfunc(c_int,POINTER(keydesc))
-  def isaddindex(self,kdesc):
+  @ISAMfunc(c_int, POINTER(keydesc))
+  def isaddindex(self, kdesc):
     '''Add an index to an open ISAM table'''
     if self._isfd_ is None: raise IsamNotOpen
-    return self._isaddindex(self._isfd_,kdesc)
+    return self._isaddindex(self._isfd_, kdesc)
 
-  @ISAMfunc(c_int,c_char_p,c_int)
-  def isaudit(self,mode,audname=None):
+  @ISAMfunc(c_int, c_char_p, c_int)
+  def isaudit(self, mode, audname=None):
     '''Perform audit trail related processing'''
     if self._isfd_ is None: raise IsamNotOpen
     if not isinstance(mode, str): raise ValueError('Must provide a string value')
     if mode == 'AUDSETNAME':
-      return self._isaudit(self,_isfd_,ISAM_bytes(audname),0)
+      return self._isaudit(self._isfd_, ISAM_bytes(audname), 0)
     elif mode == 'AUDGETNAME':
       resbuff = create_string_buffer(256)
-      self._isaudit(self._isfd_,resbuff,1)
+      self._isaudit(self._isfd_, resbuff, 1)
       return resbuff.value()
     elif mode == 'AUDSTART':
-      return self._isaudit(self._isfd_,b'',2)
+      return self._isaudit(self._isfd_, b'', 2)
     elif mode == 'AUDSTOP':
-      return self._isaudit(self._isfd_,b'',3)
+      return self._isaudit(self._isfd_, b'', 3)
     elif mode == 'AUDINFO':
       resbuff = create_string_buffer(1)
-      self._isaudit(self._isfd_,resbuff,4)
+      self._isaudit(self._isfd_, resbuff, 4)
       return resbuff[0] != '\0'
     elif mode == 'AUDRECVR':
       raise NotImplementedError('Audit recovery is not implemented')
     else:
       raise ValueError('Unhandled audit mode specified')
 
-  @ISAMfunc()
+  @ISAMfunc(None)
   def isbegin(self):
     '''Begin a transaction'''
     if self._isfd_ is None: raise IsamNotOpen
-    self._isbegin(self._isfd_)
+    self._isbegin()
 
   @ISAMfunc(c_char_p, c_int, POINTER(keydesc), c_int)
   def isbuild(self, tabname, reclen, kdesc, varlen=None):
     '''Build a new table in exclusive mode'''
     if self._isfd_ is not None:
-      raise IsamException('Attempt to build with open table')
+      raise IsamOpen('Attempt to build with open table')
     if not isinstance(kdesc, keydesc):
-      raise ValueError('Must provide the primary key description for table')
+      raise ValueError('Must provide instance of keydesc for the primary index')
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
     self._isfd_ = self._isbuild(ISAM_bytes(tabname), reclen, kdesc, self._fdmode_.value|self._fdlock_.value)
 
-  @ISAMfunc()
+  @ISAMfunc(None)
   def iscleanup(self):
     '''Cleanup the ISAM library'''
     self._iscleanup()
@@ -280,11 +276,11 @@ class ISAMobjectMixin:
     if self._isfd_ is None: raise IsamNotOpen
     self._iscluster(self._isfd_, kdesc)
 
-  @ISAMfunc()
+  @ISAMfunc(None)
   def iscommit(self):
     '''Commit the current transaction'''
     if self._isfd_ is None: raise IsamNotOpen
-    self._iscommit(self._isfd_)
+    self._iscommit()
 
   @ISAMfunc(c_int)
   def isdelcurr(self):
@@ -303,6 +299,12 @@ class ISAMobjectMixin:
     '''Remove the given index from the table'''
     if self._isfd_ is None: raise IsamNotOpen
     self._isdelindex(self._isfd_, kdesc)
+
+  @ISAMfunc(c_int, c_int32)
+  def isdelrec(self, recnum):
+    '''Delete the specified row from the table'''
+    if self._isfd is None: raise IsamNotOpen
+    self._isdelrec(self._isfd_, recnum)
 
   @ISAMfunc(c_int, POINTER(dictinfo))
   def isdictinfo(self):
@@ -333,7 +335,7 @@ class ISAMobjectMixin:
     if keynum < 0:
       raise ValueError('Index must be a positive number or 0 for dictinfo')
     elif keynum > 0:
-      return self.iskeyinfo(keynum-1)
+      return self.iskeyinfo(keynum+1)
     else:
       return self.isdictinfo()
 
@@ -341,6 +343,7 @@ class ISAMobjectMixin:
   def iskeyinfo(self, keynum):
     'Return the keydesc for the specified key'
     if self._isfd_ is None: raise IsamNotOpen
+    if keynum < 0: raise ValueError('Index must be a positive number')
     ptr = keydesc()
     self._iskeyinfo(self._isfd_, ptr, keynum+1)
     return ptr
@@ -361,7 +364,7 @@ class ISAMobjectMixin:
     if self._isfd_ is None: raise IsamNotOpen
     self._islock(self._isfd_)
 
-  @ISAMfunc()
+  @ISAMfunc(None)
   def islogclose(self):
     'Close the transaction logfile'
     self._islogclose()
@@ -421,7 +424,7 @@ class ISAMobjectMixin:
     if self._isfd_ is None: raise IsamNotOpen
     self._isrewcurr(self._isfd_, recbuff)
 
-  @ISAMfunc(c_int, c_long, c_char_p)
+  @ISAMfunc(c_int, c_int32, c_char_p)
   def isrewrec(self, recnum, recbuff):
     'Rewrite the specified record'
     if self._isfd_ is None: raise IsamNotOpen
@@ -438,13 +441,13 @@ class ISAMobjectMixin:
     'Rollback the current transaction'
     self._isrollback()
 
-  @ISAMfunc(c_int, c_long)
+  @ISAMfunc(c_int, c_int32)
   def issetunique(self, uniqnum):
     'Set the unique number'
     if self._isfd_ is None: raise IsamNotOpen
     if self._fdmode_ is OpenMode.ISINPUT: raise IsamNotWritable
-    if not isinstance(uniqnum, c_long):
-      uniqnum = c_long(uniqnum)
+    if not isinstance(uniqnum, c_int32):
+      uniqnum = c_int32(uniqnum)
     self._issetunique(self._isfd_, uniqnum)
 
   @ISAMfunc(c_int, POINTER(keydesc), c_int, c_char_p, c_int)
@@ -455,12 +458,12 @@ class ISAMobjectMixin:
       raise ValueError('Must provide a StartMode value')
     self._isstart(self._isfd_, kdesc, keylen, recbuff, mode.value)
 
-  @ISAMfunc(c_int, POINTER(c_long))
+  @ISAMfunc(c_int, restype=int)
   def isuniqueid(self):
     'Return the unique id for the table'
     if self._isfd_ is None: raise IsamNotOpen
     if self._fdmode_ is OpenMode.ISINPUT: raise IsamNotWritable
-    ptr = c_long(0)
+    ptr = c_int32(0)
     self._isuniqueid(self._isfd_, ptr)
     return ptr.value
 
@@ -495,7 +498,7 @@ class ISAMindexMixin:
     #       to be stored in the index. An offset and length of None
     #       implies that the complete column was involved in the index.
     def _idxpart(idxcol):
-      colinfo = record._colinfo(idxcol.name)
+      colinfo = record._flddict[idxcol.name]
       kpart = keypart()
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
@@ -504,9 +507,19 @@ class ISAMindexMixin:
       elif idxcol.offset is None:
         # Use the prefix part of column in the index
         if idxcol.length > colinfo.size:
-          raise ValueError('Index part is larger than specified column')
+          raise ValueError('Index part is larger than the specified column')
         kpart.start = colinfo.offset
         kpart.leng = idxcol.length
+      elif idxcol.length is None:
+        # Use the remainder of the column from the given offset
+        if idxcol.offset > colinfo._size:
+          raise ValueError('Index part is larger than the specified column')
+        elif idxcol.offset == colinfo.size:
+          raise ValueError('Index part cannot have a zero length')
+        kpart.start = idxcol.offset
+        kpart.leng = colinfo.size - idxcol.offset
+      elif idxcol.length == 0:
+        raise ValueError('Invalid index defined with zero length')
       else:
         # Use the length of column from the given offset in the index
         if idxcol.offset + idxcol.length > colinfo.size:
@@ -515,7 +528,6 @@ class ISAMindexMixin:
         kpart.leng = idxcol.length
       kpart.type = colinfo.type.value
       return kpart
-
     kdesc = keydesc()
     kdesc.flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc: kdesc.flags += IndexFlags.DESCEND
@@ -531,6 +543,8 @@ class ISAMindexMixin:
       kdesc.nparts = 1
       kpart = kdesc.part[0] = _idxpart(self._colinfo)
       kdesc_leng = kpart.leng
+    if kdesc_leng >= MAXKLENG:
+      raise ValueError(f'Maximum length of an index cannot exceed {MAXKLENG} bytes')
     if optimize and kdesc_leng > 8:
       kdesc.flags += IndexFlags.ALL_COMPRESS
     return kdesc

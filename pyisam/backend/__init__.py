@@ -2,26 +2,29 @@
 This module provides backend configuration for the pyisam package
 '''
 
-__all__ = 'ISAMobject', 'ISAMindexMixin', 'RecordBuffer', 'dictinfo', 'keydesc'
-
-# Set the following variable to True to enable the use of the CFFI interface, otherwise
-# leave as False to use the ctypes interface.
-use_cffi = True
-
-if use_cffi:
-  from .cffi import ISAMobjectMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
-else:
-  from .ctypes import ISAMobjectMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
-
-"""
-The following is a way to accept extra backends without having to modify the source manually:
-
 import importlib
-_interface = 'cffi' # or 'ctypes'
-module_obj = importlib.import_module('.' + _interface, 'pyisam.backend')
-ISAMobjectMixin = module_obj.ISAMobjectMixin
-ISAMindexMixin = module_obj.ISAMindexMixin
-RecordBuffer = module_obj.RecordBuffer
-dictinfo = module_obj.dictinfo
-keydesc = module_obj.keydesc
-"""
+from .common import MAXKPART, MAXKLENG, _checkpart
+
+__all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'RecordBuffer', 'ISAMdictinfo', 'ISAMkeydesc', 'MAXKPART', 'MAXKLENG', '_checkpart'
+_allowed_conf = ('cffi', 'ctypes', 'cython')
+
+# Pickup the interface to use, defaulting to CFFI
+try:
+  confmod = importlib.import_module('.conf', 'pyisam.backend')
+  use_conf = getattr(confmod, 'backend')
+except ModuleNotFoundError:
+  use_conf = 'cffi'
+
+# Validate the backend to those allowed
+if use_conf not in _allowed_conf:
+  raise ModuleNotFoundError()
+
+# Load the specific module to retrieve those objects specified in the __all__ variable
+mod_obj = importlib.import_module(f'.{use_conf}', 'pyisam.backend')
+
+# Reference the objects made available to the application
+ISAMobjectMixin = getattr(mod_obj, 'ISAMobjectMixin')
+ISAMindexMixin = getattr(mod_obj, 'ISAMindexMixin')
+RecordBuffer = getattr(mod_obj, 'RecordBuffer')
+ISAMdictinfo = getattr(mod_obj, 'dictinfo')
+ISAMkeydesc = getattr(mod_obj, 'keydesc')

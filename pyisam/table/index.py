@@ -10,7 +10,7 @@ __all__ = ('TableIndex', 'PrimaryIndex', 'DuplicateIndex', 'UniqueIndex',
            'create_TableIndex')
 
 from .. import MaxKeyParts
-from ..isam import ISAMindexMixin, keydesc
+from ..isam import ISAMindexMixin, ISAMkeydesc
 from ..constants import IndexFlags
 from ..tabdefns import TableDefnIndexCol
 from .record import ColumnInfo
@@ -61,12 +61,13 @@ class _TableIndexCol:
 class TableIndex(ISAMindexMixin):
   '''Class used to store index information in an instance of ISAMtable'''
   __slots__ = 'name', 'dups', 'desc', 'keynum', '_kdesc', '_colinfo'
-  def __init__(self, name, *colinfo, dups=True, desc=False, knum=-1, kdesc=None):
+  def __init__(self, name, *colinfo, debug=False, dups=True, desc=False, knum=-1, kdesc=None):
     self.name = name
     self.dups = dups
     self.desc = desc
     self.keynum = knum              # Stores the key number once matched
     self._kdesc = kdesc             # Stores the keydesc once prepared
+    self._debug = debug             # Enable debug output
     self._colinfo = []
     for col in colinfo:
       self._add_colinfo(col)
@@ -80,21 +81,25 @@ class TableIndex(ISAMindexMixin):
     elif isinstance(col, str):
       self._colinfo.append(_TableIndexCol(col))
     elif isinstance(col, TableDefnIndexCol):
-      self._colinfo.append(_TableIndexCol(col.name,
-                                          col.offset,
-                                          col.length))
+      self._colinfo.append(_TableIndexCol(col.name, col.offset, col.length))
+    elif isinstance(col, dict):
+      self._colinfo.append(_TableIndexCol(col['name'], col.get('offset'), col.get('size')))
     elif isinstance(col, (tuple, list)):
       if isinstance(col[0], (_TableIndexCol, TableDefnIndexCol, ColumnInfo)):
         for subcol in col:
           self._add_colinfo(subcol)
       else:
-        self._colinfo.append(_TableIndexCol(col[0],
-                                            col[1] if len(col) > 1 else None,
-                                            col[2] if len(col) > 2 else None))
-    elif isinstance(col, dict):
-      self._colinfo.append(_TableIndexCol(col['name'],
-                                          col.get('offset'),
-                                          col.get('size')))
+        cols = [col[0]]
+        try:
+          cols.append(col[1])
+          try:
+            cols.append(col[2])
+          except IndexError:
+            cols.append(None)
+        except IndexError:
+          cols.append(None)
+          cols.append(None)
+        self._colinfo.append(_TableIndexCol(cols[0], cols[1], cols[2]))
     else:
       raise ValueError('Unhandled type of column information')
 
@@ -110,16 +115,19 @@ class TableIndex(ISAMindexMixin):
       record = record._row_
     if not hasattr(record, '_namedtuple'):
       raise ValueError('Expecting an instance of ISAMrecord')
-    print('FILL_BEF:', record)
+    if self._debug:
+      print('FILL_BEF: K:', kwd, 'A:', args, 'R:', record)
 
     # Process the fields using either keywords or arguments 
     fld_argn = 0
     for col in self._colinfo:
-      try:
-        record[col.name] = kwd[col.name]
-      except KeyError:
+      if col.name in kwd:
+        record[col.name] = kwd.pop(col.name)
+      else:
         record[col.name] = args[fld_argn] if fld_argn < len(args) else None
         fld_argn += 1
+    if self._debug:
+      print('FILL_AFT: K:', kwd, 'A:', args, 'R:', record)
 
   @staticmethod
   def keydesc_flags_as_set(keydesc):
@@ -143,27 +151,40 @@ class TableIndex(ISAMindexMixin):
   def __eq__(self, other):
     'Compare the two TableIndex instances for equality'
     if not isinstance(other, TableIndex):
-      if other is None:
+      if hasattr(other, '_tabind'):
+        # Use the stored table index information if available
+        other = other._tabind
+      elif other is None:
         # Always fails to compare equal against None
         return False
-      print(type(other))
-      raise ValueError('Unable to compare non TableIndex instance')
+      else:
+        if self._debug:
+          print(type(other))
+        raise ValueError('Unable to compare non TableIndex instance')
+    
     # Check if the index is the same sort order
     if self.desc != other.desc:
-      print('CHK: desc differs')
+      if self._debug:
+        print('CHK: desc differs')
       return False
+    
     # Check if the index both allow duplicates
     if self.dups != other.dups:
-      print('CHK: dups differ')
+      if self._debug:
+        print('CHK: dups differ')
       return False
+    
     # Check if the number of key parts is the same
     if len(self._colinfo) != len(other._colinfo):
-      print('CHK: len colinfo differs')
+      if self._debug:
+        print('CHK: len colinfo differs')
       return False
+    
     # Check each key part for matching columns
     for self_colinfo, other_colinfo in zip(self._colinfo, other._colinfo):
       if self_colinfo != other_colinfo:
-        print('CHK: colinfo differs')
+        if self._debug:
+          print('CHK: colinfo differs')
         return False
     return True
 

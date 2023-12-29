@@ -4,7 +4,7 @@ This module provides the utility functions and exceptions for the pyisam package
 __all__ = ('ISAM_bytes', 'ISAM_str')
 
 # Convert the given value to a bytes value
-def ISAM_bytes(value,default=None):
+def ISAM_bytes(value, default=None):
   if isinstance(value, bytes):
     pass
   elif isinstance(value, str):

@@ -1,18 +1,18 @@
 '''
 This is the CFFI specific implementation of the pyisam package
 
-This module provides a cffi based interface to the underlying IBM C-ISAM or
-VBISAM library and is designed to be a direct replacement for the ctypes based
-module in that it aims to provide the same classes for situations when
-performance is required.
+This module provides a cffi based interface to the underlying IBM C-ISAM or VBISAM library and
+is designed to be a direct replacement for the ctypes based module in that it aims to provide
+the same classes for situations when performance is required.
 '''
 
+import os
 from ._isam_cffi import ffi, lib
-from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable
-from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
+from ..common import _checkpart, MAXKPART, MAXKLENG
+from ...error import IsamNotOpen, IsamOpen, IsamNoRecord, IsamFunctionFailed, IsamRecordMutable, IsamNotWritable
+from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags, dflt_openmode, dflt_lockmode
 from ...utils import ISAM_bytes, ISAM_str
 from operator import attrgetter
-import os
 
 __all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
@@ -52,7 +52,7 @@ class keydesc:
   'Class that provides the keydesc as expected by the rest of the package'
   def __init__(self, kinfo=None):
     self._kinfo = ffi.new('struct keydesc *') if kinfo is None else kinfo
-    self._kpart = [None] * self._kinfo.k_nparts
+    self._kpart = [None] * MAXKPART
 
   @property
   def nparts(self):
@@ -60,15 +60,14 @@ class keydesc:
 
   @nparts.setter
   def nparts(self, nparts):
-    if 0 <= nparts < 9:
-      cparts = self._kinfo.k_nparts
+    if 0 <= nparts < MAXKPART:
       self._kinfo.k_nparts = nparts
     else:
-      raise ValueError('An index can only have a maximum of 8 parts')
-    if nparts > cparts:
-      self._kpart = self._kpart[:] + [None] * (nparts - cparts)
-    elif nparts < cparts:
-      self._kpart = self._kpart[:nparts]
+      raise ValueError(f'An index can only have a maximum of {MAXKPART} parts')
+
+  @property
+  def length(self):
+    return self._kinfo.k_len
 
   @property
   def flags(self):
@@ -79,32 +78,16 @@ class keydesc:
     self._kinfo.k_flags = flags
 
   def __getitem__(self, part):
-    if not isinstance(part, int):
-      raise ValueError('Expecting an integer key part number')
-    if part < 0:
-      part = self._kinfo.k_nparts + part
-      if self._kinfo.k_nparts < part:
-        raise ValueError('Cannot refer beyound first key part')
-    elif self._kinfo.k_nparts < part:
-      raise ValueError('Cannot refer beyond last key part')
+    part = _checkpart(self, part)
     kpart = self._kpart[part]
     if kpart is None:
       kpart = self._kpart[part] = keypart(self._kinfo.k_part[part])
     return kpart
 
   def __setitem__(self, part, kpart):
-    if not isinstance(part, int):
-      raise ValueError('Expecting an integer key part number')
-    elif part < -self._kinfo.k_nparts:
-      raise ValueError('Cannot refer beyond first key part')
-    elif part < 0:
-      part = self._kinfo.k_nparts + part
-    elif part >= self._kinfo.k_nparts:
-      raise ValueError('Cannot refer beyond last key part')
-    if not isinstance(kpart, keypart):
-      raise ValueError('Expecting an instance of keypart')
+    part = _checkpart(self, part)
     self._kinfo.k_part[part].kp_start = kpart.start
-    self._kinfo.k_part[part].kp_leng = kpart.length
+    self._kinfo.k_part[part].kp_leng = kpart.leng
     self._kinfo.k_part[part].kp_type = kpart.type
     self._kpart[part] = keypart(self._kinfo.k_part[part])
 
@@ -167,7 +150,6 @@ class ISAMobjectMixin:
       current file to avoid having to remember it separately.
   '''
   __slots__ = ()
-  #iserrno = attrgetter('lib.iserrno')
   @property
   def iserrno(self):
     return lib.iserrno
@@ -257,13 +239,12 @@ class ISAMobjectMixin:
 
   def isbegin(self):
     'Begin a transaction'
-    if self._isfd_ is None: raise IsamNotOpen
-    self._chkerror(lib.isbegin(self._isfd_), 'isbegin')
+    self._chkerror(lib.isbegin(), 'isbegin')
 
   def isbuild(self, tabname, reclen, kdesc, varlen=None):
     'Build a new table in exclusive mode'
-    if self._isfd_ is not None: raise IsamException('Attempt to build with open table')
-    if not isinstance(kdesc, keydesc): raise ValueError('Must provide instance of keydesc for primary index')
+    if self._isfd_ is not None: raise IsamOpen('Attempt to build with open table')
+    if not isinstance(kdesc, keydesc): raise ValueError('Must provide instance of keydesc for the primary index')
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
     self._isfd_ = self._chkerror(lib.isbuild(ISAM_bytes(tabname), reclen, kdesc, self._fdmode_.value | self._fdlock_.value), 'isbuild')
@@ -337,6 +318,7 @@ class ISAMobjectMixin:
   def iskeyinfo(self, keynum):
     'Return the keydesc for the specified key'
     if self._isfd_ is None: raise IsamNotOpen
+    if keynum < 0: raise ValueError('Index must be a positive number')
     keyinfo = ffi.new('struct keydesc *')
     self._chkerror(lib.iskeyinfo(self._isfd_, keyinfo, keynum+1), 'iskeyinfo')
     return keydesc(keyinfo)
@@ -372,8 +354,8 @@ class ISAMobjectMixin:
 
   def isopen(self, tabname, mode=None, lock=None):
     'Open an ISAM table'
-    if mode is None: mode = self.def_openmode
-    if lock is None: lock = self.def_lockmode
+    if mode is None: mode = dflt_openmode
+    if lock is None: lock = dflt_lockmode
     if not isinstance(mode, OpenMode) or not isinstance(lock, LockMode):
       raise ValueError('Must provide an OpenMode and/or LockMode values')
     self._isfd_ = self._chkerror(lib.isopen(ISAM_bytes(tabname), mode.value | lock.value), 'isopen')
@@ -466,7 +448,7 @@ class ISAMindexMixin:
     #       to be stored in the index. An offset and length of None
     #       implies the complete column is involved in the index.
     def _idxpart(idxno, idxcol):
-      colinfo = record._colinfo(idxcol.name)
+      colinfo = record._flddict[idxcol.name]
       if idxcol.length is None and idxcol.offset is None:
         # Use the whole column in the index
         kdesc.k_part[idxno].kp_start = colinfo.offset
@@ -477,6 +459,16 @@ class ISAMindexMixin:
           raise ValueError('Index part is larger than the specified column')
         kdesc.k_part[idxno].kp_start = colinfo.offset
         kdesc.k_part[idxno].kp_leng = idxcol.length
+      elif idxcol.length is None:
+        # Use the remainder of the column from the given offset
+        if idxcol.offset > colinfo._size:
+          raise ValueError('Index part is larger than the specified column')
+        elif idxcol.offset == colinfo._size:
+          raise ValueError('Inder part cannot have a zero length')
+        kdesc.k_part[idxno].kp_start = idxcol.offset
+        kdesc.k_part[idxno].kp_leng = colinfo.size - idxcol.offset
+      elif idxcol.length == 0:
+        raise ValueError('Invalid index defined with zero length')
       else:
         # Use the length of column from the given offset in the index
         if idxcol.offset + idxcol.length > colinfo.size:
@@ -486,7 +478,8 @@ class ISAMindexMixin:
       kdesc.k_part[idxno].kp_type = colinfo.type.value
       return kdesc.k_part[idxno].kp_leng
 
-    kdesc = ffi.new('struct keydesc *')
+    kdesc_p = ffi.new('struct keydesc [1]')
+    kdesc = kdesc_p[0]
     kdesc.k_flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc: kdesc.k_flags |= IndexFlags.DESCEND
     if isinstance(self._colinfo, (tuple, list)):
@@ -498,6 +491,8 @@ class ISAMindexMixin:
       # Single part index comprising the given column
       kdesc.k_nparts = 1
       kdesc_leng = _idxpart(0, self._colinfo)
+    if kdesc_leng >= MAXKLENG:
+      raise ValueError(f'Maximum length of an index cannot exceed {MAXKLENG} bytes')
     if optimize and kdesc_leng > 8:
       kdesc.k_flags |= IndexFlags.ALL_COMPRESS
     return keydesc(kdesc)

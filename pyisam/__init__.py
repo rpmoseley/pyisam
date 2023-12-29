@@ -6,7 +6,7 @@ definitions and the idea of rowsets to the underlying library of choice.
 
 from .isam import ISAMobject
 from .constants import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
-from .error import IsamException, IsamNotOpen, IsamOpened, IsamNotWritable, IsamRecordMutable, IsamFunctionFailed, IsamNoRecord
+from .error import IsamException, IsamNotOpen, IsamOpen, IsamNotWritable, IsamRecordMutable, IsamFunctionFailed, IsamNoRecord
 
 MaxKeyParts = 8  # Define the maximum number of parts a key may contain
 
@@ -15,4 +15,6 @@ __all__ = ('ISAMobject',
            'IsamException', 'IsamNotOpen', 'IsamOpened', 'IsamNotWritable',
            'IsamRecordMutable', 'IsamFunctionFailed', 'IsamNoRecord',
            'MaxKeyParts',
+           '__version__',
           )
+__version__ = '0.05'

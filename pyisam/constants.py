@@ -78,3 +78,7 @@ class ColumnType(enum.IntEnum):
   LONG   = 2
   DOUBLE = 3
   FLOAT  = 4
+
+# Define the default open and lock mode
+dflt_openmode = OpenMode.ISINPUT
+dflt_lockmode = LockMode.ISMANULOCK

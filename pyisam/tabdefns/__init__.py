@@ -5,71 +5,15 @@ logic to permit alternative implementations to be provided and reduce the
 complexity of the table module.
 '''
 
-import collections
+import dataclasses
 
 __all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
            'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
            'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
            'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
-           'DescPrimaryIndex', 'TableDefnMeta')
+           'DescPrimaryIndex')
 
-class TableDefnMeta(type):
-  'Metaclass for table definition classes that remembers the order of fields and indexes'
-  @classmethod
-  def __prepare__(metacls, name, bases, **kwds):
-    return collections.OrderedDict()
-
-  def __new__(cls, name, bases, namespace, **kwds):
-    result = super().__new__(cls, name, bases, dict(namespace))
-    fields, indexes = [], []
-    if '_columns_' in namespace:
-      # Fields given in _columns_ override the attribute variants
-      for info in namespace._columns_:
-        fields.append(info._name)
-    if '_indexes_' in namespace:
-      # Indexes given in _indexes_ override the attribute variants
-      for info in namespace._indexes_:
-        indexes.append(info._name)
-    for name, info in namespace.items():
-      # Check if a dunder ('__X__') name has been given
-      if (name[:2] == '__' and name[-2:] == '__' and
-          name[2:3] != '_' and name[-3:-2] != '_' and
-          len(name) > 4):
-        continue
-      # Check if a sunder ('_X_') name has been given
-      if (name[:1] == '_' and name[-1:] == '_' and
-          name[1:2] != '_' and name[-2:-1] != '_' and
-          len(name) > 2):
-        continue
-      # Check if an underscore name has been given
-      if (name[:1] == '_' and name[1:2] != '_' and len(name) > 1):
-        continue
-      # Store as a field or indexes depending on the base type
-      if issubclass(info, TableDefnColumn):
-        col = info()
-        if col.name in fields:
-          raise NameError('Duplicate field {} defined'.format(col.name))
-        fields.append(col.name)
-      elif isinstance(info, TableDefnColumn):
-        if name in fields:
-          raise NameError('Duplicate field {} defined'.format(name))
-        fields.append(name)
-      elif issubclass(info, TableDefnIndex):
-        idx = info()
-        if idx.name in indexes:
-          raise NameError('Duplicate index {} defined'.format(idx.name))
-        indexes.append(idx.name)
-      elif isinstance(info, TableDefnIndex):
-        if name in indexes:
-          raise NameError('Duplicate index {} defined'.format(name))
-        indexes.append(name)
-    result._fields_ = tuple(fields)
-    result._indexes_ = tuple(indexes)
-    for name in ('_tabname_', '_prefix_', '_database_'):
-      value = getattr(namespace, name, None)
-      if value is not None:
-        setattr(result, name, value)
-    return result
+# from .tabmeta import TableDefnMeta
 
 class TableDefnColumn:
   'Base class for all the column based classes used in definitions'
@@ -96,13 +40,12 @@ class FloatColumn(TableDefnColumn):
 class DoubleColumn(TableDefnColumn):
   pass
 
+@dataclasses.dataclass
 class TableDefnIndexCol:
   'This class represents a column within an index definition'
-  __slots__ = 'name', 'offset', 'length'
-  def __init__(self, name, offset=None, length=None):
-    self.name = name
-    self.offset = offset
-    self.length = length
+  name: str          # Name of column within index
+  offset: int = None # Offset of column within index
+  length: int = None # Length of column within index
 
   def __str__(self):
     out = ['TableDefnIndexCol({0.name}']

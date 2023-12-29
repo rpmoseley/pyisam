@@ -6,10 +6,13 @@ created between the vaious sub-modules.
 class IsamException(Exception):
   'General exception raised by ISAM'
 
+class IsamIterError(IsamException):
+  'Iterator based error'
+  
 class IsamNotOpen(IsamException):
   'Exception raised when ISAM table not open'
 
-class IsamOpened(IsamException):
+class IsamOpen(IsamException):
   'Exception when ISAM table already opened'
 
 class IsamNotWritable(IsamNotOpen):

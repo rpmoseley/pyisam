@@ -24,16 +24,19 @@ class DEFILErecord(ISAMrecordBase):
 
 import collections
 import struct
-import sys
 from keyword import iskeyword
 from ..backend import RecordBuffer
 from ..constants import ColumnType
 
-__all__ = 'CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn', 'DoubleColumn', 'recordclass'
+__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn', 'DoubleColumn', 'ColumnInfo', 'recordclass')
+
+# Create a special tuple for storing the column information avoiding the
+# descriptor lookup that would otherwise occur
+ColumnInfo = collections.namedtuple('ColumnInfo', 'name offset size type')
 
 class _BaseColumn:
   'Base class providing the shared functionality for columns'
-  __slots__ = '_struct', '_size', '_offset', '_name', '_nullval'
+  __slots__ = '_struct', '_size', '_offset', '_name', '_nullval', '_type'
   def __init__(self, size=None, offset=-1):
     if not hasattr(self, '_struct'):
       raise ValueError('No struct object provided for column')
@@ -45,6 +48,27 @@ class _BaseColumn:
       else:
         raise ValueError('Must provide a size for column')
     self._offset = offset          # Offset into record buffer
+
+  def __set_name__(self, owner, name):
+    '''3.6+ method called during class instantiation to permit decorators
+       to know their name and owner instance, this is used to maintain the
+       list of known fields to permit information about columns to be
+       returned without actually invoking the fetch to/from the underlying
+       record buffer.'''
+    if self._offset == -1:  
+      try:
+        self._offset = owner._recsize
+        owner._recsize += self._size
+      except AttributeError:      
+        self._offset = 0
+        owner._recsize = self._size
+    colinfo = ColumnInfo(name, self._offset, self._size, self._type)
+    if not hasattr(owner, '_flddict'):
+      owner._flddict = dict()
+    if not hasattr(owner, '_fields'):
+      owner._fields = list()
+    owner._flddict[name] = colinfo
+    owner._fields.append(colinfo)
 
   def __get__(self, inst, objtype):
     if self._offset < 0:
@@ -61,9 +85,8 @@ class _BaseColumn:
         value = self._nullval
     self._struct.pack_into(inst._buffer, self._offset, value)
 
-  @classmethod
-  def _template(cls):
-    return ''
+  # Template for this column
+  _template = ''
 
   # Rich comparision methods
   def __eq__(self, other):
@@ -108,10 +131,7 @@ class TextColumn(_BaseColumn):
 
   def __set__(self, inst, value):
     if value is None:
-      if hasattr(value, '_convnull'):
-        value = self._convnull()
-      else:
-        value = self._nullval
+      value = self._convnull() if hasattr(value, '_convnull') else self._nullval
     else:
       value = value.encode('utf-8')
       if self._size < len(value):
@@ -120,9 +140,8 @@ class TextColumn(_BaseColumn):
         value += self._nullval[:self._size - len(value)]
     super().__set__(inst, value.replace(b'\x00', b' '))
 
-  @classmethod
-  def _template(cls):
-    return '{0.length}'   # NOTE This refers to the table definition class attributes
+  # Template for fields of this column type
+  _template = '{0.length}'
   
 class ShortColumn(_BaseColumn):
   __slots__ = ()
@@ -148,11 +167,10 @@ class DoubleColumn(_BaseColumn):
   _nullval = 0.0
   _type = ColumnType.DOUBLE
 
-class _ISAMrecordBaseMixin:
-  '''Mixin class providing access to the current record providing access to the
+class ISAMrecordBase:
+  '''Base class providing access to the current record providing access to the
      columns as attributes where each column is implemented by a descriptor
      object which makes the conversion to/from the underlying raw buffer directly.'''
-  # IGNORED since __dict__ still created: __slots__ = '_buffer', '_namedtuple', '_curoff'
   def __init__(self, recname, recsize=None, **kwds):
     # NOTE:
     # The passing of a 'fields' keyword permits the tuple that represents a record to an
@@ -169,7 +187,7 @@ class _ISAMrecordBaseMixin:
       if not tupfields:
         raise ValueError('Provided fields produces no suitable columns to use')
     else:
-      tupfields = [fld.name for fld in self._fields]
+      tupfields = [fld.name for fld in self._namedtuple._fields]
     self._namedtuple = collections.namedtuple(recname, tupfields)
 
     # Create a record buffer which will produce suitable instances for this table when
@@ -177,7 +195,7 @@ class _ISAMrecordBaseMixin:
     # affecting the actual package usage.
     self._record = RecordBuffer(self._recsize if recsize is None else recsize)
     self._buffer = self._record()
-
+    
   def __getitem__(self, fld):
     'Return the current value of the given item'
     if isinstance(fld, int):
@@ -200,143 +218,34 @@ class _ISAMrecordBaseMixin:
     else:
       raise ValueError("Unhandled field '{}'".format(fld))
 
-  def __call__(self):
+  def as_tuple(self):
     'Return an instance of the namedtuple for the current column values'
     return self._namedtuple._make(getattr(self, name) for name in self._namedtuple._fields)
+  __call__ = as_tuple
 
   def __contains__(self, name):
     'Return whether the record contains a field of the given NAME'
     return name in self._namedtuple._fields
 
+  @property
+  def _cur_value(self):
+    'Return the current values of all fields in the record'
+    return [getattr(self, fld.name) for fld in self._namedtuple._fields]
+
   def __str__(self):
     'Return the current values as a string'
     fldval = []
-    for fld in self._fields:
+    for fld in self._namedtuple._fields:
       if fld.type == ColumnType.CHAR:
         fldval.append("{}='{}'".format(fld.name, getattr(self, fld.name)))
       else:
         fldval.append('{}={}'.format(fld.name, getattr(self, fld.name)))
     return ''.join(('{}({})'.format(self.__class__.__name__, ', '.join(fldval))))
 
-  @property
-  def _cur_value(self):
-    'Return the current values of all fields in the record'
-    return [getattr(self, fld.name) for fld in self._fields]
-
-  def _colinfo(self, colname):
-    'Return the field information for the given COLNAME'
-    for fld in self._fields:
-      if fld.name == colname:
-        return fld
-    raise IndexError('{} not present in the record'.format(colname))
-
-# Create a special tuple for storing the column information avoiding the
-# descriptor lookup that would otherwise occur
-ColumnInfo = collections.namedtuple('ColumnInfo', 'name offset size type')
-
-# Function to check the suitablity of a column name by excluding those names that are actually
-# used for hidden methods or special methods used in the underlying class
-def _valid_name(name):
-  'Return whether the given NAME is valid'
-  if (name[:2] == '__' and name[-2:] == '__' and
-      name[2:3] != '_' and name[-3:-2] != '_' and len(name) > 4):
-    return False
-  if name[:1] == '_' and name[1:2] != '_' and len(name) > 1:
-    return False
-  return True
-
-if sys.version_info.minor < 6:
-  # Versions before 3.6 require special handling to maintain the order of fields
-  class _ISAMrecordMeta(type):
-    '''Metaclass providing the special requirements of an ISAMrecord which includes
-       producing a list of the fields to maintain their order, plus the ability to
-       return the actual column information without retrieving the underlying data'''
-    @classmethod
-    def __prepare__(metacls, name, bases, **kwds):
-      return collections.OrderedDict()
-
-    def __new__(cls, name, bases, namespace, **kwds):
-      result = type.__new__(cls, name, bases, dict(namespace))
-
-      # Don't process any further if the object being created is the Mixin class itself
-      if name.endswith('ISAMrecordBase'):
-        return result
-
-      # Process the field names to ensure they do not cause issues and also calculate the
-      # offset for each field within the record buffer area.
-      fields, flddict, curoff = [], {}, 0
-      for name, info in namespace.items():
-        if not _valid_name(name):
-          continue
-        info._offset = curoff
-        curoff += info._size
-        fields.append(ColumnInfo(name, info._offset, info._size, info._type))
-        flddict[name] = fields[-1]
-      result._fields = fields
-      result._flddict = flddict
-      result._recsize = curoff
-      return result
-
-  class ISAMrecordBase(_ISAMrecordBaseMixin, metaclass=_ISAMrecordMeta):
-    '''Provide the mixin for the remainder of the package using the
-       metaclass to maintain the field ordering'''
-    def __getitem__(self, fld):
-      'Return the current value of the given item'
-      if isinstance(fld, int):
-        return getattr(self, self._fields[fld].name)
-      elif isinstance(fld, str) and fld in self._flddict:
-        return getattr(self, fld)
-      else:
-        raise ValueError("Unhandled field '{}'".format(fld))
-
-    def __setitem__(self, fld, value):
-      'Set the current value of a field to the given value'
-      if isinstance(fld, int):
-        setattr(self, self._fields[fld].name, value)
-      elif isinstance(fld, str) and fld in self._flddict:
-        setattr(self, fld, value)
-      else:
-        raise ValueError("Unhandled field '{}'".format(fld))
-else:
-  # Versions after 3.5 maintain the order of class attributes
-  class ISAMrecordBase(_ISAMrecordBaseMixin):
-    def __init__(self, recname, recsize=None, **kwds):
-      fields, flddict, curoff = [], {}, 0
-      for name, info in self.__class__.__dict__.items():
-        if not _valid_name(name) or info is None or \
-           (isinstance(info, str) and info.startswith('Record')):
-          continue
-        info._offset = curoff
-        curoff += info._size
-        fldinfo = ColumnInfo(name, info._offset, info._size, info._type)
-        fields.append(fldinfo)
-        flddict[name] = fldinfo
-      self._fields = fields
-      self._flddict = flddict
-      self._recsize = curoff
-      super().__init__(recname, recsize=curoff, **kwds)
-
-    def __getitem__(self, fld):
-      'Return the current value of the given item'
-      if isinstance(fld, int):
-        return getattr(self, self._fields[fld].name)
-      elif isinstance(fld, str) and fld in self:
-        return getattr(self, fld)
-      else:
-        raise ValueError("Unhandled field '{}'".format(fld))
-
-    def __setitem__(self, fld, value):
-      'Set the given column to the given value'
-      if isinstance(fld, int):
-        setattr(self, self._fields[fld].name, value)
-      elif isinstance(fld, str) and fld in self:
-        setattr(self, fld, value)
-      else:
-        raise ValueError("Unhandled field '{}'".format(fld))
-
 # Define the templates used to generate the record definition class at runtime
 _record_class_template = """\
 class {rec_name}(ISAMrecordBase):
+  __slots__ = ('_record',)
 {fld_defn}
 """
 _record_field_template = """\
@@ -350,13 +259,14 @@ _record_namespace = {
     'ShortColumn'     : ShortColumn,
     'LongColumn'      : LongColumn,
     'FloatColumn'     : FloatColumn,
-    'DoubleColumn'    : DoubleColumn
+    'DoubleColumn'    : DoubleColumn,
+    'ISAMrecordBase'  : ISAMrecordBase,
 }
 
 def recordclass(tabdefn, recname=None, *args, **kwd):
   'Create a new class for the given table definition'
   seen, fdefn = set(), []
-  if isinstance(tabdefn._columns_, collections.OrderedDict):
+  if isinstance(tabdefn._columns_, (collections.OrderedDict, dict)):
     flds = list(tabdefn._columns_.values())
   elif isinstance(tabdefn._columns_, (list, tuple)):
     flds = tabdefn._columns_
@@ -374,7 +284,7 @@ def recordclass(tabdefn, recname=None, *args, **kwd):
     seen.add(fldname)
 
     # Generate the template for the particular type of field
-    fld_template = _record_namespace[klassname]._template()
+    fld_template = _record_namespace[klassname]._template
     if '{' in fld_template:
       fld_template = fld_template.format(fld)
 
@@ -392,7 +302,7 @@ def recordclass(tabdefn, recname=None, *args, **kwd):
   else:
     # TODO: Check the given record name is valid
     pass
-  record_name = 'Record_{name}'.format(name=recname)
+  record_name = f'Rec_{recname}'
   record_definition = _record_class_template.format(rec_name=record_name,
                                                     fld_defn=''.join(fdefn))
 
@@ -400,7 +310,6 @@ def recordclass(tabdefn, recname=None, *args, **kwd):
   # and column objects used in the new object with additional tracing utilities
   namespace = {
     '__name__'       : record_name,
-    'ISAMrecordBase' : ISAMrecordBase,
   } 
   namespace.update(_record_namespace)
   exec(record_definition, namespace)
