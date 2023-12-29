@@ -145,7 +145,7 @@ ibittestandreset (char *psmap, off_t tbit)
 }
 
 static int
-ipreamble (ihandle)
+ipreamble (int ihandle)
 {
 	struct DICTINFO	*psvbptr;
 	struct stat	sstat;
