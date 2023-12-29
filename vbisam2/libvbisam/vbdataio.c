@@ -273,7 +273,6 @@ ivbvarlenwrite (const int ihandle, char *pcbuffer, int ilength)
 	off_t		tnewnode, tnodenumber = 0;
 	int		islotnumber;
 	int		inodesize;
-	int		n;
 
 	psvbptr = psvbfile[ihandle];
 	psvbptr->ivarlenlength = ilength;
@@ -495,7 +494,6 @@ ivbdataread (const int ihandle, char *pcbuffer, int *pideletedrow, const off_t t
 	struct DICTINFO *psvbptr;
 	off_t		tblocknumber, toffset, tsofar;
 	int		irowlength;
-	int		n;
 	char		cfooter[VB_NODE_MAX];
 	char		cvbnodetmp[VB_NODE_MAX];
 	char		pcreadbuffer[MAX_RESERVED_LENGTH];
@@ -614,7 +612,6 @@ ivbdatawrite (const int ihandle, char *pcbuffer, int ideletedrow, const off_t tr
 	char		*pctemp;
 	off_t		tblocknumber, toffset, tsofar;
 	int		irowlength;
-	int		n;
 	char		cvbnodetmp[VB_NODE_MAX];
 	char		pcwritebuffer[MAX_RESERVED_LENGTH];
 

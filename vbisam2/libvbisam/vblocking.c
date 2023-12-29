@@ -32,7 +32,7 @@ static int
 ilockexist (const int ihandle, const off_t trownumber)
 {
 	struct DICTINFO	*psvbptr;
-	struct VBLOCK	*psnewlock = NULL, *pslock;
+	struct VBLOCK	*pslock;
 	int		iindexhandle;
 
 	psvbptr = psvbfile[ihandle];
