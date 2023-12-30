@@ -13,39 +13,40 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include	"isinternal.h"
 
 static int
-irowinsert (const int ihandle, char *pcrow_buffer, off_t trownumber)
+irowinsert (const int ihandle, VB_CHAR *pcrow_buffer, off_t trownumber)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct VBKEY	*pskey;
-	struct DICTINFO	*psvbptr;
+	struct DICTINFO	*psvbfptr;
 	struct keydesc	*pskptr;
 	off_t		tdupnumber[MAXSUBS];
 	int		ikeynumber, iresult;
-	unsigned char	ckeyvalue[VB_MAX_KEYLEN];
+	VB_UCHAR	ckeyvalue[VB_MAX_KEYLEN];
 
-	psvbptr = psvbfile[ihandle];
+	psvbfptr = vb_rtd->psvbfile[ihandle];
 	/*
 	 * Step 1:
 	 *      Check each index for a potential ISNODUPS error (EDUPL)
 	 *      Also, calculate the duplicate number as needed
 	 */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		pskptr = psvbptr->pskeydesc[ikeynumber];
+	for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+		pskptr = psvbfptr->pskeydesc[ikeynumber];
 		if (pskptr->k_nparts == 0) {
 			continue;
 		}
-		vvbmakekey (psvbptr->pskeydesc[ikeynumber], pcrow_buffer, ckeyvalue);
+		vvbmakekey (psvbfptr->pskeydesc[ikeynumber], pcrow_buffer, ckeyvalue);
 		iresult = ivbkeysearch (ihandle, ISGREAT, ikeynumber, 0, ckeyvalue, (off_t)0);
 		tdupnumber[ikeynumber] = 0;
 		if (iresult >= 0 && !ivbkeyload (ihandle, ikeynumber, ISPREV, 0, &pskey)
 		    && !memcmp (pskey->ckey, ckeyvalue, (size_t)pskptr->k_len)) {
-			iserrno = EDUPL;
+			vb_rtd->iserrno = EDUPL;
 			if (pskptr->k_flags & ISDUPS) {
 				tdupnumber[ikeynumber] = pskey->tdupnumber + 1;
 			} else {
@@ -57,11 +58,11 @@ irowinsert (const int ihandle, char *pcrow_buffer, off_t trownumber)
 	}
 
 	/* Step 2: Perform the actual insertion into each index */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		if (psvbptr->pskeydesc[ikeynumber]->k_nparts == 0) {
+	for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+		if (psvbfptr->pskeydesc[ikeynumber]->k_nparts == 0) {
 			continue;
 		}
-		vvbmakekey (psvbptr->pskeydesc[ikeynumber], pcrow_buffer, ckeyvalue);
+		vvbmakekey (psvbfptr->pskeydesc[ikeynumber], pcrow_buffer, ckeyvalue);
 		iresult = ivbkeyinsert (ihandle, NULL, ikeynumber, ckeyvalue,
 				trownumber, tdupnumber[ikeynumber], NULL);
 		if (iresult) {
@@ -82,62 +83,66 @@ irowinsert (const int ihandle, char *pcrow_buffer, off_t trownumber)
 /* Global functions */
 
 int
-ivbwriterow (const int ihandle, char *pcrow, const off_t trownumber)
+ivbwriterow (const int ihandle, VB_CHAR *pcrow, off_t trownumber)
 {
-	struct DICTINFO	*psvbptr;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
+	struct DICTINFO	*psvbfptr;
 	int		iresult = 0;
 
-	psvbptr = psvbfile[ihandle];
-	isrecnum = trownumber;
-	if (psvbptr->iopenmode & ISTRANS) {
-		iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
-		if (iserrno) {
+	psvbfptr = vb_rtd->psvbfile[ihandle];
+	vb_rtd->isrecnum = trownumber;
+	if (psvbfptr->iopenmode & ISTRANS) {
+		vb_rtd->iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
+		if (vb_rtd->iserrno) {
 			return -1;
 		}
 	}
 	iresult = irowinsert (ihandle, pcrow, trownumber);
 	if (!iresult) {
-		iserrno = 0;
-		psvbptr->tvarlennode = 0;	/* Stop it from removing */
+		vb_rtd->iserrno = 0;
+		psvbfptr->tvarlennode = 0;	/* Stop it from removing */
 		iresult = ivbdatawrite (ihandle, (void *)pcrow, 0, trownumber);
 		if (iresult) {
-			iserrno = iresult;
-			if (psvbptr->iopenmode & ISTRANS) {
+			vb_rtd->iserrno = iresult;
+			if (psvbfptr->iopenmode & ISTRANS) {
 				ivbdatalock (ihandle, VBUNLOCK, trownumber);
 			}
 			return -1;
 		}
-		if (psvbptr->iopenmode & ISVARLEN) {
+		if (psvbfptr->iopenmode & ISVARLEN) {
 			iresult = ivbtransinsert (ihandle, trownumber,
-					isreclen, pcrow);
+					vb_rtd->isreclen, pcrow);
 		} else {
 			iresult = ivbtransinsert (ihandle, trownumber,
-					psvbptr->iminrowlength, pcrow);
+					psvbfptr->iminrowlength, pcrow);
 		}
 	}
 	return iresult;
 }
 
 int
-iswrcurr (const int ihandle, char *pcrow)
+iswrcurr (int ihandle, VB_CHAR *pcrow)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 	off_t	trownumber;
 	int	iresult;
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 
-	if ((psvbptr->iopenmode & ISVARLEN) && (isreclen > psvbptr->imaxrowlength
-		|| isreclen < psvbptr->iminrowlength)) {
-		iserrno = EBADARG;
+	if ((psvbptr->iopenmode & ISVARLEN) && (vb_rtd->isreclen > psvbptr->imaxrowlength
+		|| vb_rtd->isreclen < psvbptr->iminrowlength)) {
+		ivbexit (ihandle);
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
 
 	trownumber = tvbdataallocate (ihandle);
 	if (trownumber == -1) {
+		ivbexit (ihandle);
 		return -1;
 	}
 
@@ -153,33 +158,36 @@ iswrcurr (const int ihandle, char *pcrow)
 }
 
 int
-iswrite (const int ihandle, char *pcrow)
+iswrite (int ihandle, VB_CHAR *pcrow)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 	off_t trownumber;
 	int iresult, isaveerror;
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 
-	if ((psvbptr->iopenmode & ISVARLEN) && (isreclen > psvbptr->imaxrowlength
-		|| isreclen < psvbptr->iminrowlength)) {
-		iserrno = EBADARG;
+	if ((psvbptr->iopenmode & ISVARLEN) && (vb_rtd->isreclen > psvbptr->imaxrowlength
+		|| vb_rtd->isreclen < psvbptr->iminrowlength)) {
+		ivbexit (ihandle);
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
 
 	trownumber = tvbdataallocate (ihandle);
 	if (trownumber == -1) {
+		ivbexit (ihandle);
 		return -1;
 	}
 
 	iresult = ivbwriterow (ihandle, pcrow, trownumber);
 	if (iresult) {
-		isaveerror = iserrno;
+		isaveerror = vb_rtd->iserrno;
 		ivbdatafree (ihandle, trownumber);
-		iserrno = isaveerror;
+		vb_rtd->iserrno = isaveerror;
 	}
 
 	ivbexit (ihandle);

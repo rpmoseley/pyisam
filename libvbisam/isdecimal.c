@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include	"isinternal.h"
@@ -25,13 +25,13 @@ struct decacc {
 	short dec_exp;
 	short dec_pos;
 	short dec_ndgts;
-	char dec_dgts[ACCSIZE];
+	VB_CHAR dec_dgts[ACCSIZE];
 };
 
 /* Local functions */
 
 static void
-comp100 (unsigned char *cp, int count)
+comp100 (VB_UCHAR *cp, int count)
 {
 	int base;
 
@@ -50,7 +50,7 @@ comp100 (unsigned char *cp, int count)
 }
 
 static int
-round100 (unsigned char *cp, int len)
+round100 (VB_UCHAR *cp, int len)
 {
 	int carry = 1;
 	int count = len;
@@ -81,7 +81,7 @@ static int
 deccvfix (long i, dec_t *dp)
 {
 	int j;
-	char buffer[DECSIZE];
+	VB_CHAR buffer[DECSIZE];
 
 	if (i < 0) {
 		dp->dec_pos = 0;
@@ -113,7 +113,7 @@ static void
 dectofix (dec_t *dp, long *ip)
 {
 	long		i = 0;
-	unsigned char	*digits = dp->dec_dgts;
+	VB_UCHAR	*digits = dp->dec_dgts;
 	int		expon = dp->dec_exp;
 	int		valid = dp->dec_ndgts;
 
@@ -129,12 +129,12 @@ dectofix (dec_t *dp, long *ip)
 static int
 deccvreal (double dbl, dec_t *dp, int ndigits)
 {
-	unsigned char	*str;
-	unsigned char	*dgt;
+	VB_UCHAR	*str;
+	VB_UCHAR	*dgt;
 	int		decpt;
 	int		sign;
 
-	str = (unsigned char *)ecvt (dbl, ndigits, &decpt, &sign);
+	str = (VB_UCHAR *)ecvt (dbl, ndigits, &decpt, &sign);
 
 	dp->dec_pos = sign ? 0 : 1;
 	dp->dec_exp = (decpt + (decpt > 0 ? 1 : 0)) / 2;
@@ -163,7 +163,7 @@ deccvreal (double dbl, dec_t *dp, int ndigits)
 static int
 dectoreal (dec_t *dp, double *dblp, int valid)
 {
-	unsigned char	*digits = dp->dec_dgts;
+	VB_UCHAR	*digits = dp->dec_dgts;
 	double		dbl;
 
 	if (valid > dp->dec_ndgts) {
@@ -199,19 +199,19 @@ dectoreal (dec_t *dp, double *dblp, int valid)
 	return 0;
 }
 
-static char *
+static VB_CHAR *
 decefcvt (dec_t *np, int dg, int *pt, int *sg, int fl)
 {
-	static char	*ds = NULL;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	int i, j, k, nd;
 	dec_t rd;
 
-	if (!ds) {
-		ds = calloc (1, 160);
+	if (!vb_rtd->ds) {
+		vb_rtd->ds = calloc (1, 160);
 	}
-	ds[0] = 0;
+	vb_rtd->ds[0] = 0;
 	if (np->dec_pos == -1) {
-		return ds;
+		return vb_rtd->ds;
 	}
 	*sg = np->dec_pos ^ 1;
 	*pt = np->dec_exp * 2;
@@ -224,7 +224,7 @@ decefcvt (dec_t *np, int dg, int *pt, int *sg, int fl)
 		k += *pt;
 	}
 	if (k < 0) {
-		return ds;
+		return vb_rtd->ds;
 	}
 	i = 0;
 	if (nd && np->dec_dgts[0] < 10) {
@@ -243,7 +243,7 @@ decefcvt (dec_t *np, int dg, int *pt, int *sg, int fl)
 		rd.dec_dgts[0] = 0;
 	}
 	if (decadd (np, &rd, &rd)) {
-		return ds;
+		return vb_rtd->ds;
 	}
 	i = 0;
 	*pt = rd.dec_exp * 2;
@@ -266,12 +266,12 @@ decefcvt (dec_t *np, int dg, int *pt, int *sg, int fl)
 		} else {
 			k /= 10;
 		}
-		ds[j] = k + '0';
+		vb_rtd->ds[j] = k + '0';
 		i += 1;
 		j += 1;
 	}
-	ds[j] = 0;
-	return ds;
+	vb_rtd->ds[j] = 0;
+	return vb_rtd->ds;
 }
 
 static int
@@ -431,16 +431,16 @@ dectoflt (dec_t *dp, float *fltp)
 	int status;
 
 	status = dectoreal (dp, &dbl, 8);
-	*fltp = (float)(dbl);
+	*fltp = dbl;
 	return status;
 }
 
 void
-stdecimal (dec_t *dp, unsigned char *cp, int len)
+stdecimal (dec_t *dp, VB_UCHAR *cp, int len)
 {
-	unsigned char *bp;
-	unsigned char buffer[DECSIZE];
-	unsigned char header;
+	VB_UCHAR *bp;
+	VB_UCHAR buffer[DECSIZE];
+	VB_UCHAR header;
 	int count;
 
 	if (dp->dec_pos == -1) {
@@ -475,10 +475,10 @@ stdecimal (dec_t *dp, unsigned char *cp, int len)
 }
 
 int
-lddecimal (unsigned char *cp, int len, dec_t *dp)
+lddecimal (VB_UCHAR *cp, int len, dec_t *dp)
 {
-	unsigned char buffer[DECSIZE + 1];
-	unsigned char *digits;
+	VB_UCHAR buffer[DECSIZE + 1];
+	VB_UCHAR *digits;
 
 	if (*cp == 0) {
 		dp->dec_pos = -1;
@@ -801,10 +801,10 @@ deccmp (dec_t *x, dec_t *y)
 }
 
 int
-dectoasc (dec_t *np, char *cp, int ln, int dg)
+dectoasc (dec_t *np, VB_CHAR *cp, int ln, int dg)
 {
 	int i, j, m, t, pt, sg;
-	char *v;
+	VB_CHAR *v;
 
 	memset (cp, ' ', ln);
 	if (np->dec_pos == DECPOSNULL) {
@@ -835,7 +835,7 @@ dectoasc (dec_t *np, char *cp, int ln, int dg)
 		}
 	}
 	v = decfcvt (np, dg, &pt, &sg);
-	i = strlen (v);
+	i = strlen ((char*)v);
 	if (pt != i) {
 		i++;
 	}
@@ -942,7 +942,7 @@ dectoasc (dec_t *np, char *cp, int ln, int dg)
 }
 
 int
-deccvasc (char *cp, int ln, dec_t *rp)
+deccvasc (VB_CHAR *cp, int ln, dec_t *rp)
 {
 	int		c;
 	int		ps, i, j, xs, xv, ms;
@@ -1047,13 +1047,13 @@ deccvasc (char *cp, int ln, dec_t *rp)
 	return i;
 }
 
-char *
+VB_CHAR *
 dececvt (dec_t *np, int dg, int *pt, int *sg)
 {
 	return decefcvt (np, dg, pt, sg, 0);
 }
 
-char *
+VB_CHAR *
 decfcvt (dec_t *np, int dg, int *pt, int *sg)
 {
 	return decefcvt (np, dg, pt, sg, 1);

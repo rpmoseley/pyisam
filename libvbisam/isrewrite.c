@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include	"isinternal.h"
@@ -22,23 +22,25 @@
 /* Local functions */
 
 static int
-irowupdate (const int ihandle, char *pcrow, off_t trownumber)
+irowupdate (const int ihandle, VB_CHAR *pcrow, off_t trownumber)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct VBKEY	*pskey;
-	struct DICTINFO	*psvbptr;
+	struct DICTINFO	*psvbfptr;
 	struct keydesc	*pskeyptr;
 	off_t		tdupnumber = 0;
 	int		ikeynumber, iresult;
-	unsigned char	ckeyvalue[VB_MAX_KEYLEN];
+	char		keypresent[64];
+	VB_UCHAR	ckeyvalue[VB_MAX_KEYLEN];
 
-	psvbptr = psvbfile[ihandle];
+	psvbfptr = vb_rtd->psvbfile[ihandle];
 	/*
 	 * Step 1:
 	 *      For each index that's changing, confirm that the NEW value
 	 *      doesn't conflict with an existing ISNODUPS flag.
 	 */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		pskeyptr = psvbptr->pskeydesc[ikeynumber];
+	for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+		pskeyptr = psvbfptr->pskeydesc[ikeynumber];
 		if (pskeyptr->k_nparts == 0) {
 			continue;
 		}
@@ -48,11 +50,11 @@ irowupdate (const int ihandle, char *pcrow, off_t trownumber)
 		vvbmakekey (pskeyptr, pcrow, ckeyvalue);
 		iresult = ivbkeysearch (ihandle, ISGTEQ, ikeynumber, 0, ckeyvalue, (off_t)0);
 		if (iresult != 1
-		    || trownumber == psvbptr->pskeycurr[ikeynumber]->trownode
-		    || psvbptr->pskeycurr[ikeynumber]->iisdummy) {
+		    || trownumber == psvbfptr->pskeycurr[ikeynumber]->trownode
+		    || psvbfptr->pskeycurr[ikeynumber]->iisdummy) {
 			continue;
 		}
-		iserrno = EDUPL;
+		vb_rtd->iserrno = EDUPL;
 		return -1;
 	}
 
@@ -61,15 +63,20 @@ irowupdate (const int ihandle, char *pcrow, off_t trownumber)
 	 *      Check each index for existance of trownumber
 	 *      This 'preload' additionally helps determine which indexes change
 	 */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		pskeyptr = psvbptr->pskeydesc[ikeynumber];
+	for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+		pskeyptr = psvbfptr->pskeydesc[ikeynumber];
 		if (pskeyptr->k_nparts == 0) {
 			continue;
 		}
-		if (ivbkeylocaterow (ihandle, ikeynumber, trownumber)) {
-			iserrno = EBADFILE;
+		iresult = ivbkeylocaterow (ihandle, ikeynumber, trownumber);
+		if (iresult) {
+			keypresent[ikeynumber] = 0;
+			if ((pskeyptr->k_flags & NULLKEY))
+				continue;
+			vb_rtd->iserrno = EBADFILE;
 			return -1;
 		}
+		keypresent[ikeynumber] = 1;
 	}
 
 	/*
@@ -77,33 +84,39 @@ irowupdate (const int ihandle, char *pcrow, off_t trownumber)
 	 *      Perform the actual deletion / insertion with each index
 	 *      But *ONLY* for those indexes that have actually CHANGED!
 	 */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		pskeyptr = psvbptr->pskeydesc[ikeynumber];
+	for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+		pskeyptr = psvbfptr->pskeydesc[ikeynumber];
 		if (pskeyptr->k_nparts == 0) {
 			continue;
 		}
 		/* pcrow is the UPDATED key! */
 		vvbmakekey (pskeyptr, pcrow, ckeyvalue);
-		if (!memcmp (ckeyvalue, psvbptr->pskeycurr[ikeynumber]->ckey,
-			    (size_t)pskeyptr->k_len)) {
-			continue;
-		}
-		/* If NEW key is DIFFERENT than CURRENT, remove CURRENT */
-		iresult = ivbkeydelete (ihandle, ikeynumber);
-		if (iresult) {
-			/* An error occured.  Let's put back what we removed! */
-			while (ikeynumber >= 0) {
-/* BUG - We need to do SOMETHING sane here? Dunno WHAT */
-				ivbkeyinsert (ihandle, NULL, ikeynumber, ckeyvalue,
-					      trownumber, tdupnumber, NULL);
-				ikeynumber--;
-				vvbmakekey (pskeyptr,
-					    psvbptr->ppcrowbuffer, ckeyvalue);
+		if (keypresent[ikeynumber] == 0) {
+			iresult = 0;
+		} else {
+			iresult = memcmp (ckeyvalue, psvbfptr->pskeycurr[ikeynumber]->ckey,
+					(size_t)pskeyptr->k_len);
+			/* If NEW key is DIFFERENT than CURRENT, remove CURRENT */
+			if (iresult) {
+				iresult = ivbkeydelete (ihandle, ikeynumber);
+			} else {
+				continue;
 			}
-			iserrno = EBADFILE;
-			return -1;
+			if (iresult) {
+				/* Eeek, an error occured.  Let's put back what we removed! */
+				while (ikeynumber >= 0) {
+	/* BUG - We need to do SOMETHING sane here? Dunno WHAT */
+					ivbkeyinsert (ihandle, NULL, ikeynumber, ckeyvalue,
+							  trownumber, tdupnumber, NULL);
+					ikeynumber--;
+					vvbmakekey (pskeyptr,
+							psvbfptr->ppcrowbuffer, ckeyvalue);
+				}
+				vb_rtd->iserrno = EBADFILE;
+				return -1;
+			}
+			iresult = ivbkeysearch (ihandle, ISGREAT, ikeynumber, 0, ckeyvalue, (off_t)0);
 		}
-		iresult = ivbkeysearch (ihandle, ISGREAT, ikeynumber, 0, ckeyvalue, (off_t)0);
 		tdupnumber = 0;
 		if (iresult >= 0) {
 			iresult = ivbkeyload (ihandle, ikeynumber, ISPREV, 1, &pskey);
@@ -113,10 +126,10 @@ irowupdate (const int ihandle, char *pcrow, off_t trownumber)
 						(size_t)pskeyptr->k_len)) {
 					tdupnumber = pskey->tdupnumber + 1;
 				}
-				psvbptr->pskeycurr[ikeynumber] =
-				    psvbptr->pskeycurr[ikeynumber]->psnext;
-				psvbptr->pskeycurr[ikeynumber]->psparent->pskeycurr =
-				    psvbptr->pskeycurr[ikeynumber];
+				psvbfptr->pskeycurr[ikeynumber] =
+				    psvbfptr->pskeycurr[ikeynumber]->psnext;
+				psvbfptr->pskeycurr[ikeynumber]->psparent->pskeycurr =
+				    psvbfptr->pskeycurr[ikeynumber];
 			}
 			iresult = ivbkeysearch (ihandle, ISGTEQ, ikeynumber, 0, ckeyvalue,
 					  tdupnumber);
@@ -124,7 +137,7 @@ irowupdate (const int ihandle, char *pcrow, off_t trownumber)
 					  trownumber, tdupnumber, NULL);
 		}
 		if (iresult) {
-			/* An error occured.  Let's remove what we added */
+			/* Eeek, an error occured.  Let's remove what we added */
 			while (ikeynumber >= 0) {
 /* BUG - This is WRONG, we should re-establish what we had before! */
 				/* ivbkeydelete (ihandle, ikeynumber); */
@@ -134,79 +147,81 @@ irowupdate (const int ihandle, char *pcrow, off_t trownumber)
 		}
 	}
 
-	iserrno = 0;
+	vb_rtd->iserrno = 0;
 	return 0;
 }
 
 /* Global functions */
 
 int
-isrewrite (const int ihandle, char *pcrow)
+isrewrite (int ihandle, VB_CHAR *pcrow)
 {
-	struct DICTINFO	*psvbptr;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
+	struct DICTINFO	*psvbfptr;
 	off_t		trownumber;
 	int		ideleted, inewreclen, ioldreclen = 0, iresult = 0;
-	unsigned char	ckeyvalue[VB_MAX_KEYLEN];
+	VB_UCHAR	ckeyvalue[VB_MAX_KEYLEN];
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
-	if ((psvbptr->iopenmode & ISVARLEN) && (isreclen > psvbptr->imaxrowlength
-		|| isreclen < psvbptr->iminrowlength)) {
-		iserrno = EBADARG;
+	psvbfptr = vb_rtd->psvbfile[ihandle];
+	if ((psvbfptr->iopenmode & ISVARLEN) && (vb_rtd->isreclen > psvbfptr->imaxrowlength
+		|| vb_rtd->isreclen < psvbfptr->iminrowlength)) {
+		ivbexit (ihandle);
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
 
-	inewreclen = isreclen;
-	if (psvbptr->pskeydesc[0]->k_flags & ISDUPS) {
+	inewreclen = vb_rtd->isreclen;
+	if (psvbfptr->pskeydesc[0]->k_flags & ISDUPS) {
 		iresult = -1;
-		iserrno = ENOREC;
+		vb_rtd->iserrno = ENOREC;
 	} else {
-		vvbmakekey (psvbptr->pskeydesc[0], pcrow, ckeyvalue);
+		vvbmakekey (psvbfptr->pskeydesc[0], pcrow, ckeyvalue);
 		iresult = ivbkeysearch (ihandle, ISEQUAL, 0, 0, ckeyvalue, (off_t)0);
 		switch (iresult) {
 		case 1:	/* Exact match */
 			iresult = 0;
-			psvbptr->iisdictlocked |= 0x02;
-			trownumber = psvbptr->pskeycurr[0]->trownode;
-			if (psvbptr->iopenmode & ISTRANS) {
-				iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
-				if (iserrno) {
+			psvbfptr->iisdictlocked |= 0x02;
+			trownumber = psvbfptr->pskeycurr[0]->trownode;
+			if (psvbfptr->iopenmode & ISTRANS) {
+				vb_rtd->iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
+				if (vb_rtd->iserrno) {
 					iresult = -1;
 					goto isrewrite_exit;
 				}
 			}
-			iserrno = ivbdataread (ihandle, psvbptr->ppcrowbuffer,
+			vb_rtd->iserrno = ivbdataread (ihandle, (void *)psvbfptr->ppcrowbuffer,
 					 &ideleted, trownumber);
-			if (!iserrno && ideleted) {
-				iserrno = ENOREC;
+			if (!vb_rtd->iserrno && ideleted) {
+				vb_rtd->iserrno = ENOREC;
 			}
-			if (iserrno) {
+			if (vb_rtd->iserrno) {
 				iresult = -1;
 			} else {
-				ioldreclen = isreclen;
+				ioldreclen = vb_rtd->isreclen;
 			}
 
 			if (!iresult) {
 				iresult = irowupdate (ihandle, pcrow, trownumber);
 			}
 			if (!iresult) {
-				isrecnum = trownumber;
-				isreclen = inewreclen;
+				vb_rtd->isrecnum = trownumber;
+				vb_rtd->isreclen = inewreclen;
 				iresult =
-				    ivbdatawrite (ihandle, pcrow, 0, (off_t)isrecnum);
+				    ivbdatawrite (ihandle, (void *)pcrow, 0, (off_t)vb_rtd->isrecnum);
 			}
 			if (!iresult) {
-				if (psvbptr->iopenmode & ISVARLEN) {
+				if (psvbfptr->iopenmode & ISVARLEN) {
 					iresult =
 					    ivbtransupdate (ihandle, trownumber, ioldreclen,
 							    inewreclen, pcrow);
 				} else {
 					iresult =
 					    ivbtransupdate (ihandle, trownumber,
-							    psvbptr->iminrowlength,
-							    psvbptr->iminrowlength,
+							    psvbfptr->iminrowlength,
+							    psvbfptr->iminrowlength,
 							    pcrow);
 				}
 			}
@@ -215,12 +230,12 @@ isrewrite (const int ihandle, char *pcrow)
 		case 0:	/* LESS than */
 		case 2:	/* GREATER than */
 		case 3:	/* EMPTY file */
-			iserrno = ENOREC;
+			vb_rtd->iserrno = ENOREC;
 			iresult = -1;
 			break;
 
 		default:
-			iserrno = EBADFILE;
+			vb_rtd->iserrno = EBADFILE;
 			iresult = -1;
 			break;
 		}
@@ -232,130 +247,134 @@ isrewrite_exit:
 }
 
 int
-isrewcurr (const int ihandle, char *pcrow)
+isrewcurr (int ihandle, VB_CHAR *pcrow)
 {
-	struct DICTINFO	*psvbptr;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
+	struct DICTINFO	*psvbfptr;
 	int		ideleted, inewreclen, ioldreclen = 0, iresult = 0;
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
 
-	psvbptr = psvbfile[ihandle];
-	if ((psvbptr->iopenmode & ISVARLEN) && (isreclen > psvbptr->imaxrowlength
-		|| isreclen < psvbptr->iminrowlength)) {
-		iserrno = EBADARG;
+	psvbfptr = vb_rtd->psvbfile[ihandle];
+	if ((psvbfptr->iopenmode & ISVARLEN) && (vb_rtd->isreclen > psvbfptr->imaxrowlength
+		|| vb_rtd->isreclen < psvbfptr->iminrowlength)) {
+		ivbexit (ihandle);
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
 
-	inewreclen = isreclen;
-	if (psvbptr->trownumber > 0) {
-		if (psvbptr->iopenmode & ISTRANS) {
-			iserrno = ivbdatalock (ihandle, VBWRLOCK, psvbptr->trownumber);
-			if (iserrno) {
+	inewreclen = vb_rtd->isreclen;
+	if (psvbfptr->trownumber > 0) {
+		if (psvbfptr->iopenmode & ISTRANS) {
+			vb_rtd->iserrno = ivbdatalock (ihandle, VBWRLOCK, psvbfptr->trownumber);
+			if (vb_rtd->iserrno) {
 				iresult = -1;
 				goto isrewcurr_exit;
 			}
 		}
-		iserrno = ivbdataread (ihandle, psvbptr->ppcrowbuffer, &ideleted,
-				 psvbptr->trownumber);
-		if (!iserrno && ideleted) {
-			iserrno = ENOREC;
+		vb_rtd->iserrno = ivbdataread (ihandle, (void *)psvbfptr->ppcrowbuffer, &ideleted,
+				 psvbfptr->trownumber);
+		if (!vb_rtd->iserrno && ideleted) {
+			vb_rtd->iserrno = ENOREC;
 		} else {
-			ioldreclen = isreclen;
+			ioldreclen = vb_rtd->isreclen;
 		}
-		if (iserrno) {
+		if (vb_rtd->iserrno) {
 			iresult = -1;
 		}
 		if (!iresult) {
-			iresult = irowupdate (ihandle, pcrow, psvbptr->trownumber);
+			iresult = irowupdate (ihandle, pcrow, psvbfptr->trownumber);
 		}
 		if (!iresult) {
-			isrecnum = psvbptr->trownumber;
-			isreclen = inewreclen;
-			iresult = ivbdatawrite (ihandle, pcrow, 0, (off_t)isrecnum);
+			vb_rtd->isrecnum = psvbfptr->trownumber;
+			vb_rtd->isreclen = inewreclen;
+			iresult = ivbdatawrite (ihandle, (void *)pcrow, 0, (off_t)vb_rtd->isrecnum);
 		}
 		if (!iresult) {
-			if (psvbptr->iopenmode & ISVARLEN) {
+			if (psvbfptr->iopenmode & ISVARLEN) {
 				iresult =
-				    ivbtransupdate (ihandle, psvbptr->trownumber,
+				    ivbtransupdate (ihandle, psvbfptr->trownumber,
 						    ioldreclen, inewreclen, pcrow);
 			} else {
 				iresult =
-				    ivbtransupdate (ihandle, psvbptr->trownumber,
-						    psvbptr->iminrowlength,
-						    psvbptr->iminrowlength, pcrow);
+				    ivbtransupdate (ihandle, psvbfptr->trownumber,
+						    psvbfptr->iminrowlength,
+						    psvbfptr->iminrowlength, pcrow);
 			}
 		}
 	}
 isrewcurr_exit:
-	psvbptr->iisdictlocked |= 0x02;
+	psvbfptr->iisdictlocked |= 0x02;
 	iresult |= ivbexit (ihandle);
 	return iresult;
 }
 
 int
-isrewrec (const int ihandle, const vbisam_off_t trownumber, char *pcrow)
+isrewrec (int ihandle, vbisam_off_t trownumber, VB_CHAR *pcrow)
 {
-	struct DICTINFO	*psvbptr;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
+	struct DICTINFO	*psvbfptr;
 	int		ideleted, inewreclen, ioldreclen = 0, iresult = 0;
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
 
-	psvbptr = psvbfile[ihandle];
-	if ((psvbptr->iopenmode & ISVARLEN) && (isreclen > psvbptr->imaxrowlength
-		|| isreclen < psvbptr->iminrowlength)) {
-		iserrno = EBADARG;
+	psvbfptr = vb_rtd->psvbfile[ihandle];
+	if ((psvbfptr->iopenmode & ISVARLEN) && (vb_rtd->isreclen > psvbfptr->imaxrowlength
+		|| vb_rtd->isreclen < psvbfptr->iminrowlength)) {
+		ivbexit (ihandle);
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
 
-	inewreclen = isreclen;
+	inewreclen = vb_rtd->isreclen;
 	if (trownumber < 1) {
 		iresult = -1;
-		iserrno = ENOREC;
+		vb_rtd->iserrno = ENOREC;
 	} else {
-		if (psvbptr->iopenmode & ISTRANS) {
-			iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
-			if (iserrno) {
+		if (psvbfptr->iopenmode & ISTRANS) {
+			vb_rtd->iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
+			if (vb_rtd->iserrno) {
 				iresult = -1;
 				goto isrewrec_exit;
 			}
 		}
-		iserrno = ivbdataread (ihandle, psvbptr->ppcrowbuffer, &ideleted,
+		vb_rtd->iserrno = ivbdataread (ihandle, (void *)psvbfptr->ppcrowbuffer, &ideleted,
 				 trownumber);
-		if (!iserrno && ideleted) {
-			iserrno = ENOREC;
+		if (!vb_rtd->iserrno && ideleted) {
+			vb_rtd->iserrno = ENOREC;
 		}
-		if (iserrno) {
+		if (vb_rtd->iserrno) {
 			iresult = -1;
 		} else {
-			ioldreclen = isreclen;
+			ioldreclen = vb_rtd->isreclen;
 		}
 		if (!iresult) {
 			iresult = irowupdate (ihandle, pcrow, trownumber);
 		}
 		if (!iresult) {
-			isrecnum = trownumber;
-			isreclen = inewreclen;
-			iresult = ivbdatawrite (ihandle, pcrow, 0, (off_t)isrecnum);
+			vb_rtd->isrecnum = trownumber;
+			vb_rtd->isreclen = inewreclen;
+			iresult = ivbdatawrite (ihandle, (void *)pcrow, 0, (off_t)vb_rtd->isrecnum);
 		}
 		if (!iresult) {
-			if (psvbptr->iopenmode & ISVARLEN) {
+			if (psvbfptr->iopenmode & ISVARLEN) {
 				iresult = ivbtransupdate (ihandle, trownumber,
 						ioldreclen, inewreclen,
 						pcrow);
 			} else {
 				iresult = ivbtransupdate (ihandle, trownumber,
-						psvbptr->iminrowlength,
-						psvbptr->iminrowlength, pcrow);
+						psvbfptr->iminrowlength,
+						psvbfptr->iminrowlength, pcrow);
 			}
 		}
 	}
 isrewrec_exit:
 	if (!iresult) {
-		psvbptr->iisdictlocked |= 0x02;
+		psvbfptr->iisdictlocked |= 0x02;
 	}
 	iresult |= ivbexit (ihandle);
 	return iresult;

@@ -13,199 +13,207 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include	"isinternal.h"
 
-static char	*pcwritebuffer;
 
 /* Local functions */
 
 static int
 irowdelete (const int ihandle, off_t trownumber)
 {
-	struct DICTINFO	*psvbptr;
-	int		ikeynumber, iresult;
-	off_t		tdupnumber[MAXSUBS];
+    vb_rtd_t *vb_rtd =VB_GET_RTD;
+    int             ikeynumber, iresult;
+    struct DICTINFO *psvbfptr;
+    off_t           tdupnumber[MAXSUBS];
 
-	psvbptr = psvbfile[ihandle];
-	/*
-	 * Step 1:
-	 *      Check each index for existance of trownumber
-	 */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		if (psvbptr->pskeydesc[ikeynumber]->k_nparts == 0) {
+    psvbfptr = vb_rtd->psvbfile[ihandle];
+    /*
+     * Step 1:
+     *      Check each index for existance of trownumber
+     */
+    for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+        if (psvbfptr->pskeydesc[ikeynumber]->k_nparts == 0) {
+            continue;
+        }
+        iresult = ivbkeylocaterow (ihandle, ikeynumber, trownumber);
+		if (iresult		/* May not be present if key was SUPPRESSED */
+		&& psvbfptr->pskeydesc[ikeynumber]->k_flags & NULLKEY)
 			continue;
-		}
-		if (ivbkeylocaterow (ihandle, ikeynumber, trownumber)) {
-			iserrno = EBADFILE;
-			return -1;
-		}
-		tdupnumber[ikeynumber] = psvbptr->pskeycurr[ikeynumber]->tdupnumber;
-	}
+        vb_rtd->iserrno = EBADFILE;
+        if (iresult) {
+            return -1;
+        }
+        tdupnumber[ikeynumber] = psvbfptr->pskeycurr[ikeynumber]->tdupnumber;
+    }
 
-	/*
-	 * Step 2:
-	 *      Perform the actual deletion from each index
-	 */
-	for (ikeynumber = 0; ikeynumber < psvbptr->inkeys; ikeynumber++) {
-		if (psvbptr->pskeydesc[ikeynumber]->k_nparts == 0) {
-			continue;
-		}
-		iresult = ivbkeydelete (ihandle, ikeynumber);
-		if (iresult) {
-			iserrno = iresult;
-			return -1;
-		}
-	}
+    /*
+     * Step 2:
+     *      Perform the actual deletion from each index
+     */
+    for (ikeynumber = 0; ikeynumber < psvbfptr->inkeys; ikeynumber++) {
+        if (psvbfptr->pskeydesc[ikeynumber]->k_nparts == 0) {
+            continue;
+        }
+        iresult = ivbkeydelete (ihandle, ikeynumber);
+        if (iresult) {
+            vb_rtd->iserrno = iresult;
+            return -1;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 static int
 iprocessdelete (const int ihandle, off_t trownumber)
 {
-	struct DICTINFO	*psvbptr;
-	int		ideleted;
+    vb_rtd_t *vb_rtd =VB_GET_RTD;
+    int     ideleted;
+    struct DICTINFO *psvbfptr;
 
-	psvbptr = psvbfile[ihandle];
-	if (psvbptr->iopenmode & ISTRANS) {
-		iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
-		if (iserrno) {
-			return -1;
-		}
-	}
-	iserrno = ivbdataread (ihandle, psvbptr->ppcrowbuffer,
-			 &ideleted, trownumber);
-	if (!iserrno && ideleted) {
-		iserrno = ENOREC;
-	}
-	if (iserrno) {
-		return -1;
-	}
-	if (irowdelete (ihandle, trownumber)) {
-		return -1;
-	}
-	if (!pcwritebuffer) {
-		pcwritebuffer = pvvbmalloc (MAX_RESERVED_LENGTH);
-		if (!pcwritebuffer) {
-			iserrno = EBADMEM;
-			return -1;
-		}
-	}
-	iserrno = ivbdatawrite (ihandle, pcwritebuffer, 1, trownumber);
-	if (iserrno) {
-		return -1;
-	}
-	if (!(psvbptr->iopenmode & ISTRANS) || ivbintrans == VBNOTRANS
-	    || ivbintrans == VBCOMMIT || ivbintrans == VBROLLBACK) {
-		iserrno = ivbdatafree (ihandle, trownumber);
-		if (iserrno) {
-			return -1;
-		}
-	}
-	isrecnum = trownumber;
-	if (trownumber == psvbptr->trownumber) {
-		psvbptr->trownumber = 0;
-	}
-	ivbtransdelete (ihandle, trownumber, isreclen);	/* BUG - retval */
-	return 0;
+    psvbfptr = vb_rtd->psvbfile[ihandle];
+    if (psvbfptr->iopenmode & ISTRANS) {
+        vb_rtd->iserrno = ivbdatalock (ihandle, VBWRLOCK, trownumber);
+        if (vb_rtd->iserrno) {
+            return -1;
+        }
+    }
+    vb_rtd->iserrno = ivbdataread (ihandle, (void *)psvbfptr->ppcrowbuffer,
+                                   &ideleted, trownumber);
+    if (!vb_rtd->iserrno && ideleted) {
+        vb_rtd->iserrno = ENOREC;
+    }
+    if (vb_rtd->iserrno) {
+        return -1;
+    }
+    if (irowdelete (ihandle, trownumber)) {
+        return -1;
+    }
+    if (!vb_rtd->pcwritebuffer) {
+        vb_rtd->pcwritebuffer = pvvbmalloc (MAX_RESERVED_LENGTH);
+        if (!vb_rtd->pcwritebuffer) {
+            vb_rtd->iserrno = EBADMEM;
+            return -1;
+        }
+    }
+    vb_rtd->iserrno = ivbdatawrite (ihandle, (void *)vb_rtd->pcwritebuffer, 1, trownumber);
+    if (vb_rtd->iserrno) {
+        return -1;
+    }
+    if (!(psvbfptr->iopenmode & ISTRANS) || vb_rtd->ivbintrans == VBNOTRANS
+        || vb_rtd->ivbintrans == VBCOMMIT || vb_rtd->ivbintrans == VBROLLBACK) {
+        vb_rtd->iserrno = ivbdatafree (ihandle, trownumber);
+        if (vb_rtd->iserrno) {
+            return -1;
+        }
+    }
+    vb_rtd->isrecnum = trownumber;
+    if (trownumber == psvbfptr->trownumber) {
+        psvbfptr->trownumber = 0;
+    }
+    ivbtransdelete (ihandle, trownumber, vb_rtd->isreclen); /* BUG - retval */
+    return 0;
 }
 
 /* Global functions */
 
 int
-isdelete (const int ihandle, char *pcrow)
+isdelete (int ihandle, VB_CHAR *pcrow)
 {
-	struct DICTINFO	*psvbptr;
-	int		iresult = 0;
-	unsigned char	ckeyvalue[VB_MAX_KEYLEN];
+    vb_rtd_t *vb_rtd =VB_GET_RTD;
+    int             iresult = 0;
+    struct DICTINFO *psvbfptr;
+    VB_UCHAR        ckeyvalue[VB_MAX_KEYLEN];
 
-	if (ivbenter (ihandle, 1, 0)) {
-		return -1;
-	}
+    if (ivbenter (ihandle, 1)) {
+        return -1;
+    }
 
-	psvbptr = psvbfile[ihandle];
-	if (psvbptr->pskeydesc[0]->k_flags & ISDUPS) {
-		iserrno = ENOPRIM;
-		iresult = -1;
-	} else {
-		vvbmakekey (psvbptr->pskeydesc[0], pcrow, ckeyvalue);
-		iresult = ivbkeysearch (ihandle, ISEQUAL, 0, 0, ckeyvalue, (off_t)0);
-		switch (iresult) {
-		case 1:	/* Exact match */
-			iresult =
-			    iprocessdelete (ihandle, psvbptr->pskeycurr[0]->trownode);
-			break;
+    psvbfptr = vb_rtd->psvbfile[ihandle];
+    if (psvbfptr->pskeydesc[0]->k_flags & ISDUPS) {
+        vb_rtd->iserrno = ENOPRIM;
+        iresult = -1;
+    } else {
+        vvbmakekey (psvbfptr->pskeydesc[0], pcrow, ckeyvalue);
+        iresult = ivbkeysearch (ihandle, ISEQUAL, 0, 0, ckeyvalue, (off_t)0);
+        switch (iresult) {
+        case 1: /* Exact match */
+            iresult =
+            iprocessdelete (ihandle, psvbfptr->pskeycurr[0]->trownode);
+            break;
 
-		case 0:	/* LESS than */
-		case 2:	/* EMPTY file */
-			iserrno = ENOREC;
-			iresult = -1;
-			break;
+        case 0: /* LESS than */
+        case 2: /* EMPTY file */
+            vb_rtd->iserrno = ENOREC;
+            iresult = -1;
+            break;
 
-		default:
-			iserrno = EBADFILE;
-			iresult = -1;
-			break;
-		}
-	}
+        default:
+            vb_rtd->iserrno = EBADFILE;
+            iresult = -1;
+            break;
+        }
+    }
 
-	if (iresult == 0) {
-		psvbptr->iisdictlocked |= 0x02;
-	}
-	iresult |= ivbexit (ihandle);
-	return iresult;
+    if (iresult == 0) {
+        psvbfptr->iisdictlocked |= 0x02;
+    }
+    iresult |= ivbexit (ihandle);
+    return iresult;
 }
 
 int
-isdelcurr (const int ihandle)
+isdelcurr (int ihandle)
 {
-	struct DICTINFO	*psvbptr;
-	int		iresult = 0;
+    vb_rtd_t *vb_rtd =VB_GET_RTD;
+    struct DICTINFO *psvbptr;
+    int             iresult = 0;
 
-	if (ivbenter (ihandle, 1, 0)) {
-		return -1;
-	}
-	psvbptr = psvbfile[ihandle];
+    if (ivbenter (ihandle, 1)) {
+        return -1;
+    }
+    psvbptr = vb_rtd->psvbfile[ihandle];
 
-	if (psvbptr->trownumber > 0) {
-		iresult = iprocessdelete (ihandle, psvbptr->trownumber);
-	} else {
-		iserrno = ENOREC;
-		iresult = -1;
-	}
+    if (psvbptr->trownumber > 0) {
+        iresult = iprocessdelete (ihandle, psvbptr->trownumber);
+    } else {
+        vb_rtd->iserrno = ENOREC;
+        iresult = -1;
+    }
 
-	if (iresult == 0) {
-		psvbptr->iisdictlocked |= 0x02;
-	}
-	iresult |= ivbexit (ihandle);
-	return iresult;
+    if (iresult == 0) {
+        psvbptr->iisdictlocked |= 0x02;
+    }
+    iresult |= ivbexit (ihandle);
+    return iresult;
 }
 
 int
-isdelrec (const int ihandle, vbisam_off_t trownumber)
+isdelrec (int ihandle, vbisam_off_t trownumber)
 {
-	struct DICTINFO	*psvbptr;
-	int		iresult = 0;
+    vb_rtd_t *vb_rtd =VB_GET_RTD;
+    struct DICTINFO *psvbptr;
+    int             iresult = 0;
 
-	if (ivbenter (ihandle, 1, 0)) {
-		return -1;
-	}
-	psvbptr = psvbfile[ihandle];
+    if (ivbenter (ihandle, 1)) {
+        return -1;
+    }
+    psvbptr = vb_rtd->psvbfile[ihandle];
 
-	if (trownumber > 0) {
-		iresult = iprocessdelete (ihandle, trownumber);
-	} else {
-		iserrno = ENOREC;
-		iresult = -1;
-	}
+    if (trownumber > 0) {
+        iresult = iprocessdelete (ihandle, trownumber);
+    } else {
+        vb_rtd->iserrno = ENOREC;
+        iresult = -1;
+    }
 
-	if (iresult == 0) {
-		psvbptr->iisdictlocked |= 0x02;
-	}
-	iresult |= ivbexit (ihandle);
-	return iresult;
+    if (iresult == 0) {
+        psvbptr->iisdictlocked |= 0x02;
+    }
+    iresult |= ivbexit (ihandle);
+    return iresult;
 }

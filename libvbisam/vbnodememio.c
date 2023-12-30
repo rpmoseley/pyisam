@@ -13,23 +13,24 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
+#define NEED_VBINLINE_FUNCS 1
 #include	"isinternal.h"
 
 #define		TCC	(' ')	/* Trailing Compression Character */
 
-static char	cvbnodetmp[VB_NODE_MAX];
-
 static int
-iquicknodesave (const int ihandle, struct VBTREE *pstree, const off_t tnodenumber,
+iquicknodesave (const int ihandle, struct VBTREE *pstree, off_t tnodenumber,
 		struct keydesc *pskeydesc, const int imode, const int iposn)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	int	idupslength = 0;
 	int	ikeylength = pskeydesc->k_len;
 	int	ilength, iposition, iresult;
+	VB_CHAR	        cvbnodetmp[MAX_NODE_LENGTH];
 
 	/* Sanity checks */
 	if (!pstree || !pstree->pskeylist[iposn]) {
@@ -50,16 +51,16 @@ iquicknodesave (const int ihandle, struct VBTREE *pstree, const off_t tnodenumbe
 	/* Is there enough free space in the node for an insertion? */
 	if (imode == 1
 	    && ilength + 3 + ikeylength + idupslength + QUADSIZE >=
-	    psvbfile[ihandle]->inodesize) {
+	    vb_rtd->psvbfile[ihandle]->inodesize) {
 		return -1;
 	}
 	inl_stint (ilength + (imode * (ikeylength + idupslength + QUADSIZE)), cvbnodetmp);
 	/* Calculate position for insertion / deletion of key */
 #if	ISAMMODE == 1
 	iposition = INTSIZE + QUADSIZE + (iposn * (ikeylength + idupslength + QUADSIZE));
-#else
+#else	/* ISAMMODE == 1 */
 	iposition = INTSIZE + (iposn * (ikeylength + idupslength + QUADSIZE));
-#endif
+#endif	/* ISAMMODE == 1 */
 	if (imode == 1) {
 		memmove (cvbnodetmp + iposition + ikeylength + idupslength + QUADSIZE,
 			 cvbnodetmp + iposition, (size_t)(ilength - iposition));
@@ -91,11 +92,12 @@ inewroot (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 	  struct VBTREE *psnewtree, struct VBTREE *psroottree,
 	  struct VBKEY *psrootkey[], off_t tnewnode1, off_t tnewnode2)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 	struct VBKEY	*pskey;
 	int		iresult;
 
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	/* Fill in the content for the new root node */
 	psrootkey[0]->psnext = psrootkey[1];
 	psrootkey[1]->psnext = psrootkey[2];
@@ -163,6 +165,7 @@ static int
 inodesplit (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 	    struct VBKEY *pskeyhalfway)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 	struct VBKEY	*pskey, *pskeytemp, *psholdkeycurr, *psnewkey;
 	struct VBKEY	*psrootkey[3];
@@ -179,7 +182,7 @@ inodesplit (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 	if (!psnewkey) {
 		return errno;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	psrootkey[0] = NULL;
 	psrootkey[1] = NULL;
 	psrootkey[2] = NULL;
@@ -202,12 +205,12 @@ inodesplit (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 		}
 		tnewnode2 = tvbnodeallocate (ihandle);
 		if (tnewnode2 == -1) {
-			return iserrno;
+			return vb_rtd->iserrno;
 		}
 	}
 	tnewnode1 = tvbnodeallocate (ihandle);
 	if (tnewnode1 == -1) {
-		return iserrno;
+		return vb_rtd->iserrno;
 	}
 
 	if (pstree->iisroot) {
@@ -283,22 +286,24 @@ inodesplit (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 
 int
 ivbnodeload (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
-	     const off_t tnodenumber, const int iprevlvl)
+	     off_t tnodenumber, int iprevlvl)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 	struct VBKEY	*pskey, *pskeynext;
 	struct keydesc	*pskeydesc;
-	char		*pcnodeptr;
+	VB_CHAR		*pcnodeptr;
 #if	ISAMMODE == 1
 	off_t		ttransnumber;
-#endif
+#endif	/* ISAMMODE == 1 */
 	int		icountlc = 0;	/* Leading compression */
 	int		icounttc = 0;	/* Trailing compression */
 	int		idups = 0, inodelen, iresult;
-	unsigned char	cprevkey[VB_MAX_KEYLEN];
-	unsigned char	chighkey[VB_MAX_KEYLEN];
+	VB_UCHAR	cprevkey[VB_MAX_KEYLEN];
+	VB_UCHAR	chighkey[VB_MAX_KEYLEN];
+	VB_CHAR     cvbnodetmp[MAX_NODE_LENGTH];
 
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	pskeydesc = psvbptr->pskeydesc[ikeynumber];
 	vvbkeyvalueset (0, pskeydesc, cprevkey);
 	vvbkeyvalueset (1, pskeydesc, chighkey);
@@ -320,9 +325,9 @@ ivbnodeload (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 	if (ttransnumber == pstree->ttransnumber) {
 		return 0;
 	}
-#else
+#else	/* ISAMMODE == 1 */
 	pcnodeptr = cvbnodetmp + INTSIZE;
-#endif
+#endif	/* ISAMMODE == 1 */
 	for (pskey = pstree->pskeyfirst; pskey; pskey = pskeynext) {
 		if (pskey->pschild) {
 			vvbtreeallfree (ihandle, ikeynumber, pskey->pschild);
@@ -343,19 +348,19 @@ ivbnodeload (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 #if	ISAMMODE == 1
 				icountlc = inl_ldint (pcnodeptr);
 				pcnodeptr += INTSIZE;
-#else
+#else	/* ISAMMODE == 1 */
 				icountlc = *(pcnodeptr);
 				pcnodeptr++;
-#endif
+#endif	/* ISAMMODE == 1 */
 			}
 			if (pskeydesc->k_flags & TCOMPRESS) {
 #if	ISAMMODE == 1
 				icounttc = inl_ldint (pcnodeptr);
 				pcnodeptr += INTSIZE;
-#else
+#else	/* ISAMMODE == 1 */
 				icounttc = *(pcnodeptr);
 				pcnodeptr++;
-#endif
+#endif	/* ISAMMODE == 1 */
 			}
 			memcpy (cprevkey + icountlc, pcnodeptr,
 				(size_t)(pskeydesc->k_len - (icountlc + icounttc)));
@@ -414,18 +419,20 @@ ivbnodeload (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 
 int
 ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
-	     const off_t tnodenumber, const int imode, const int iposn)
+	     off_t tnodenumber, int imode, int iposn)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
-	unsigned char	*pckeyendptr, *pcnodeptr, *pcnodehalfway;
-	unsigned char	*pcnodeend, *pcprevkey = NULL;
+	VB_UCHAR		*pckeyendptr, *pcnodeptr, *pcnodehalfway;
+	VB_UCHAR		*pcnodeend, *pcprevkey = NULL;
 	struct VBKEY	*pskey, *pskeyhalfway = NULL;
 	struct keydesc	*pskeydesc;
 	int		icountlc = 0,	/* Leading compression */
 			icounttc = 0,	/* Trailing compression */
 			ilasttc = 0, ikeylen, imaxtc, iresult;
+	VB_CHAR	        cvbnodetmp[MAX_NODE_LENGTH];
 
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	pskeydesc = psvbptr->pskeydesc[ikeynumber];
 	/*
 	 * If it's an INSERT into a node or a DELETE from a node
@@ -448,14 +455,14 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 	}
 	pcnodehalfway = (ucharptr)cvbnodetmp + (psvbptr->inodesize / 2);
 	pcnodeend = (ucharptr)cvbnodetmp + psvbptr->inodesize - 2;
-	memset (cvbnodetmp, 0, VB_NODE_MAX);
+	memset (cvbnodetmp, 0, MAX_NODE_LENGTH);
 #if	ISAMMODE == 1
 	inl_stquad (inl_ldquad (psvbptr->sdictnode.ctransnumber) + 1,
 		    cvbnodetmp + INTSIZE);
 	pcnodeptr = (ucharptr)cvbnodetmp + INTSIZE + QUADSIZE;
-#else
+#else	/* ISAMMODE == 1 */
 	pcnodeptr = (ucharptr)cvbnodetmp + INTSIZE;
-#endif
+#endif	/* ISAMMODE == 1 */
 	*pcnodeend = pstree->ilevel;
 	pstree->ikeysinnode = 0;
 	for (pskey = pstree->pskeyfirst; pskey && !pskey->iisdummy;
@@ -477,9 +484,9 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 			}
 #if	ISAMMODE == 1
 			ikeylen += INTSIZE - icounttc;
-#else
+#else	/* ISAMMODE == 1 */
 			ikeylen += 1 - icounttc;
-#endif
+#endif	/* ISAMMODE == 1 */
 		}
 		if (pskeydesc->k_flags & LCOMPRESS) {
 			icountlc = 0;
@@ -491,25 +498,25 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 			}
 #if	ISAMMODE == 1
 			ikeylen += INTSIZE - icountlc;
-#else
+#else	/* ISAMMODE == 1 */
 			ikeylen += 1 - icountlc;
-#endif
-			if (pskey->iishigh && pskeydesc->k_flags && LCOMPRESS) {
+#endif	/* ISAMMODE == 1 */
+			if (pskey->iishigh && (pskeydesc->k_flags & LCOMPRESS)) {
 				icountlc = pskeydesc->k_len;
 				icounttc = 0;
 #if	ISAMMODE == 1
-				if (pskeydesc->k_flags && TCOMPRESS) {
+				if (pskeydesc->k_flags & TCOMPRESS) {
 					ikeylen = INTSIZE * 2;
 				} else {
 					ikeylen = INTSIZE;
 				}
-#else
-				if (pskeydesc->k_flags && TCOMPRESS) {
+#else	/* ISAMMODE == 1 */
+				if (pskeydesc->k_flags & TCOMPRESS) {
 					ikeylen = 2;
 				} else {
 					ikeylen = 1;
 				}
-#endif
+#endif	/* ISAMMODE == 1 */
 				if (pskeydesc->k_flags & DCOMPRESS) {
 					ikeylen = 0;
 				}
@@ -518,7 +525,8 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 		if (pskeydesc->k_flags & ISDUPS) {
 			ikeylen += QUADSIZE;
 			/* If the key is a duplicate and it's not first in node */
-			if (pskey->iishigh || (pskey != pstree->pskeyfirst
+			if ((pskey->iishigh)
+			    || (pskey != pstree->pskeyfirst
 				&& !memcmp (pskey->ckey, pcprevkey, (size_t)pskeydesc->k_len))) {
 				if (pskeydesc->k_flags & DCOMPRESS) {
 					ikeylen = QUADSIZE;
@@ -540,7 +548,7 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 		}
 		if (((ikeylen == (QUADSIZE * 2))
 		     && ((pskeydesc->k_flags & (DCOMPRESS | ISDUPS)) == (DCOMPRESS | ISDUPS)))
-		    || (pskeydesc->k_flags & DCOMPRESS && !(pskeydesc->k_flags & ISDUPS)
+		    || ((pskeydesc->k_flags & DCOMPRESS) && !(pskeydesc->k_flags & ISDUPS)
 			&& ikeylen == QUADSIZE)) {
 			*(pcnodeptr - QUADSIZE) |= 0x80;
 		} else {
@@ -548,17 +556,17 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 #if	ISAMMODE == 1
 				inl_stint (icountlc, pcnodeptr);
 				pcnodeptr += INTSIZE;
-#else
+#else	/* ISAMMODE == 1 */
 				*pcnodeptr++ = icountlc;
-#endif
+#endif	/* ISAMMODE == 1 */
 			}
 			if (pskeydesc->k_flags & TCOMPRESS) {
 #if	ISAMMODE == 1
 				inl_stint (icounttc, pcnodeptr);
 				pcnodeptr += INTSIZE;
-#else
+#else	/* ISAMMODE == 1 */
 				*pcnodeptr++ = icounttc;
-#endif
+#endif	/* ISAMMODE == 1 */
 			}
 			if (icountlc != pskeydesc->k_len) {
 				pcprevkey = pskey->ckey + icountlc;
@@ -570,16 +578,36 @@ ivbnodesave (const int ihandle, const int ikeynumber, struct VBTREE *pstree,
 			pcprevkey = pskey->ckey;
 		}
 		if (pskeydesc->k_flags & ISDUPS) {
-			inl_stquad (pskey->tdupnumber, pcnodeptr);
-			pcnodeptr += QUADSIZE;
+#if	ISAMMODE == 1
+			*pcnodeptr++ = (pskey->tdupnumber >> 56) & 0xff;
+			*pcnodeptr++ = (pskey->tdupnumber >> 48) & 0xff;
+			*pcnodeptr++ = (pskey->tdupnumber >> 40) & 0xff;
+			*pcnodeptr++ = (pskey->tdupnumber >> 32) & 0xff;
+#endif	/* ISAMMODE == 1 */
+			*pcnodeptr++ = (pskey->tdupnumber >> 24) & 0xff;
+			*pcnodeptr++ = (pskey->tdupnumber >> 16) & 0xff;
+			*pcnodeptr++ = (pskey->tdupnumber >> 8) & 0xff;
+			*pcnodeptr++ = pskey->tdupnumber & 0xff;
 		}
-		inl_stquad (pskey->trownode, pcnodeptr);
-		pcnodeptr += QUADSIZE;
+#if	ISAMMODE == 1
+		*pcnodeptr++ = (pskey->trownode >> 56) & 0xff;
+		*pcnodeptr++ = (pskey->trownode >> 48) & 0xff;
+		*pcnodeptr++ = (pskey->trownode >> 40) & 0xff;
+		*pcnodeptr++ = (pskey->trownode >> 32) & 0xff;
+#endif	/* ISAMMODE == 1 */
+		*pcnodeptr++ = (pskey->trownode >> 24) & 0xff;
+		*pcnodeptr++ = (pskey->trownode >> 16) & 0xff;
+		*pcnodeptr++ = (pskey->trownode >> 8) & 0xff;
+		*pcnodeptr++ = pskey->trownode & 0xff;
 	}
 	if (pskey && pskey->iisdummy) {
 		pstree->pskeylist[pstree->ikeysinnode] = pskey;
 		pstree->ikeysinnode++;
 	}
 	inl_stint ((int)((ucharptr)pcnodeptr - (ucharptr)cvbnodetmp), cvbnodetmp);
-	return ivbblockwrite (ihandle, 1, tnodenumber, cvbnodetmp);
+	iresult = ivbblockwrite (ihandle, 1, tnodenumber, cvbnodetmp);
+	if (iresult) {
+		return iresult;
+	}
+	return 0;
 }

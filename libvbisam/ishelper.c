@@ -13,138 +13,137 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
+#define NEED_VBINLINE_FUNCS 1
 #include	"isinternal.h"
 
 /* Global functions */
 
 int
-iscluster (const int ihandle, struct keydesc *pskeydesc)
+iscluster (int ihandle, struct keydesc *pskeydesc)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	/* BUG Write iscluster() and don't forget to call ivbtranscluster */
-	if (ihandle < 0 || ihandle > ivbmaxusedhandle) {
-		iserrno = EBADARG;
+	if (ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
 	return 0;
 }
 
 int
-iserase (char *pcfilename)
+iserase (VB_CHAR *pcfilename)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	int	ihandle;
-	char	cbuffer[1024];
+	VB_CHAR	cbuffer[1024];
 
-	for (ihandle = 0; ihandle <= ivbmaxusedhandle; ihandle++) {
-		if (psvbfile[ihandle] != NULL) {
-			if (!strcmp (psvbfile[ihandle]->cfilename, pcfilename)) {
+	for (ihandle = 0; ihandle <= vb_rtd->ivbmaxusedhandle; ihandle++) {
+		if (vb_rtd->psvbfile[ihandle] != NULL) {
+			if (!strcmp ((char*)vb_rtd->psvbfile[ihandle]->cfilename, (char*)pcfilename)) {
 				isclose (ihandle);
 				ivbclose3 (ihandle);
 				break;
 			}
 		}
 	}
-	sprintf (cbuffer, "%s.idx", pcfilename);
-	unlink (cbuffer);
-	sprintf (cbuffer, "%s.dat", pcfilename);
-	unlink (cbuffer);
+	sprintf ((char*)cbuffer, "%s.idx", pcfilename);
+	unlink ((char*)cbuffer);
+	sprintf ((char*)cbuffer, "%s.dat", pcfilename);
+	unlink ((char*)cbuffer);
 	return ivbtranserase (pcfilename);
 }
 
 int
-isflush (const int ihandle)
+isflush (int ihandle)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 
-	if (ihandle < 0 || ihandle > ivbmaxusedhandle) {
-		iserrno = EBADARG;
+	if (ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
+		vb_rtd->iserrno = ENOTOPEN;
 		return -1;
 	}
-/*
 	if (psvbptr->iindexhandle >= 0) {
 		fsync (psvbptr->iindexhandle);
 	}
 	if (psvbptr->idatahandle >= 0) {
 		fsync (psvbptr->idatahandle);
 	}
-*/
-  	if (psvbptr->iindexhandle >= 0) {
-  		fsync (svbfile[psvbptr->iindexhandle].ihandle);
-  	}
-  	if (psvbptr->idatahandle >= 0) {
-  		fsync (svbfile[psvbptr->idatahandle].ihandle);
-  	}
 	return 0;
 }
 
 int
-islock (const int ihandle)
+islock (int ihandle)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 
-	if (ihandle < 0 || ihandle > ivbmaxusedhandle) {
-		iserrno = EBADARG;
+	if (ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
+		vb_rtd->iserrno = ENOTOPEN;
 		return -1;
 	}
 	return ivbdatalock (ihandle, VBWRLOCK, (off_t)0);
 }
 
 int
-isrelcurr (const int ihandle)
+isrelcurr (int ihandle)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 
-	if (ihandle < 0 || ihandle > ivbmaxusedhandle) {
-		iserrno = EBADARG;
+	if (ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
+		vb_rtd->iserrno = ENOTOPEN;
 		return -1;
 	}
-	if (ivbintrans != VBNOTRANS) {
+	if (vb_rtd->ivbintrans != VBNOTRANS) {
 		return 0;
 	}
 	if (!psvbptr->trownumber) {
-		iserrno = ENOREC;
+		vb_rtd->iserrno = ENOREC;
 		return -1;
 	}
-	iserrno = ivbdatalock (ihandle, VBUNLOCK, psvbptr->trownumber);
-	if (iserrno) {
+	vb_rtd->iserrno = ivbdatalock (ihandle, VBUNLOCK, psvbptr->trownumber);
+	if (vb_rtd->iserrno) {
 		return -1;
 	}
 	return 0;
 }
 
 int
-isrelease (const int ihandle)
+isrelease (int ihandle)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 
-	if (ihandle < 0 || ihandle > ivbmaxusedhandle) {
-		iserrno = EBADARG;
+	if (ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
+		vb_rtd->iserrno = ENOTOPEN;
 		return -1;
 	}
-	if (ivbintrans != VBNOTRANS) {
+	if (vb_rtd->ivbintrans != VBNOTRANS) {
 		return 0;
 	}
 	ivbdatalock (ihandle, VBUNLOCK, (off_t)0);	/* Ignore the return */
@@ -152,77 +151,82 @@ isrelease (const int ihandle)
 }
 
 int
-isrelrec (const int ihandle, const vbisam_off_t trownumber)
+isrelrec (int ihandle, vbisam_off_t trownumber)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 
-	if (ihandle < 0 || ihandle > ivbmaxusedhandle) {
-		iserrno = EBADARG;
+	if (ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
+		vb_rtd->iserrno = ENOTOPEN;
 		return -1;
 	}
-	iserrno = ivbdatalock (ihandle, VBUNLOCK, trownumber);
-	if (iserrno) {
+	vb_rtd->iserrno = ivbdatalock (ihandle, VBUNLOCK, trownumber);
+	if (vb_rtd->iserrno) {
 		return -1;
 	}
 	return 0;
 }
 
 int
-isrename (char *pcoldname, char *pcnewname)
+isrename (VB_CHAR *pcoldname, VB_CHAR *pcnewname)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	int	iresult;
-	char	cbuffer[2][1024];
+	VB_CHAR	cbuffer[2][1024];
 
-	sprintf (cbuffer[0], "%s.idx", pcoldname);
-	sprintf (cbuffer[1], "%s.idx", pcnewname);
-	iresult = rename (cbuffer[0], cbuffer[1]);
+	sprintf ((char*)cbuffer[0], "%s.idx", pcoldname);
+	sprintf ((char*)cbuffer[1], "%s.idx", pcnewname);
+	iresult = rename ((char*)cbuffer[0], (char*)cbuffer[1]);
 	if (iresult == -1) {
 		goto renameexit;
 	}
-	sprintf (cbuffer[0], "%s.dat", pcoldname);
-	sprintf (cbuffer[1], "%s.dat", pcnewname);
-	iresult = rename (cbuffer[0], cbuffer[1]);
+	sprintf ((char*)cbuffer[0], "%s.dat", pcoldname);
+	sprintf ((char*)cbuffer[1], "%s.dat", pcnewname);
+	iresult = rename ((char*)cbuffer[0], (char*)cbuffer[1]);
 	if (iresult == -1) {
-		sprintf (cbuffer[0], "%s.idx", pcoldname);
-		sprintf (cbuffer[1], "%s.idx", pcnewname);
-		rename (cbuffer[1], cbuffer[0]);
+		sprintf ((char*)cbuffer[0], "%s.idx", pcoldname);
+		sprintf ((char*)cbuffer[1], "%s.idx", pcnewname);
+		rename ((char*)cbuffer[1], (char*)cbuffer[0]);
 		goto renameexit;
 	}
 	return ivbtransrename (pcoldname, pcnewname);
 renameexit:
-	iserrno = errno;
+	vb_rtd->iserrno = errno;
 	return -1;
 }
 
 int
-issetunique (const int ihandle, const vbisam_off_t tuniqueid)
+issetunique (int ihandle, vbisam_off_t tuniqueid)
 {
-	struct DICTINFO *psvbptr;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
+	struct DICTINFO *tvbptr;
 	off_t		tvalue;
 	int		iresult, iresult2;
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
-	iserrno = 0;
-	if (!psvbptr->iisdictlocked) {
-		iserrno = EBADARG;
+	tvbptr = vb_rtd->psvbfile[ihandle];
+	vb_rtd->iserrno = EBADARG;
+	if (!tvbptr->iisdictlocked) {
+		/*CIT*/ivbexit (ihandle);
 		return -1;
 	}
-	tvalue = inl_ldquad (psvbptr->sdictnode.cuniqueid);
+
+	vb_rtd->iserrno = 0;
+	tvalue = inl_ldquad (tvbptr->sdictnode.cuniqueid);
 	if (tuniqueid > tvalue) {
-		inl_stquad (tuniqueid, psvbptr->sdictnode.cuniqueid);
-		psvbptr->iisdictlocked |= 0x02;
+		inl_stquad (tuniqueid, tvbptr->sdictnode.cuniqueid);
+		tvbptr->iisdictlocked |= 0x02;
 	}
 
 	iresult = ivbtranssetunique (ihandle, tuniqueid);
-	psvbptr->iisdictlocked |= 0x02;
+	tvbptr->iisdictlocked |= 0x02;
 	iresult2 = ivbexit (ihandle);
 	if (iresult) {
 		return -1;
@@ -231,26 +235,29 @@ issetunique (const int ihandle, const vbisam_off_t tuniqueid)
 }
 
 int
-isuniqueid (const int ihandle, vbisam_off_t *ptuniqueid)
+isuniqueid (int ihandle, vbisam_off_t *ptuniqueid)
 {
-	struct DICTINFO *psvbptr;
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
+	struct DICTINFO *tvbptr;
 	off_t		tvalue;
-	int		iresult;
+	int		iresult = 0;
 	int		iresult2;
 
-	if (ivbenter (ihandle, 1, 0)) {
+	if (ivbenter (ihandle, 1)) {
 		return -1;
 	}
 
-	psvbptr = psvbfile[ihandle];
-	iserrno = 0;
-	if (!psvbptr->iisdictlocked) {
-		iserrno = EBADARG;
+	tvbptr = vb_rtd->psvbfile[ihandle];
+	vb_rtd->iserrno = EBADARG;
+	if (!tvbptr->iisdictlocked) {
+		/*CIT*/ivbexit (ihandle);
 		return -1;
 	}
-	tvalue = inl_ldquad (psvbptr->sdictnode.cuniqueid);
-	inl_stquad (tvalue + 1, psvbptr->sdictnode.cuniqueid);
-	psvbptr->iisdictlocked |= 0x02;
+	vb_rtd->iserrno = 0;
+
+	tvalue = inl_ldquad (tvbptr->sdictnode.cuniqueid);
+	inl_stquad (tvalue + 1, tvbptr->sdictnode.cuniqueid);
+	tvbptr->iisdictlocked |= 0x02;
 	iresult = ivbtransuniqueid (ihandle, tvalue);
 	iresult2 = ivbexit (ihandle);
 	if (iresult) {
@@ -261,137 +268,30 @@ isuniqueid (const int ihandle, vbisam_off_t *ptuniqueid)
 }
 
 int
-isunlock (const int ihandle)
+isunlock (int ihandle)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	struct DICTINFO	*psvbptr;
 
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
+	if (unlikely(ihandle < 0 || ihandle > vb_rtd->ivbmaxusedhandle)) {
+		vb_rtd->iserrno = EBADARG;
 		return -1;
 	}
-	psvbptr = psvbfile[ihandle];
+	psvbptr = vb_rtd->psvbfile[ihandle];
 	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
+		vb_rtd->iserrno = ENOTOPEN;
 		return -1;
 	}
 	return ivbdatalock (ihandle, VBUNLOCK, (off_t)0);
 }
 
-char *
-isdi_name (const int ihandle)
-{
-	struct DICTINFO	*psvbptr;
-
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
-		return NULL;
-	}
-	psvbptr = psvbfile[ihandle];
-	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
-		return NULL;
-	}
-	return strdup (psvbptr->cfilename);
-}
-
-int
-isdi_datlen (const int ihandle)
-{
-	struct DICTINFO	*psvbptr;
-
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
-		return -1;
-	}
-	psvbptr = psvbfile[ihandle];
-	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
-		return -1;
-	}
-	return psvbptr->imaxrowlength;
-}
-
-int
-isdi_idxfd (const int ihandle)
-{
-	struct DICTINFO	*psvbptr;
-
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
-		return -1;
-	}
-	psvbptr = psvbfile[ihandle];
-	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
-		return -1;
-	}
-	return psvbptr->iindexhandle;
-}
-
-int
-isdi_datfd (const int ihandle)
-{
-	struct DICTINFO	*psvbptr;
-
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
-		return -1;
-	}
-	psvbptr = psvbfile[ihandle];
-	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
-		return -1;
-	}
-	return psvbptr->idatahandle;
-}
-
-int
-isdi_curidx (const int ihandle)
-{
-	struct DICTINFO	*psvbptr;
-
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
-		return -1;
-	}
-	psvbptr = psvbfile[ihandle];
-	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
-		return -1;
-	}
-	return psvbptr->iactivekey;
-}
-
-struct keydesc *
-isdi_kdsc (const int ihandle)
-{
-	struct DICTINFO	*psvbptr;
-	struct keydesc	*keydptr;
-
-	if (unlikely(ihandle < 0 || ihandle > ivbmaxusedhandle)) {
-		iserrno = EBADARG;
-		return NULL;
-	}
-	psvbptr = psvbfile[ihandle];
-	if (!psvbptr || psvbptr->iisopen) {
-		iserrno = ENOTOPEN;
-		return NULL;
-	}
-	keydptr = pvvbmalloc (sizeof(struct keydesc));
-	if (keydptr) {
-		memcpy (keydptr, psvbptr->pskeydesc[psvbptr->iactivekey],
-			sizeof(struct keydesc));
-	}
-	return keydptr;
-}
-
 void
-ldchar (char *pcsource, int ilength, char *pcdestination)
+ldchar (VB_CHAR *pcsource, int ilength, VB_CHAR *pcdestination)
 {
-	char *pcdst;
+	VB_CHAR *pcdst;
 
 	memcpy ((void *)pcdestination, (void *)pcsource, (size_t)ilength);
-	for (pcdst = pcdestination + ilength - 1; pcdst >= (char *)pcdestination; pcdst--) {
+	for (pcdst = pcdestination + ilength - 1; pcdst >= (VB_CHAR *)pcdestination; pcdst--) {
 		if (*pcdst != ' ') {
 			pcdst++;
 			*pcdst = 0;
@@ -402,9 +302,9 @@ ldchar (char *pcsource, int ilength, char *pcdestination)
 }
 
 void
-stchar (char *pcsource, char *pcdestination, int ilength)
+stchar (VB_CHAR *pcsource, VB_CHAR *pcdestination, int ilength)
 {
-	char *pcsrc, *pcdst;
+	VB_CHAR *pcsrc, *pcdst;
 	int icount;
 
 	pcsrc = pcsource;
@@ -424,8 +324,8 @@ ldint (void *pclocation)
 	return (int)VB_BSWAP_16 (*(unsigned short *)pclocation);
 #else
 	short ivalue = 0;
-	unsigned char *pctemp = (unsigned char *)&ivalue;
-	unsigned char *pctemp2 = (unsigned char *)pclocation;
+	VB_UCHAR *pctemp = (VB_UCHAR *)&ivalue;
+	VB_UCHAR *pctemp2 = (VB_UCHAR *)pclocation;
 
 	*(pctemp + 0) = *(pctemp2 + 0);
 	*(pctemp + 1) = *(pctemp2 + 1);
@@ -439,10 +339,10 @@ stint (int ivalue, void *pclocation)
 #ifndef	WORDS_BIGENDIAN
 	*(unsigned short *)pclocation = VB_BSWAP_16 ((unsigned short)ivalue);
 #else
-	unsigned char *pctemp = (unsigned char *)&ivalue;
+	VB_UCHAR *pctemp = (VB_UCHAR *)&ivalue;
 
-	*((unsigned char *)pclocation + 0) = *(pctemp + 0 + INTSIZE);
-	*((unsigned char *)pclocation + 1) = *(pctemp + 1 + INTSIZE);
+	*((VB_UCHAR *)pclocation + 0) = *(pctemp + 0 + INTSIZE);
+	*((VB_UCHAR *)pclocation + 1) = *(pctemp + 1 + INTSIZE);
 #endif
 }
 
@@ -454,7 +354,7 @@ ldlong (void *pclocation)
 #else
 	int lvalue;
 
-	memcpy ((unsigned char *)&lvalue, (unsigned char *)pclocation, 4);
+	memcpy ((VB_UCHAR *)&lvalue, (VB_UCHAR *)pclocation, 4);
 	return lvalue;
 #endif
 }
@@ -465,9 +365,51 @@ stlong (int lvalue, void *pclocation)
 #ifndef	WORDS_BIGENDIAN
 	*(unsigned int *)pclocation = VB_BSWAP_32 ((unsigned int)lvalue);
 #else
-	memcpy ((unsigned char *)pclocation, (unsigned char *)&lvalue, 4);
+	memcpy ((VB_UCHAR *)pclocation, (VB_UCHAR *)&lvalue, 4);
 #endif
 }
+
+/* RXW
+off_t
+ldquad (void *pclocation)
+{
+
+#ifndef	WORDS_BIGENDIAN
+#if	ISAMMODE == 1
+	return VB_BSWAP_64 (*(unsigned long long *)pclocation);
+#else
+	return VB_BSWAP_32 (*(unsigned int *)pclocation);
+#endif
+#else
+	off_t tvalue;
+#if	ISAMMODE == 1
+	memcpy ((VB_UCHAR *)&tvalue, (VB_UCHAR *)pclocation, 8);
+#else
+	memcpy ((VB_UCHAR *)&tvalue, (VB_UCHAR *)pclocation, 4);
+#endif
+	return tvalue;
+#endif
+}
+
+void
+stquad (off_t tvalue, void *pclocation)
+{
+
+#ifndef	WORDS_BIGENDIAN
+#if	ISAMMODE == 1
+	*(unsigned long long *)pclocation = VB_BSWAP_64 ((unsigned long long)tvalue);
+#else
+	*(unsigned int *)pclocation = VB_BSWAP_32 ((unsigned int)tvalue);
+#endif
+#else
+#if	ISAMMODE == 1
+	memcpy ((VB_UCHAR *)pclocation, (VB_UCHAR *)&tvalue, 8);
+#else
+	memcpy ((VB_UCHAR *)pclocation, (VB_UCHAR *)&tvalue, 4);
+#endif
+#endif
+}
+*/
 
 double
 ldfloat (void *pclocation)
@@ -485,7 +427,7 @@ stfloat (double dsource, void *pcdestination)
 {
 	float ffloat;
 
-	ffloat = (float)(dsource);
+	ffloat = dsource;
 	memcpy (pcdestination, &ffloat, FLOATSIZE);
 }
 

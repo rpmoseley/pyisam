@@ -31,7 +31,7 @@ main (int iargc, char **ppcargv)
 	}
 
 	for (iloop = 1; iloop < iargc; iloop++) {
-		ischeck (ppcargv[iloop]);
+		ischeck ((VB_CHAR*)ppcargv[iloop]);
 	}
 	return 0;
 }

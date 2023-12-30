@@ -1,0 +1,2 @@
+option('vbisam', type: 'boolean', value: false, description: 'Build using the vbisam library')
+option('32bit', type: 'boolean', value: false, description: 'Build the 32-bit version instead of 64-bit')

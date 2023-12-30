@@ -23,22 +23,23 @@
 int
 main (int iargc, char **ppcargv)
 {
+	vb_rtd_t *vb_rtd =VB_GET_RTD;
 	int	iresult;
 
 	if (iargc != 2) {
 		printf ("Usage: %s <LOGFILE>\n", ppcargv [0]);
 		return 1;
 	}
-	iresult = islogopen (ppcargv[1]);
+	iresult = islogopen ((VB_CHAR*)ppcargv[1]);
 	if (iresult < 0) {
-		fprintf (stdout, "Error opening log: %d\n", iserrno);
+		fprintf (stdout, "Error opening log: %d\n", vb_rtd->iserrno);
 		return 1;
 	}
 	printf ("Recovering... Please wait\n");
 	iresult = isrecover ();
 	islogclose ();
 	if (iresult) {
-		printf ("Recovery failed with error %d\n", iserrno);
+		printf ("Recovery failed with error %d\n", vb_rtd->iserrno);
 		return 1;
 	}
 	printf ("Recovery SUCCESSFUL!\n");

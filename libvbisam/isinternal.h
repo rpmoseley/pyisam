@@ -13,144 +13,178 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If
- * not, write to the Free Software Foundation, 51 Franklin Street, Fifth Floor
- * Boston, MA 02110-1301 USA
+ * not, write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA 02111-1307 USA
  */
 
 #ifndef VB_LIBVBISAM_H
 #define VB_LIBVBISAM_H
 
-#include    "config.h"
-
 /* Note : following are pulled in from config.h : */
-/* ISAMMODE     - ISAM Mode */
-/* HAVE_LFS64       - 64 bit file I/O */
-/* VBDEBUG      - Debugging mode */
+/* ISAMMODE   - ISAM Mode */
+/* HAVE_LFS64   - 64 bit file I/O */
+/* VBDEBUG    - Debugging mode */
 
 #ifdef WITH_LFS64
-#define _LFS64_LARGEFILE    1
-#define _LFS64_STDIO        1
-#define _FILE_OFFSET_BITS   64
-#define _LARGEFILE64_SOURCE 1
-#define __USE_LARGEFILE64   1
-#define __USE_FILE_OFFSET64 1
-#ifdef _AIX
-#define _LARGE_FILES        1
-#endif /* _AIX */
-#if defined(__hpux__) && !defined(__LP64__)
-#define _APP32_64BIT_OFF_T  1
-#endif
+    #define _LFS64_LARGEFILE  1
+    #define _LFS64_STDIO  1
+    #define _FILE_OFFSET_BITS 64
+    #define _LARGEFILE64_SOURCE 1
+    #define __USE_LARGEFILE64 1
+    #define __USE_FILE_OFFSET64 1
+    #define _LARGE_FILES  1
+
+    #if (defined(__hpux__) || defined(__hpux)) && !defined(__LP64__)
+        #define _APP32_64BIT_OFF_T  1
+    #endif
+    #if (defined(__hpux__) || defined(__hpux))
+        #define VB_SHORT_LOCK_RANGE     1
+    #endif
+
+    /* ??? #define  VB_MAX_OFF_T    (off_t)2147483647*/
+    #define VB_MAX_OFF_T    (off_t)9223372036854775807LL
+#else
+    #define VB_MAX_OFF_T    (off_t)2147483647
+    /* #define  VB_MAX_OFF_T    (off_t)9223372036854775807*/
 #endif
 
 #ifdef  HAVE_UNISTD_H
-#include    <unistd.h>
+    #include  <unistd.h>
 #endif
-#include    <stdio.h>
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <ctype.h>
+#include  <stdio.h>
+#include  <sys/types.h>
+#include  <sys/stat.h>
+#include  <ctype.h>
 #ifdef  HAVE_FCNTL_H
-#include    <fcntl.h>
+    #include  <fcntl.h>
 #endif
-#include    <stdlib.h>
-#include    <string.h>
-#include    <errno.h>
-#include    <time.h>
-#include    <limits.h>
-#include    <float.h>
+#include  <stdlib.h>
+#include  <string.h>
+#include  <errno.h>
+#include  <time.h>
+#include  <limits.h>
+#include  <float.h>
 
 #ifdef _WIN32
-#define WINDOWS_LEAN_AND_MEAN
-#include    <windows.h>
-#include    <io.h>
-#include    <sys/locking.h>
-#define open(x, y, z)   _open(x, y, z)
-#define read(x, y, z)   _read(x, y, z)
-#define write(x, y, z)  _write(x, y, z)
-#ifdef WITH_LFS64
-#define lseek(x, y, z)  _lseeki64(x, y, z)
-#else
-#define lseek(x, y, z)  _lseek(x, y, z)
-#endif
-#define close(x)    _close(x)
-#define unlink(x)   _unlink(x)
-#define fsync       _commit
+    #define WINDOWS_LEAN_AND_MEAN
+    #include  <windows.h>
+    #include  <io.h>
+    #include  <sys/locking.h>
+    #define open(x, y, z) _open(x, y, z)
+    #define read(x, y, z) _read(x, y, z)
+    #define write(x, y, z)  _write(x, y, z)
+    #if (!defined(_FILE_OFFSET_BITS) || (_FILE_OFFSET_BITS != 64))
+        #ifdef WITH_LFS64
+            #define lseek(x, y, z)  _lseeki64(x, y, z)
+        #else
+            #define lseek(x, y, z)  _lseek(x, y, z)
+        #endif
+    #endif
+    #define close(x)  _close(x)
+    #define unlink(x) _unlink(x)
+    #define fsync   _commit
 typedef int     uid_t;
-#ifndef _PID_T_
+    #ifndef _PID_T_
 typedef int     pid_t;
-#endif
-#ifndef _MODE_T_
+    #endif
+    #ifndef _MODE_T_
 typedef unsigned short  mode_t;
-#endif
-#ifndef _SSIZE_T_
-typedef int     ssize_t;
-#endif
+    #endif
+    #if (!defined(_SSIZE_T_DEFINED) && !defined(_SIZE_T_))
+        typedef int     ssize_t;
+    #endif
 #endif
 
 #ifdef _MSC_VER
 
-#define _CRT_SECURE_NO_DEPRECATE 1
-#define inline _inline
-#include    <malloc.h>
-#pragma warning(disable: 4996)
-#define strncasecmp _strnicmp
-#define strcasecmp _stricmp
-#define __attribute__(x)
-#define __i386__
+    #define _CRT_SECURE_NO_DEPRECATE 1
+    #define VB_INLINE _inline
+    #include  <malloc.h>
+    #pragma warning(disable: 4996)
+    #define strncasecmp _strnicmp
+    #define strcasecmp _stricmp
+    #define __attribute__(x)
+    #define __i386__
+    /*#define VB_THREAD __declspec( thread ) */
 
-#endif /* _MSC_VER */
-
-#ifdef  __370__
-#define inline __inline
+#elif  __370__
+    #define VB_INLINE __inline
+#elif defined(HAS_INLINE)
+    #define VB_INLINE inline
+#else
+    #define VB_INLINE
 #endif
+
 
 #if ISAMMODE == 1
-#define QUADSIZE    8
-#define VB_OFFLEN_7F    0x7fffffffffffffffLL
-#define VB_OFFLEN_3F    0x3fffffffffffffffLL
-#define VB_OFFLEN_40    0x4000000000000000LL
+    #define QUADSIZE  8
+    #if     VB_SHORT_LOCK_RANGE == 1
+        #define VB_OFFLEN_7F  0x7FFFFFFF
+        #define VB_OFFLEN_3F  0x3FFFFFFF
+        #define VB_OFFLEN_40  0x40000000
+    #else
+        #define VB_OFFLEN_7F  0x7fffffffffffffffLL
+        #define VB_OFFLEN_3F  0x3fffffffffffffffLL
+        #define VB_OFFLEN_40  0x4000000000000000LL
+    #endif
 #else
-#define QUADSIZE    4
-#define VB_OFFLEN_7F    0x7FFFFFFF
-#define VB_OFFLEN_3F    0x3FFFFFFF
-#define VB_OFFLEN_40    0x40000000
+    #define QUADSIZE  4
+    #define VB_OFFLEN_7F  0x7FFFFFFF
+    #define VB_OFFLEN_3F  0x3FFFFFFF
+    #define VB_OFFLEN_40  0x40000000
 #endif
 
-#define MAXSUBS     32  /* Maximum number of indexes per table */
-#define VB_MAX_FILES    128 /* Maximum number of open VBISAM files */
+/*#define VBISAM_LIB only define for a dll*/
+#include  "vbisam.h"
+#include  "byteswap.h"
 
-//#define   VBISAM_LIB      /* defined externally */
-#include    "vbisam.h"
-#include    "byteswap.h"
+#ifdef _MSC_VER
+    #define COB_THREAD __declspec( thread )
+    #define HAVE__THEAD_ATTR 1
+    extern COB_THREAD vb_rtd_t vb_rtd_data;
+#else
 
+#ifdef HAVE__PTHREAD_ATTR
+  extern __pthread vb_rtd_t vb_rtd_data;
+  #undef VB_GET_RTD
+  #define VB_GET_RTD &vb_rtd_data
+
+#elif defined (HAVE_PTHREAD_H)
+#else
+  extern vb_rtd_t vb_rtd_data;
+  #undef VB_GET_RTD
+  #define VB_GET_RTD &vb_rtd_data
+
+#endif
+#endif
+
+
+/*
 #if defined(__GNUC__) && defined(linux) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3))
-#define VB_HIDDEN   __attribute__ ((visibility("hidden")))
+    #define VB_HIDDEN __attribute__ ((visibility("hidden")))
 #else
-#define VB_HIDDEN
+    #define VB_HIDDEN
 #endif
+*/
+#define VB_HIDDEN
 
 #ifndef O_BINARY
-#define O_BINARY    0
+    #define O_BINARY  0
 #endif
 
 #ifdef  WITH_LFS64
-//#ifdef    _MSC_VER
-//#if defined(_WIN32) || defined(_MSC_VER)
-#ifdef _WIN32
-#undef off_t            /* already defined as 'long' */
-#define off_t __int64
-#endif
+    #ifdef  _WIN32
+        #define off_t __int64
+    #endif
 #endif
 
-#ifdef  HAVE_BUILTIN_EXPECT
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+    #define likely(x) __builtin_expect(!!(x), 1)
+    #define unlikely(x) __builtin_expect(!!(x), 0)
 #else
-#define likely(x)   (x)
-#define unlikely(x) (x)
+    #define likely(x) (x)
+    #define unlikely(x) (x)
 #endif
-
-typedef unsigned char * ucharptr;
 
 #if !defined(__i386__) && !defined(__x86_64__) && !defined(__powerpc__) && !defined(__powerpc64__) && !defined(__ppc__) && !defined(__amd64__)
     #if defined(_MSC_VER)
@@ -164,159 +198,232 @@ typedef unsigned char * ucharptr;
     #define MISALIGNED
 #endif
 
-/* Inline versions of load/store routines */
+typedef VB_UCHAR * ucharptr;
 
-#if defined(ALLOW_MISALIGNED) && !defined(WORDS_BIGENDIAN)
-#define inl_ldint(x)    (int)(VB_BSWAP_16(*((unsigned short MISALIGNED *)(x))))
-#else
-static inline int
+/* Inline versions of load/store routines */
+#if NEED_VBINLINE_FUNCS
+static VB_INLINE int
 inl_ldint (void *pclocation)
 {
 #ifndef WORDS_BIGENDIAN
-    return (int)VB_BSWAP_16(*(unsigned short MISALIGNED *)pclocation);
+    #ifdef ALLOW_MISALIGNED
+    return(int)VB_BSWAP_16(*(unsigned short *)pclocation);
+    #else
+    short   ivalue = 0;
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &ivalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+
+    *(pctemp + 0) = *(pctemp2 + 1);
+    *(pctemp + 1) = *(pctemp2 + 0);
+    return(int)ivalue;
+    #endif
 #else
     short   ivalue = 0;
-    unsigned char   *pctemp = (unsigned char *) &ivalue;
-    unsigned char   *pctemp2 = (unsigned char *) pclocation;
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &ivalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
 
     *(pctemp + 0) = *(pctemp2 + 0);
     *(pctemp + 1) = *(pctemp2 + 1);
-    return (int)ivalue;
+    return(int)ivalue;
 #endif
 }
-#endif
 
-#if defined(ALLOW_MISALIGNED) && !defined(WORDS_BIGENDIAN)
-#define inl_stint(x,y)  *(unsigned short MISALIGNED *)(y) = VB_BSWAP_16((unsigned short)(x));
-#else
-static inline void
+static VB_INLINE void
 inl_stint (int ivalue, void *pclocation)
 {
 #ifndef WORDS_BIGENDIAN
-    *(unsigned short MISALIGNED *)pclocation = VB_BSWAP_16((unsigned short)ivalue);
-#else
-    unsigned char   *pctemp = (char *) &ivalue;
-    unsigned char   *pctemp2 = (unsigned char *) pclocation;
+    #ifdef ALLOW_MISALIGNED
+    *(unsigned short *)pclocation = VB_BSWAP_16((unsigned short)ivalue);
+    #else
+    short           s =(short)(ivalue & 0xFFFF);
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &s;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
 
-    *(pctemp2 + 0) = *(pctemp + 0 + INTSIZE);
-    *(pctemp2 + 1) = *(pctemp + 1 + INTSIZE);
+    *(pctemp2 + 0) = *(pctemp + 1 );
+    *(pctemp2 + 1) = *(pctemp + 0 );
+    #endif
+#else
+    short           s =(short)(ivalue & 0xFFFF);
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &s;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+
+    *(pctemp2 + 0) = *(pctemp + 0 );
+    *(pctemp2 + 1) = *(pctemp + 1 );
 #endif
     return;
 }
-#endif
 
-#if defined(ALLOW_MISALIGNED) && !defined(WORDS_BIGENDIAN)
-//#define   inl_ldlong(x)   (int)(VB_BSWAP_32(*((unsigned short MISALIGNED *)(x))))
-#define inl_ldlong(x)   (int)(VB_BSWAP_32(*((unsigned int MISALIGNED *)(x))))
-#else
-static inline int
+static VB_INLINE int
 inl_ldlong (void *pclocation)
 {
 #ifndef WORDS_BIGENDIAN
-    return VB_BSWAP_32(*(unsigned int MISALIGNED *)pclocation);
+    #ifdef ALLOW_MISALIGNED
+    return VB_BSWAP_32(*(unsigned int *)pclocation);
+    #else
+    int   ivalue = 0;
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &ivalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+
+    *(pctemp + 0) = *(pctemp2 + 3);
+    *(pctemp + 1) = *(pctemp2 + 2);
+    *(pctemp + 2) = *(pctemp2 + 1);
+    *(pctemp + 3) = *(pctemp2 + 0);
+    return(int)ivalue;
+    #endif
 #else
     int lvalue;
 
-    memcpy((unsigned char *)&lvalue, (unsigned char *)pclocation, 4);
+    memcpy((VB_UCHAR *)&lvalue, (VB_UCHAR *)pclocation, 4);
     return lvalue;
 #endif
 }
-#endif
 
-#if defined(ALLOW_MISALIGNED) && !defined(WORDS_BIGENDIAN)
-#define inl_stlong(x,y) *(unsigned int MISALIGNED *)(y) = VB_BSWAP_32((unsigned int)(x));
-#else
-static inline void
+static VB_INLINE void
 inl_stlong (int lvalue, void *pclocation)
 {
 #ifndef WORDS_BIGENDIAN
-    *(unsigned int MISALIGNED *)pclocation = VB_BSWAP_32((unsigned int)lvalue);
+    #ifdef ALLOW_MISALIGNED
+    *(unsigned int *)pclocation = VB_BSWAP_32((unsigned int)lvalue);
+    #else
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &lvalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+
+    *(pctemp2 + 0) = *(pctemp + 3 );
+    *(pctemp2 + 1) = *(pctemp + 2 );
+    *(pctemp2 + 2) = *(pctemp + 1 );
+    *(pctemp2 + 3) = *(pctemp + 0 );
+    #endif
 #else
-    memcpy((unsigned char *)pclocation, (unsigned char *)&lvalue, 4);
+    memcpy((VB_UCHAR *)pclocation, (VB_UCHAR *)&lvalue, 4);
 #endif
     return;
 }
-#endif
 
-static inline off_t
+static VB_INLINE off_t
 inl_ldquad (void *pclocation)
 {
 
 #ifndef WORDS_BIGENDIAN
 #if ISAMMODE == 1
-    return VB_BSWAP_64(*(unsigned long long MISALIGNED *)pclocation);
-#else
-    return VB_BSWAP_32(*(unsigned int MISALIGNED *)pclocation);
-#endif
+    #ifdef ALLOW_MISALIGNED
+    return VB_BSWAP_64(*(unsigned long long *)pclocation);
+    #else
+    unsigned long long   ivalue = 0;
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &ivalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+
+    *(pctemp + 0) = *(pctemp2 + 7);
+    *(pctemp + 1) = *(pctemp2 + 6);
+    *(pctemp + 2) = *(pctemp2 + 5);
+    *(pctemp + 3) = *(pctemp2 + 4);
+    *(pctemp + 4) = *(pctemp2 + 3);
+    *(pctemp + 5) = *(pctemp2 + 2);
+    *(pctemp + 6) = *(pctemp2 + 1);
+    *(pctemp + 7) = *(pctemp2 + 0);
+    return (off_t)ivalue;
+    #endif
+#else /* ISAMMODE == 1 */
+
+    #ifdef ALLOW_MISALIGNED
+    return VB_BSWAP_32(*(unsigned int *)pclocation);
+    #else
+    off_t   ivalue = 0;
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &ivalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+
+    *(pctemp + 0) = *(pctemp2 + 3);
+    *(pctemp + 1) = *(pctemp2 + 2);
+    *(pctemp + 2) = *(pctemp2 + 1);
+    *(pctemp + 3) = *(pctemp2 + 0);
+    return (off_t)ivalue;
+    #endif
+#endif  /* ISAMMODE == 1 */
 #else
     off_t   tvalue = 0;
 
 #if ISAMMODE == 1
-    memcpy((unsigned char *)&tvalue, (unsigned char *)pclocation, 8);
-#else
-    memcpy((unsigned char *)&tvalue, (unsigned char *)pclocation, 4);
-#endif
+    memcpy((VB_UCHAR *)&tvalue, (VB_UCHAR *)pclocation, 8);
+#else /* ISAMMODE == 1 */
+    memcpy((VB_UCHAR *)&tvalue, (VB_UCHAR *)pclocation, 4);
+#endif  /* ISAMMODE == 1 */
     return tvalue;
 #endif
 }
 
-static inline void
+static VB_INLINE void
 inl_stquad (off_t tvalue, void *pclocation)
 {
 #ifndef WORDS_BIGENDIAN
 #if ISAMMODE == 1
-    *(unsigned long long MISALIGNED *)pclocation = VB_BSWAP_64((unsigned long long)tvalue);
-#else
-    *(unsigned int MISALIGNED *)pclocation = VB_BSWAP_32((unsigned int)tvalue);
-#endif
+    #ifdef ALLOW_MISALIGNED
+    *(unsigned long long *)pclocation = VB_BSWAP_64((unsigned long long)tvalue);
+    #else
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &tvalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+    *(pctemp2 + 0) = *(pctemp + 7 );
+    *(pctemp2 + 1) = *(pctemp + 6 );
+    *(pctemp2 + 2) = *(pctemp + 5 );
+    *(pctemp2 + 3) = *(pctemp + 4 );
+    *(pctemp2 + 4) = *(pctemp + 3 );
+    *(pctemp2 + 5) = *(pctemp + 2 );
+    *(pctemp2 + 6) = *(pctemp + 1 );
+    *(pctemp2 + 7) = *(pctemp + 0 );
+    #endif
+
+#else /* ISAMMODE == 1 */
+    #ifdef ALLOW_MISALIGNED
+    *(unsigned int *)pclocation = VB_BSWAP_32((unsigned int)tvalue);
+    #else
+    VB_UCHAR   *pctemp = (VB_UCHAR *) &tvalue;
+    VB_UCHAR   *pctemp2 = (VB_UCHAR *) pclocation;
+    *(pctemp2 + 0) = *(pctemp + 3 );
+    *(pctemp2 + 1) = *(pctemp + 2 );
+    *(pctemp2 + 2) = *(pctemp + 1 );
+    *(pctemp2 + 3) = *(pctemp + 0 );
+    #endif
+#endif  /* ISAMMODE == 1 */
 #else
 #if ISAMMODE == 1
-    memcpy((unsigned char *)pclocation, (unsigned char *)&tvalue, 8);
-#else
-    memcpy((unsigned char *)pclocation, (unsigned char *)&tvalue, 4);
-#endif
+    memcpy((VB_UCHAR *)pclocation, (VB_UCHAR *)&tvalue, 8);
+#else /* ISAMMODE == 1 */
+    memcpy((VB_UCHAR *)pclocation, (VB_UCHAR *)&tvalue, 4);
+#endif  /* ISAMMODE == 1 */
 #endif
     return;
 }
+#endif /*NEED_VBINLINE_FUNCS*/
 
-/* Implementation limits */
-/* 64-bit versions have a maximum node length of 4096 bytes */
-/* 32-bit versions have a maximum node length of 1024 bytes */
 
-#if ISAMMODE == 1
-#define MAX_NODE_LENGTH     4096
-#else
-#define MAX_NODE_LENGTH     1024
-#endif
+#define SLOTS_PER_NODE  ((MAX_NODE_LENGTH >> 2) - 1)  /* Used in vbvarlenio.c */
 
-#define VB_NODE_MAX     4096
-#define MAX_ISREC_LENGTH    32511
-#define MAX_RESERVED_LENGTH 32768   /* Greater then MAX_ISREC_LENGTH */
-#define MAX_BUFFER_LENGTH   65536
+#define MAX_PATH_LENGTH   512
+#define MAX_OPEN_TRANS    1024  /* Currently, only used in isrecover () */
+#define MAX_ISREC_LENGTH  32511
+#define MAX_RESERVED_LENGTH 32768 /* Greater then MAX_ISREC_LENGTH */
 
 /* Arguments to ivblock */
-#define VBUNLOCK    0   /* Unlock */
-#define VBRDLOCK    1   /* A simple read lock, non-blocking */
-#define VBRDLCKW    2   /* A simple read lock, blocking */
-#define VBWRLOCK    3   /* An exclusive write lock, non-blocking */
-#define VBWRLCKW    4   /* An exclusive write lock, blocking */
+#define VBUNLOCK  0 /* Unlock */
+#define VBRDLOCK  1 /* A simple read lock, non-blocking */
+#define VBRDLCKW  2 /* A simple read lock, blocking */
+#define VBWRLOCK  3 /* An exclusive write lock, non-blocking */
+#define VBWRLCKW  4 /* An exclusive write lock, blocking */
 
 /* Values for ivbrcvmode (used to control how isrecover works) */
-#define RECOV_C     0x00    /* Boring old buggy C-ISAM mode */
-#define RECOV_VB    0x01    /* New, improved error detection */
-#define RECOV_LK    0x02    /* Use locks in isrecover (See documentation) */
+#define RECOV_C   0x00  /* Boring old buggy C-ISAM mode */
+#define RECOV_VB  0x01  /* New, improved error detection */
+#define RECOV_LK  0x02  /* Use locks in isrecover (See documentation) */
 
-/* Values for ivbintrans */
-#define VBNOTRANS   0   /* NOT in a transaction at all */
-#define VBBEGIN     1   /* An isbegin has been issued but no more */
-#define VBNEEDFLUSH 2   /* Something BEYOND just isbegin has been issued */
-#define VBCOMMIT    3   /* We're in 'iscommit' mode */
-#define VBROLLBACK  4   /* We're in 'isrollback' mode */
-#define VBRECOVER   5   /* We're in 'isrecover' mode */
+/* Values for vb_rtd->ivbintrans */
+#define VBNOTRANS 0 /* NOT in a transaction at all */
+#define VBBEGIN   1 /* An isbegin has been issued but no more */
+#define VBNEEDFLUSH 2 /* Something BEYOND just isbegin has been issued */
+#define VBCOMMIT  3 /* We're in 'iscommit' mode */
+#define VBROLLBACK  4 /* We're in 'isrollback' mode */
+#define VBRECOVER 5 /* We're in 'isrecover' mode */
 
-VB_HIDDEN extern    int ivbintrans;
-VB_HIDDEN extern    int ivblogfilehandle;
-VB_HIDDEN extern    int ivbmaxusedhandle;
+/*
+VB_HIDDEN extern  VB_CHAR vb_rtd->cvbtransbuffer[MAX_BUFFER_LENGTH];
+*/
 
 struct  VBLOCK {
     struct  VBLOCK *psnext;
@@ -331,11 +438,11 @@ struct  VBKEY {
     struct  VBTREE  *pschild;   /* Pointer towards LEAF */
     off_t       trownode;   /* The row / node number */
     off_t       tdupnumber; /* The duplicate number (1st = 0) */
-    unsigned char   iisnew;     /* If this is a new entry (split use) */
-    unsigned char   iishigh;    /* Is this a GREATER THAN key? */
-    unsigned char   iisdummy;   /* A simple end of node marker */
-    unsigned char   spare[5];   /* Spare */
-    unsigned char   ckey[1];    /* Placeholder for the key itself */
+    VB_UCHAR   iisnew;     /* If this is a new entry (split use) */
+    VB_UCHAR   iishigh;    /* Is this a GREATER THAN key? */
+    VB_UCHAR   iisdummy;   /* A simple end of node marker */
+    VB_UCHAR   pspare[5];  /* Spare */
+    VB_UCHAR   ckey[1];    /* Placeholder for the key itself */
 };
 
 struct  VBTREE {
@@ -348,56 +455,56 @@ struct  VBTREE {
     off_t       ttransnumber;   /* Transaction number stamp */
     unsigned int    ilevel;     /* The level number (0 = LEAF) */
     unsigned int    ikeysinnode;    /* # keys in pskeylist */
-    unsigned char   iisroot;    /* 1 = This is the ROOT node */
-    unsigned char   iistof;     /* 1 = First entry in index */
-    unsigned char   iiseof;     /* 1 = Last entry in index */
-    unsigned char   spare[5];   /* Spare */
-#if ISAMMODE == 1           /* Highly non-portable.. kind of */
+    VB_UCHAR   iisroot;    /* 1 = This is the ROOT node */
+    VB_UCHAR   iistof;     /* 1 = First entry in index */
+    VB_UCHAR   iiseof;     /* 1 = Last entry in index */
+    VB_UCHAR   pspare[5];  /* Spare */
+#if ISAMMODE == 1     /* Highly non-portable.. kind of */
     struct  VBKEY   *pskeylist[512];
-#else
+#else /* ISAMMODE == 1 */
     struct  VBKEY   *pskeylist[256];
-#endif
+#endif  /* ISAMMODE == 1 */
 };
 
-struct  DICTNODE {          /* Offset   32Val   64Val */
-                    /* 32IO 64IO */
-    char    cvalidation[2];     /* 0x00 0x00    0xfe53  0x5642 */
-    char    cheaderrsvd;        /* 0x02 0x02    0x02    Same */
-    char    cfooterrsvd;        /* 0x03 0x03    0x02    Same */
-    char    crsvdperkey;        /* 0x04 0x04    0x04    0x08 */
-    char    crfu1;          /* 0x05 0x05    0x04    Same */
-    char    cnodesize[INTSIZE]; /* 0x06 0x06    0x03ff  0x0fff */
-    char    cindexcount[INTSIZE];   /* 0x08 0x08    Varies  Same */
-    char    crfu2[2];       /* 0x0a 0x0a    0x0704  Same */
-    char    cfileversion;       /* 0x0c 0x0c    0x00    Same */
-    char    cminrowlength[INTSIZE]; /* 0x0d 0x0d    Varies  Same */
-    char    cnodekeydesc[QUADSIZE]; /* 0x0f 0x0f    Normally 2 */
-    char    clocalindex;        /* 0x13 0x17    0x00    Same */
-    char    crfu3[5];       /* 0x14 0x18    0x00... Same */
-    char    cdatafree[QUADSIZE];    /* 0x19 0x1d    Varies  Same */
-    char    cnodefree[QUADSIZE];    /* 0x1d 0x25    Varies  Same */
-    char    cdatacount[QUADSIZE];   /* 0x21 0x2d    Varies  Same */
-    char    cnodecount[QUADSIZE];   /* 0x25 0x35    Varies  Same */
-    char    ctransnumber[QUADSIZE]; /* 0x29 0x3d    Varies  Same */
-    char    cuniqueid[QUADSIZE];    /* 0x2d 0x45    Varies  Same */
-    char    cnodeaudit[QUADSIZE];   /* 0x31 0x4d    Varies  Same */
-    char    clockmethod[INTSIZE];   /* 0x35 0x55    0x0008  Same */
-    char    crfu4[QUADSIZE];    /* 0x37 0x57    0x00... Same */
-    char    cmaxrowlength[INTSIZE]; /* 0x3b 0x5f    Varies  Same */
-    char    cvarleng0[QUADSIZE];    /* 0x3d 0x61    Varies  Same */
-    char    cvarleng1[QUADSIZE];    /* 0x41 0x69    Varies  Same */
-    char    cvarleng2[QUADSIZE];    /* 0x45 0x71    Varies  Same */
-    char    cvarleng3[QUADSIZE];    /* 0x49 0x79    Varies  Same */
-    char    cvarleng4[QUADSIZE];    /* 0x4d 0x81    Varies  Same */
+struct  DICTNODE {          /* Offset 32Val 64Val */
+    /* 32IO 64IO */
+    VB_CHAR    cvalidation[2];     /* 0x00  0x00  0xfe53  0x5642 */
+    VB_CHAR    cheaderrsvd;        /* 0x02 0x02 0x02  Same */
+    VB_CHAR    cfooterrsvd;        /* 0x03  0x03  0x02  Same */
+    VB_CHAR    crsvdperkey;        /* 0x04  0x04  0x04  0x08 */
+    VB_CHAR    crfu1;          /* 0x05 0x05 0x04  Same */
+    VB_CHAR    cnodesize[INTSIZE]; /* 0x06  0x06  0x03ff  0x0fff */
+    VB_CHAR    cindexcount[INTSIZE];   /* 0x08  0x08  Varies  Same */
+    VB_CHAR    crfu2[2];       /* 0x0a  0x0a  0x0704  Same */
+    VB_CHAR    cfileversion;       /* 0x0c  0x0c  0x00  Same */
+    VB_CHAR    cminrowlength[INTSIZE]; /* 0x0d  0x0d  Varies  Same */
+    VB_CHAR    cnodekeydesc[QUADSIZE]; /* 0x0f  0x0f  Normally 2 */
+    VB_CHAR    clocalindex;        /* 0x13  0x17  0x00  Same */
+    VB_CHAR    crfu3[5];       /* 0x14  0x18  0x00... Same */
+    VB_CHAR    cdatafree[QUADSIZE];    /* 0x19  0x1d  Varies  Same */
+    VB_CHAR    cnodefree[QUADSIZE];    /* 0x1d  0x25  Varies  Same */
+    VB_CHAR    cdatacount[QUADSIZE];   /* 0x21  0x2d  Varies  Same */
+    VB_CHAR    cnodecount[QUADSIZE];   /* 0x25  0x35  Varies  Same */
+    VB_CHAR    ctransnumber[QUADSIZE]; /* 0x29  0x3d  Varies  Same */
+    VB_CHAR    cuniqueid[QUADSIZE];    /* 0x2d  0x45  Varies  Same */
+    VB_CHAR    cnodeaudit[QUADSIZE];   /* 0x31  0x4d  Varies  Same */
+    VB_CHAR    clockmethod[INTSIZE];   /* 0x35  0x55  0x0008  Same */
+    VB_CHAR    crfu4[QUADSIZE];    /* 0x37  0x57  0x00... Same */
+    VB_CHAR    cmaxrowlength[INTSIZE]; /* 0x3b  0x5f  Varies  Same */
+    VB_CHAR    cvarleng0[QUADSIZE];    /* 0x3d  0x61  Varies  Same */
+    VB_CHAR    cvarleng1[QUADSIZE];    /* 0x41  0x69  Varies  Same */
+    VB_CHAR    cvarleng2[QUADSIZE];    /* 0x45  0x71  Varies  Same */
+    VB_CHAR    cvarleng3[QUADSIZE];    /* 0x49  0x79  Varies  Same */
+    VB_CHAR    cvarleng4[QUADSIZE];    /* 0x4d  0x81  Varies  Same */
 #if ISAMMODE == 1
-    char    cvarleng5[QUADSIZE];    /*  0x89    Varies  Same */
-    char    cvarleng6[QUADSIZE];    /*  0x91    Varies  Same */
-    char    cvarleng7[QUADSIZE];    /*  0x99    Varies  Same */
-    char    cvarleng8[QUADSIZE];    /*  0xa1    Varies  Same */
-#endif
-    char    crfulocalindex[36]; /* 0x51 0xa9    0x00... Same */
-            /*         ---- ---- */
-            /* Length Total    0x75 0xcd */
+    VB_CHAR    cvarleng5[QUADSIZE];    /* 0x89  Varies  Same */
+    VB_CHAR    cvarleng6[QUADSIZE];    /* 0x91  Varies  Same */
+    VB_CHAR    cvarleng7[QUADSIZE];    /* 0x99  Varies  Same */
+    VB_CHAR    cvarleng8[QUADSIZE];    /* 0xa1  Varies  Same */
+#endif  /* ISAMMODE == 1 */
+    VB_CHAR    crfulocalindex[36]; /* 0x51  0xa9  0x00... Same */
+    /*       ---- ---- */
+    /* Length Total    0x75 0xcd */
 };
 
 struct  DICTINFO {
@@ -409,10 +516,10 @@ struct  DICTINFO {
     int idatahandle;    /* file descriptor of the .dat file */
     int iindexhandle;   /* file descriptor of the .idx file */
     int iisopen;    /* 0: Table open, Files open, Buffers OK */
-                /* 1: Table closed, Files open, Buffers OK */
-                /*  Used to retain locks */
-                /* 2: Table closed, Files closed, Buffers OK */
-                /*  Basically, just caching */
+    /* 1: Table closed, Files open, Buffers OK */
+    /*  Used to retain locks */
+    /* 2: Table closed, Files closed, Buffers OK */
+    /*  Basically, just caching */
     int iopenmode;  /* The type of open which was used */
     int ivarlenlength;  /* Length of varlen component */
     int ivarlenslot;    /* The slot number within tvarlennode */
@@ -423,28 +530,27 @@ struct  DICTINFO {
     off_t   ttranslast; /* Used to see whether to set iindexchanged */
     off_t   tnrows;     /* Number of rows (0 IF EMPTY, 1 IF NOT) */
     off_t   tvarlennode;    /* Node containing 1st varlen data */
-    char    *cfilename;
-    char    *ppcrowbuffer;  /* tminrowlength buffer for key (re)construction */
-    const unsigned char *collating_sequence; /* Collating sequence */
-    unsigned char       iisdisjoint;    /* If set, CURR & NEXT give same result */
-    unsigned char       iisdatalocked;  /* If set, islock() is active */
-    unsigned char       iisdictlocked;  /* Relates to sdictnode below */
-                /* 0x00: Content on file MIGHT be different */
-                /* 0x01: Dictionary node is LOCKED */
-                /* 0x02: sdictnode needs to be rewritten */
-                /* 0x04: do NOT increment Dict.Trans */
-                /*       isrollback () is in progress */
-                /*      (Thus, suppress some ivbenter/ivbexit) */
-    unsigned char       iindexchanged;  /* Various */
-                /* 0: Index has NOT changed since last time */
-                /* 1: Index has changed, blocks invalid */
-                /* 2: Index has changed, blocks are valid */
-    unsigned char       itransyet;  /* Relates to isbegin () et al */
-                /* 0: FO Trans not yet written */
-                /* 1: FO Trans written outside isbegin */
-                /* 2: FO Trans written within isbegin */
-    unsigned char       iisammode;  /* ISAM mode */
-    unsigned char       dspare2[2]; /* spare */
+    VB_CHAR    *cfilename;
+    VB_CHAR    *ppcrowbuffer;  /* tminrowlength buffer for key (re)construction */
+    VB_UCHAR       *collating_sequence; /* Collating sequence */
+    VB_UCHAR       iisdisjoint;    /* If set, CURR & NEXT give same result */
+    VB_UCHAR       iisdatalocked;  /* If set, islock() is active */
+    VB_UCHAR       iisdictlocked;  /* Relates to sdictnode below */
+    /* 0x00: Content on file MIGHT be different */
+    /* 0x01: Dictionary node is LOCKED */
+    /* 0x02: sdictnode needs to be rewritten */
+    /* 0x04: do NOT increment Dict.Trans */
+    /*       isrollback () is in progress */
+    /*      (Thus, suppress some ivbenter/ivbexit) */
+    VB_UCHAR       iindexchanged;  /* Various */
+    /* 0: Index has NOT changed since last time */
+    /* 1: Index has changed, blocks invalid */
+    /* 2: Index has changed, blocks are valid */
+    VB_UCHAR       itransyet;  /* Relates to isbegin () et al */
+    /* 0: FO Trans not yet written */
+    /* 1: FO Trans written outside isbegin */
+    /* 2: FO Trans written within isbegin */
+    VB_UCHAR       dspare2[3]; /* spare */
     struct  DICTNODE    sdictnode;  /* Holds dictionary node data */
     struct  keydesc     *pskeydesc[MAXSUBS];    /* Array of key description info */
     struct  VBTREE      *pstree[MAXSUBS]; /* Linked list of index nodes */
@@ -452,162 +558,156 @@ struct  DICTINFO {
     struct  VBKEY       *pskeycurr[MAXSUBS]; /* An array of 'current' VBKEY pointers */
 };
 
-VB_HIDDEN extern    struct  DICTINFO *psvbfile[VB_MAX_FILES + 1];
-
-struct  VBFILE {
-    struct VBLOCK   *pslockhead;    /* Ordered linked list of locked row numbers */
-    struct VBLOCK   *pslocktail;
-    int     ihandle;
-    int     irefcount;  /* How many times we are 'open' */
-    dev_t       tdevice;
-    ino_t       tinode;
-#ifdef  _WIN32
-    HANDLE      whandle;
-    char        *cfilename;
-#endif
-};
-
-VB_HIDDEN extern    struct  VBFILE svbfile[VB_MAX_FILES * 3];
-
-#define VBL_BUILD   ("BU")
-#define VBL_BEGIN   ("BW")
-#define VBL_CREINDEX    ("CI")
+#define VBL_BUILD ("BU")
+#define VBL_BEGIN ("BW")
+#define VBL_CREINDEX  ("CI")
 #define VBL_CLUSTER ("CL")
 #define VBL_COMMIT  ("CW")
 #define VBL_DELETE  ("DE")
-#define VBL_DELINDEX    ("DI")
-#define VBL_FILEERASE   ("ER")
-#define VBL_FILECLOSE   ("FC")
-#define VBL_FILEOPEN    ("FO")
+#define VBL_DELINDEX  ("DI")
+#define VBL_FILEERASE ("ER")
+#define VBL_FILECLOSE ("FC")
+#define VBL_FILEOPEN  ("FO")
 #define VBL_INSERT  ("IN")
 #define VBL_RENAME  ("RE")
-#define VBL_ROLLBACK    ("RW")
-#define VBL_SETUNIQUE   ("SU")
-#define VBL_UNIQUEID    ("UN")
+#define VBL_ROLLBACK  ("RW")
+#define VBL_SETUNIQUE ("SU")
+#define VBL_UNIQUEID  ("UN")
 #define VBL_UPDATE  ("UP")
 
 struct  SLOGHDR {
-    char    clength[INTSIZE];
-    char    coperation[2];
-    char    cpid[INTSIZE];
-    char    cuid[INTSIZE];
-    char    ctime[LONGSIZE];
-    char    crfu1[INTSIZE];
-    char    clastposn[INTSIZE];
-    char    clastlength[INTSIZE];
+    VB_CHAR    clength[INTSIZE];
+    VB_CHAR    coperation[2];
+    VB_CHAR    cpid[INTSIZE];
+    VB_CHAR    cuid[INTSIZE];
+    VB_CHAR    ctime[LONGSIZE];
+    VB_CHAR    crfu1[INTSIZE];
+    VB_CHAR    clastposn[INTSIZE];
+    VB_CHAR    clastlength[INTSIZE];
 };
 
+
+/* isbuild.c */
+VB_HIDDEN extern int    VBiaddkeydescriptor (const int ihandle, struct keydesc *pskeydesc);
+
 /* isopen.c */
-VB_HIDDEN extern int    ivbforceexit (const int ihandle);
 VB_HIDDEN extern int    ivbclose2 (const int ihandle);
 VB_HIDDEN extern void   ivbclose3 (const int ihandle);
 
 /* isread.c */
 VB_HIDDEN extern int    ivbcheckkey (const int ihandle, struct keydesc *pskey,
-                 const int imode, int irowlength, const int iisbuild);
+                                     const int imode, int irowlength, const int iisbuild);
 
 /* istrans.c */
-VB_HIDDEN extern int    ivbtransbuild (const char *pcfilename, const int iminrowlen, const int imaxrowlen,
-                   struct keydesc *pskeydesc, const int imode);
-VB_HIDDEN extern int    ivbtranscreateindex (const int ihandle, struct keydesc *pskeydesc);
+VB_HIDDEN extern int    ivbtransbuild (const VB_CHAR *pcfilename, const int iminrowlen, const int imaxrowlen,
+                                       struct keydesc *pskeydesc, const int imode);
+VB_HIDDEN extern int    ivbtranscreateindex (int ihandle, struct keydesc *pskeydesc);
 VB_HIDDEN extern int    ivbtranscluster (void);
-VB_HIDDEN extern int    ivbtransdelete (const int ihandle, off_t trownumber, int irowlength);
-VB_HIDDEN extern int    ivbtransdeleteindex (const int ihandle, struct keydesc *pskeydesc);
-VB_HIDDEN extern int    ivbtranserase (const char *pcfilename);
-VB_HIDDEN extern int    ivbtransclose (const int ihandle, const char *pcfilename);
-VB_HIDDEN extern int    ivbtransopen (const int ihandle, const char *pcfilename);
-VB_HIDDEN extern int    ivbtransinsert (const int ihandle, const off_t trownumber,
-                int irowlength, char *pcrow);
-VB_HIDDEN extern int    ivbtransrename (char *pcoldname, char *pcnewname);
-VB_HIDDEN extern int    ivbtranssetunique (const int ihandle, const off_t tuniqueid);
-VB_HIDDEN extern int    ivbtransuniqueid (const int ihandle, const off_t tuniqueid);
-VB_HIDDEN extern int    ivbtransupdate (const int ihandle, const off_t trownumber,
-                const int ioldrowlen, const int inewrowlen,
-                const char *pcrow);
+VB_HIDDEN extern int    ivbtransdelete (int ihandle, off_t trownumber, int irowlength);
+VB_HIDDEN extern int    ivbtransdeleteindex (int ihandle, struct keydesc *pskeydesc);
+VB_HIDDEN extern int    ivbtranserase (VB_CHAR *pcfilename);
+VB_HIDDEN extern int    ivbtransclose (int ihandle, VB_CHAR *pcfilename);
+VB_HIDDEN extern int    ivbtransopen (int ihandle, const VB_CHAR *pcfilename);
+VB_HIDDEN extern int    ivbtransinsert (int ihandle, off_t trownumber, int irowlength,
+                                        VB_CHAR *pcrow);
+VB_HIDDEN extern int    ivbtransrename (VB_CHAR *pcoldname, VB_CHAR *pcnewname);
+VB_HIDDEN extern int    ivbtranssetunique (int ihandle, off_t tuniqueid);
+VB_HIDDEN extern int    ivbtransuniqueid (int ihandle, off_t tuniqueid);
+VB_HIDDEN extern int    ivbtransupdate (int ihandle, off_t trownumber, int ioldrowlen,
+                                        int inewrowlen, VB_CHAR *pcrow);
 
 /* iswrite.c */
-VB_HIDDEN extern int    ivbwriterow (const int ihandle, char *pcrow,
-                const off_t trownumber);
+VB_HIDDEN extern int    ivbwriterow (const int ihandle, VB_CHAR *pcrow, off_t trownumber);
 
 /* vbdataio.c */
-VB_HIDDEN extern int    ivbdataread (const int ihandle, char *pcbuffer,
-                int *pideletedrow, const off_t trownumber);
-VB_HIDDEN extern int    ivbdatawrite (const int ihandle, char *pcbuffer,
-                int ideletedrow, const off_t trownumber);
+VB_HIDDEN extern int    ivbdataread (const int ihandle, VB_CHAR *pcbuffer, int *pideletedrow,
+                                     off_t trownumber);
+VB_HIDDEN extern int    ivbdatawrite (const int ihandle, VB_CHAR *pcbuffer, int ideletedrow,
+                                      off_t trownumber);
 
 /* vbindexio.c */
 VB_HIDDEN extern off_t  tvbnodecountgetnext (const int ihandle);
-VB_HIDDEN extern int    ivbnodefree (const int ihandle, const off_t tnodenumber);
-VB_HIDDEN extern int    ivbdatafree (const int ihandle, const off_t trownumber);
+VB_HIDDEN extern int    ivbnodefree (const int ihandle, off_t tnodenumber);
+VB_HIDDEN extern int    ivbdatafree (const int ihandle, off_t trownumber);
 VB_HIDDEN extern off_t  tvbnodeallocate (const int ihandle);
 VB_HIDDEN extern off_t  tvbdataallocate (const int ihandle);
-VB_HIDDEN extern int    ivbforcedataallocate (const int ihandle, const off_t trownumber);
+VB_HIDDEN extern int    ivbforcedataallocate (const int ihandle, off_t trownumber);
 
 /* vbkeysio.c */
 VB_HIDDEN extern void   vvbmakekey (const struct keydesc *pskeydesc,
-                char *pcrow_buffer, unsigned char *pckeyvalue);
+                                    VB_CHAR *pcrow_buffer, VB_UCHAR *pckeyvalue);
 VB_HIDDEN extern int    ivbkeysearch (const int ihandle, const int imode,
-                  const int ikeynumber, int ilength,
-                  unsigned char *pckeyvalue, off_t tdupnumber);
+                                      const int ikeynumber, int ilength,
+                                      VB_UCHAR *pckeyvalue, off_t tdupnumber);
 VB_HIDDEN extern int    ivbkeylocaterow (const int ihandle, const int ikeynumber, off_t trownumber);
 VB_HIDDEN extern int    ivbkeyload (const int ihandle, const int ikeynumber, const int imode,
-                const int isetcurr, struct VBKEY **ppskey);
+                                    const int isetcurr, struct VBKEY **ppskey);
 VB_HIDDEN extern void   vvbkeyvalueset (const int ihigh, struct keydesc *pskeydesc,
-                unsigned char *pckeyvalue);
+                                        VB_UCHAR *pckeyvalue);
 VB_HIDDEN extern int    ivbkeyinsert (const int ihandle, struct VBTREE *pstree,
-                  const int ikeynumber, unsigned char *pckeyvalue,
-                  off_t trownode, off_t tdupnumber,
-                  struct VBTREE *pschild);
+                                      const int ikeynumber, VB_UCHAR *pckeyvalue,
+                                      off_t trownode, off_t tdupnumber,
+                                      struct VBTREE *pschild);
 VB_HIDDEN extern int    ivbkeydelete (const int ihandle, const int ikeynumber);
 VB_HIDDEN extern int    ivbkeycompare (const int ihandle, const int ikeynumber, int ilength,
-                   unsigned char *pckey1, unsigned char *pckey2);
+                                       VB_UCHAR *pckey1, VB_UCHAR *pckey2);
+#ifdef  VBDEBUG
+VB_HIDDEN extern int    idumptree (int ihandle, int ikeynumber);
+VB_HIDDEN extern int    ichktree (int ihandle, int ikeynumber);
+#endif  /* VBDEBUG */
 
 /* vblocking.c */
-VB_HIDDEN extern int    ivbenter (const int ihandle, const unsigned int imodifying,
-                const unsigned int ispecial);
+VB_HIDDEN extern int    ivbenter (const int ihandle, const int imodifying);
 VB_HIDDEN extern int    ivbexit (const int ihandle);
 VB_HIDDEN extern int    ivbfileopenlock (const int ihandle, const int imode);
-VB_HIDDEN extern int    ivbdatalock (const int ihandle, const int imode,
-                const off_t trownumber);
+VB_HIDDEN extern int    ivbdatalock (const int ihandle, const int imode, off_t trownumber);
 
 /* vblowlovel.c */
-VB_HIDDEN extern int    ivbopen (const char *pcfilename, const int iflags,
-                const mode_t tmode);
+extern int    ivbopen (VB_CHAR *pcfilename, const int iflags, const mode_t tmode);
 VB_HIDDEN extern int    ivbclose (const int ihandle);
 VB_HIDDEN extern off_t  tvblseek (const int ihandle, off_t toffset, const int iwhence);
 
+#ifdef  VBDEBUG
 VB_HIDDEN extern ssize_t    tvbread (const int ihandle, void *pvbuffer, const size_t tcount);
-VB_HIDDEN extern ssize_t    tvbwrite (const int ihandle, const void *pvbuffer, const size_t tcount);
+VB_HIDDEN extern ssize_t    tvbwrite (const int ihandle, void *pvbuffer, const size_t tcount);
+#else
+    #define tvbread(x,y,z)  read(vb_rtd->svbfile[(x)].ihandle,(void *)(y),(size_t)(z))
+    #define tvbwrite(x,y,z) write(vb_rtd->svbfile[(x)].ihandle,(void *)(y),(size_t)(z))
+#endif
 
 VB_HIDDEN extern int    ivbblockread (const int ihandle, const int iisindex,
-                const off_t tblocknumber, char *cbuffer);
+                                      off_t tblocknumber, VB_CHAR *cbuffer);
 VB_HIDDEN extern int    ivbblockwrite (const int ihandle, const int iisindex,
-                const off_t tblocknumber, const char *cbuffer);
-VB_HIDDEN extern int    ivblock (const int ihandle, const off_t toffset,
-                const off_t tlength, const int imode);
+                                       off_t tblocknumber, VB_CHAR *cbuffer);
+VB_HIDDEN extern int    ivblock (const int ihandle, off_t toffset, off_t tlength, const int imode);
 
 /* vbmemio.c */
 VB_HIDDEN extern struct VBLOCK  *psvblockallocate (const int ihandle);
-VB_HIDDEN extern void       vvblockfree (struct VBLOCK *pslock);
+VB_HIDDEN extern void           vvblockfree (struct VBLOCK *pslock);
 VB_HIDDEN extern struct VBTREE  *psvbtreeallocate (const int ihandle);
-VB_HIDDEN extern void       vvbtreeallfree (const int ihandle, const int ikeynumber,
-                    struct VBTREE *pstree);
+VB_HIDDEN extern void           vvbtreeallfree (const int ihandle, const int ikeynumber,
+                                                struct VBTREE *pstree);
 VB_HIDDEN extern struct VBKEY   *psvbkeyallocate (const int ihandle, const int ikeynumber);
-VB_HIDDEN extern void       vvbkeyallfree (const int ihandle, const int ikeynumber,
-                       struct VBTREE *pstree);
-VB_HIDDEN extern void       vvbkeyfree (const int ihandle, const int ikeynumber,
-                    struct VBKEY *pskey);
-VB_HIDDEN extern void       vvbkeyunmalloc (const int ihandle, const int ikeynumber);
-VB_HIDDEN extern void       *pvvbmalloc (const size_t size);
-VB_HIDDEN extern void       vvbfree (void *mptr);
-VB_HIDDEN extern void       vvbunmalloc (void);
+VB_HIDDEN extern void           vvbkeyallfree (const int ihandle, const int ikeynumber,
+                                               struct VBTREE *pstree);
+VB_HIDDEN extern void           vvbkeyfree (const int ihandle, const int ikeynumber,
+                                            struct VBKEY *pskey);
+VB_HIDDEN extern void           vvbkeyunmalloc (const int ihandle, const int ikeynumber);
+#ifdef  VBDEBUG
+VB_HIDDEN extern void           *pvvbmalloc (const size_t tlength);
+VB_HIDDEN extern void           vvbfree (void *pvpointer, size_t tlength);
+VB_HIDDEN extern void           vvbunmalloc (void);
+#else
+    #define vvbfree(x,y)  free((void *)(x))
+    #define pvvbmalloc(x) calloc(1, (size_t)(x))
+#endif  /* VBDEBUG */
 
 /* vbnodememio.c */
 VB_HIDDEN extern int    ivbnodeload (const int ihandle, const int ikeynumber,
-                struct VBTREE *pstree, const off_t tnodenumber,
-                const int iprevlvl);
+                                     struct VBTREE *pstree, off_t tnodenumber,
+                                     int iprevlvl);
 VB_HIDDEN extern int    ivbnodesave (const int ihandle, const int ikeynumber,
-                struct VBTREE *pstree, const off_t tnodenumber,
-                const int imode, const int iposn);
+                                     struct VBTREE *pstree, off_t tnodenumber , int imode,
+                                     int iposn);
 
 #endif  /* VB_LIBVBISAM_H */
