@@ -1,0 +1,2052 @@
+adcent   key      company  system                                                         
+adchange key      mfdef    mfval1   mfval2                                                
+adcomms  key      ndcode   source   type     lineno                                       
+adcon    forkey   uforenameconref                                                         
+adcon    ndkey    address  conref                                                         
+adcon    opkey    oper     conref                                                         
+adcon    surkey   usurname conref                                                         
+adcon    telkey   telephoneconref                                                         
+adconatt enqkey   attcode  attval   conref   seq                                          
+adconatt key      conref   attcode  seq                                                   
+adconc   key      type     ndcode   word                                                  
+adconc   wordkey  type     word     ndcode                                                
+adconref key      atype    account  conref                                                
+adcontel enqkey   telno    conref   teltyp                                                
+adcontel key      conref   teltyp                                                         
+adfunc   key1     filename fldname  rectype  seq                                          
+adgdesc  key      type     company  code                                                  
+adinslnk key      ledger   ref      inscode  order    st_date                             
+adlabel  key      ledger   doctype  ltype    label    ljob     lsubcode                   
+admfclassprikey   type     mfval                                                          
+adnumb   key      ncode    ltype    label    ljob     lsubcode rstart                     
+adnumb   numkey   ncode    nextnr   rstart                                                
+adpdex   key      type     code                                                           
+adpouprapkey      user     authcat                                                        
+adprefx  key      ledger   doctype  prefix                                                
+adqcomm  key      invlgr   ourref   seq      commseq                                      
+adrdest  cokey    conref   ndcode   rolecode rtype                                        
+adrdest  ndkey    ndcode   rolecode conref   rtype                                        
+adrdest  rtkey    rtype    ndcode   rolecode conref                                       
+adref    key      company  loc      system   type                                         
+adscgpar key      coid     master                                                         
+adscgpar keymastermaster   coid                                                           
+adspass  ckey     ccoid    paragraph                                                      
+adspass  key      coid     name     seq                                                   
+adsphead key      coid     paragraph                                                      
+adtermdeskey      terms    lang                                                           
+alcca    key      cicode   year                                                           
+alcode   key      prefix   code                                                           
+alcomm   key      asset    docref   seq                                                   
+alelt    key      eltcode  year                                                           
+almas    cstgrp   cstcent  group    asset                                                 
+almas    cstkey   cstcent  asset                                                          
+almas    grpkey   group    asset                                                          
+almas    prodkey  product  asset                                                          
+alsecure key      userid   cstcent  group                                                 
+altable  key      type     code                                                           
+altran   key      asset    ourref   seq                                                   
+apcont   batkey   batch    proof                                                          
+apcont   key      ledger   proof    source   batch    trantype                            
+apde1    key      type     code                                                           
+apdesc   key      type     code                                                           
+appcodes key      language type     code                                                  
+apstd    key      para     seq                                                            
+aradds   key      asset    seq                                                            
+arcca    key      cicode   year                                                           
+arelt    key      eltcode  year                                                           
+armas    grpkey   group    location asset                                                 
+armas    lockey   location group    asset                                                 
+armas    prodkey  product  asset                                                          
+artable  key      type     code                                                           
+asanal   key      account  order    glaccountwt       job      subcode  tcode    element  
+asapp    apkey    account  order    valno                                                 
+asapp    key      account  order    trandate appref                                       
+asarch   dockey   account  docref   seq                                                   
+asarch   key      account  order    trandate trantype seq                                 
+asarch   merge_keyaccount  order    orgttype streamed trandate seq                        
+asarch   valkey   account  order    valno                                                 
+ascomm   key      account  order    comref   element  seq                                 
+aselpar  key      account  order    status   element                                      
+asocdet  key      account  order    element                                               
+asord    acctkey  account  wt       job      subcode                                      
+asord    jobkey   wt       job      subcode                                               
+asord    key      account  order                                                          
+asord    mhckey   wt       job      account  order                                        
+asreten  key      account  order    seq                                                   
+asstat   key      account  year     period                                                
+astran   dockey   account  docref   seq                                                   
+astran   key      account  order    trandate trantype seq                                 
+astran   merge_keyaccount  order    orgttype streamed trandate seq                        
+astran   valkey   account  order    valno                                                 
+asvanal  key      docref   taxcode                                                        
+aswof    key      account  order                                                          
+atfile   filekey  file     audit                                                          
+atfile   key      audit    file     field                                                 
+atprog   key      audit    prog                                                           
+ausifile key      f1       f2       f3                                                    
+b1amend  key      loc      ordtype  product  year     period   seq                        
+b1amend  secondkeyloc      year     period   ordtype  product  seq                        
+b1archg  key      year     period   loc      chargcodeproduct  ordtype  week              
+b1aresdetkey      loc      chargcodeseq                                                   
+b1charge key      year     period   loc      chargcodeproduct  ordtype  week              
+b1charge lockey   loc      chargcode                                                      
+b1charge wkkey    year     period   week     loc      ordtype  chargcodeproduct           
+b1chgper key      year     period   start                                                 
+b1disc   key      ordtype  disccode                                                       
+b1estdet key      loc      chargcodeseq                                                   
+b1hihead key      loc      product  seq                                                   
+b1hires  hkey     loc      ordtype  product  seq      serfld                              
+b1hires  prodkey  loc      product  start    seq      ordtype  serfld                     
+b1plan   ancustkeyyear     period   analtype anal     customer costper  product           
+b1plan   anperkey year     period   analtype anal     costper  product  seq               
+b1plan   ppctpkey year     period   costper  pctype   product                             
+b1plan   ppprodkeyyear     period   costper  product  analtype anal     customer          
+b1plan   ptypekey year     period   costper  type     product                             
+b1prhire key      weekno   product                                                        
+b1prhire prodkey  product  weekno                                                         
+b1rates  key      group    pertype  pctype   ctype    item                                
+b2dataerrkey      ref      counter                                                        
+b2jobeditkey      fileid   seq                                                            
+b3hist   key      wt       job      number   type     hkey                                
+b3stone  key      wt       job      number                                                
+bkaccpc  key      acctref  paycode                                                        
+bkaccpt  acctkey  acctref  paycode                                                        
+bkbill   acctkey  acctref  billdate billref                                               
+bkbill   currkey  account  currency billref                                               
+bkbill   srckey   source   status   account  billdate billref                             
+bkcheq   key      acctref  chequeno seq                                                   
+bkcheq   refkey   source   voucher                                                        
+bkpayee  key      code     sequence                                                       
+bkpaymnt acctkey  acctref  trandate voucher                                               
+bkpaymnt batkey   acctref  batch    status   trantype                                     
+bkpaymnt chqkey   acctref  remdel   ndcode   trandate voucher                             
+bkpaymnt key      source   voucher  trantype                                              
+bkpaymnt paykey   code     trandate status   voucher                                      
+bkpaymnt vouchkey voucher  acctref  trandate source   trantype                            
+bkpmeth  key      type     acctref  source   method                                       
+bkrec    acctkey  acctref  trandate voucher  source   trantype                            
+bkrec    batkey   acctref  batch                                                          
+bkrec    chqkey   acctref  chequeno                                                       
+bkrec    key      source   voucher  trantype                                              
+bkrec    pagekey  acctref  page     line     trandate voucher  trantype                   
+bkrec    paykey   code     trandate status   voucher                                      
+bkrec    vouchkey voucher  acctref  trandate source   trantype                            
+bkstan   acctkey  acctref  docref                                                         
+bkstat   key      acctref  page                                                           
+bkstmt   key      acctref  page     line                                                  
+bksumm   key      coid     acctref                                                        
+bugalloc key      team     system   prog                                                  
+buganal  key      team     level    option   code                                         
+buglog   fixkey   fixdate  fixuser                                                        
+buglog   prgsys   prog     system                                                         
+buglog   repkey   repdate  repuser  repteam                                               
+buglog   typkey   type     priority status                                                
+bugmail  key      team     seq                                                            
+bugnote  key      number   type     seq                                                   
+bugport  key      number   seq                                                            
+bugstat  key      team     type     priority system                                       
+buguser  key      user     team                                                           
+bugvers  key      env      seq                                                            
+bugvfix  key      number   env      seq                                                   
+c1hist   key      transno  comp     sys      proof    batch                               
+c1proof  key      comp     sys      ledger                                                
+c4contrctmtrjkey  worktype mentorjobyegjob                                                
+c4contrctyegjkey  yegjob   worktype mentorjob                                             
+c4trcodesfromkey  yegccfromtcode                                                          
+c4trcodestcodekey tcode    yegccfrom                                                      
+c4trcodestokey    yegccto  tcode                                                          
+c4work   wtkey    wt       yegcc                                                          
+c4work   yegcckey yegcc    wt                                                             
+c5cash   key      wt       job      subcode  tcode    ledger                              
+c5cash   tckey    wt       job      tcode    ledger   subcode                             
+cachangedkey      lang     type     name     comp     user                                
+ccarch   key      wt       job      subcode  tcode    trandate serial                     
+ccarch   proofkey proof    wt       job      subcode  tcode    trandate serial            
+ccbatch  key      wt       job      subcode  tcode    trandate serial                     
+cccharge key      wt       job      tcode                                                 
+cccomm   key      comref   seq                                                            
+ccmas    ackey    client   wt       job                                                   
+ccmas    jobkey   job      wt                                                             
+ccmas    key      wt       job                                                            
+ccmas    ndkey    ndcode   wt       job                                                   
+ccmas    renewkey termdate status   wt       job                                          
+ccmas    termkey  termdate wt       job                                                   
+ccname   key      type     code                                                           
+ccord    issdkey  wt       job      issdate  vonr                                         
+ccord    key      wt       job      vonr                                                  
+ccost    grpkey   wt       job      subcode  maingrp  tcode                               
+ccost    jobkey   wt       job      tcode    subcode                                      
+ccost    key      wt       job      subcode  tcode                                        
+ccrevdef key      sdate    wt       job      subcode  tcode    trandate serial            
+ccrevdef ourkey   ourref   serial                                                         
+ccscode  key      wt       job      subcode                                               
+ccsec    key      user     rectype  wt       job      anal                                
+ccstand  key      ourref   seq                                                            
+ccstat   key      wt       job      tcode    subcode  year     rectype                    
+ccstat   tckey    tcode    wt       job      subcode  year     rectype                    
+cctcode  grpkey   maingrp  tcode                                                          
+cctran   crkey    wt       job      subcode  cusref   trandate serial                     
+cctran   key      wt       job      subcode  tcode    trandate serial                     
+cctran   proofkey proof    wt       job      subcode  tcode    trandate                   
+cctran   trankey  trandate docref                                                         
+cddel    key      wt       job                                                            
+cdfile   key      coid     wt       job                                                   
+cdtran   extkey   table    type     exterc                                                
+cdtran   intkey   table    type     intern                                                
+cfcalc   key      modref   calcref                                                        
+cfcash   key      modref   code     date                                                  
+cfnote   key      type     modref   calcref  seqno                                        
+cfnote   modkey   modref   type     calcref  seqno                                        
+cgcat    seqkey   sequence category                                                       
+cgcentre alkey    alias    centre                                                         
+cgcode   catkey   category code                                                           
+cgcollangkey      language spec     column                                                
+cgcolumn key      spec     column                                                         
+cgconvtmpaliaskey alias    account                                                        
+cgconvtmpcodekey  code     account                                                        
+cgconvtmpcompkey  complete account                                                        
+cgconvtmpcostkey  centre   account                                                        
+cgconvtmpnewkey   newacc   account                                                        
+cgelementelekey   grouping element  segment                                               
+cgelementkey      grouping segment  element                                               
+cgenqit  key      enq      level                                                          
+cglookup key      company  type     pcode    exmod    category                            
+cgsecdet enqkey   enq      secgrp   level    grouping segment                             
+cgsecdet key      secgrp   enq      level    grouping segment                             
+cgsegmentkey      grouping segment                                                        
+cgushier key      user     enq                                                            
+chacce   key      call     product  serial                                                
+chaction actkey   actcode  call     action                                                
+chaction empkey   emp      closure  call     action                                       
+chaction etakey   emp      etadate  etatime  call     action                              
+chaction key      call     action                                                         
+chaction outkey   closure  actcode  call     action                                       
+chcall   callkey  wt       job      lineref  effdate  call                                
+chcall   ckey     clog     cprioritycstatus  cescdate cesctime call                       
+chcall   constatkywt       job      stat     call                                         
+chcall   contkey  wt       job      ldate    call                                         
+chcall   crefkey  cusref   call                                                           
+chcall   cuspokey cusporef call                                                           
+chcall   cusstatkycustomer stat     call                                                  
+chcall   custkey  customer call                                                           
+chcall   deptkey  dept     call                                                           
+chcall   esckey   escdate  esctime  call                                                  
+chcall   estatkey emp      log      stat     call                                         
+chcall   etakey   emp      etadate  etatime  call                                         
+chcall   leadkey  leadcall call                                                           
+chcall   lkey     log      lprioritylstatus  lescdate lesctime call                       
+chcall   mankey   manser   ldate    call                                                  
+chcall   ndkey    ndcode   ldate    call                                                  
+chcall   ourkey   ourser   ldate    call                                                  
+chcall   prodkey  product  ldate    call                                                  
+chcall   sareakey sarea    call                                                           
+chcall   seqkey   emp      empseq   call                                                  
+chcall   soordkey soorder  call                                                           
+chcall   stareakeystat     sarea    call                                                  
+chcall   statkey  stat     call                                                           
+chcall   statndkeystat     ndcode   call                                                  
+chcall   stdeptkeystat     dept     call                                                  
+chcall   userkey  userstat emp      call                                                  
+chclosactactkey   actcode  closure                                                        
+chclosactkey      closure  actcode                                                        
+chclosfltkey      closure  fault                                                          
+chclosfltkey1     fault    closure                                                        
+chclossercloskey  closure  service                                                        
+chclosserservkey  service  closure                                                        
+chcomm   key      call     action   seq                                                   
+chconc   callkey  call     word                                                           
+chconc   wordkey  word     call                                                           
+chefault key      emp      fault                                                          
+chemp    deptkey  dept     section  emp                                                   
+chemp    lockey   loc      emp                                                            
+chemp    loginkey login    emp                                                            
+chemp    ndkey    ndcode   emp                                                            
+cheskill key      emp      skill                                                          
+chfault  key      type     code                                                           
+chhoauditkey      call     seq                                                            
+chinvoicecallkey  call     invref                                                         
+chndarea key      sarea    ndarea                                                         
+chparts  key      call     product  loc                                                   
+chparts  retkey   returned loc      call     product                                      
+chparts  trankey  transferdloc      call     product                                      
+chrarea  key      region   sarea                                                          
+chrate   key      type     rate                                                           
+chskmat  key      product  fault                                                          
+chtandm  key      call     action   seq                                                   
+chtandm  prodkey  type     product  call     action   seq                                 
+chtcact  key      calltemp seq                                                            
+chuser   key      user     log                                                            
+chuser   mailkey  log      mail     user                                                  
+chwarr   key      warranty type                                                           
+cicomm   key      comref   seq                                                            
+cidhead  contkey  finvref  wt       job      invtype  draft                               
+cidhead  custkey  finvref  customer wt       job      invtype  draft                      
+cidhead  finkey   finvref  draft                                                          
+ciditem  cckey    draft    wt       job      subcode  tcode    trandate ctserial          
+ciditem  invkey   draft    sectwt   sectjob  sectsub  seq      sort     sortrate serial   
+ciditem  wtkey    wt       job      smitemseqstartper serial                              
+cidline  key      draft    sectwt   sectjob  sectsub  seq                                 
+cifcode  seqkey   invform  seq      tcode                                                 
+cifcode  tcokey   invform  tcode                                                          
+cifline  key      invform  seq                                                            
+cifreq   key      wt       job      invtype                                               
+cismwoff cckey    draft    wt       job      subcode  tcode    trandate ctserial          
+cismwoff invkey   woffdat  serial                                                         
+cismwoff wtkey    wt       job      smitemseqstartper serial                              
+cistan   dockey   docref   startdateserial                                                
+cistan   jobkey   wt       job      subcode  startdateserial                              
+cmaccess key      loc      code     company  div                                          
+cmanal   key      element  code                                                           
+cmanaldeskey      code1    code2                                                          
+cmaprod  key1     product  altprod                                                        
+cmaprod  key2     product  priority altprod                                               
+cmaprod  key3     altprod  product                                                        
+cmass    key      atype    assem    variant  sequence effdate  ctype    product           
+cmass    where    ctype    product  atype    assem    variant  sequence effdate           
+cmasschedkey      atype    assem    variant  sequence effdate  operation                  
+cmbill   key      billname variant                                                        
+cmbill   prodkey  product  billname variant                                               
+cmblong  key      atype    assem    variant  sequence effdate  ctype    product  seq      
+cmclass  key      class    subclass product                                               
+cmclass  prkey    product  class    subclass                                              
+cmcomprodcmprkey  company  compref  product                                               
+cmcomprodkey      product  company                                                        
+cmcomprodkey2     company  product                                                        
+cmcomprodlpckey   lpcdate  company  product                                               
+cmcomprodnoautkey noautall product  company                                               
+cmcomprodprojkey  company  projcode product                                               
+cmcomprodsuppkey  company  supplier product                                               
+cmcomps  cuskey   account  product  compcat                                               
+cmcomps  key      product  compcat  subcat   docref   dumkey                              
+cmdept   key      dept     section                                                        
+cmdiscgrpkey      pdisc    mempdisc                                                       
+cmdiscgrpmemkey   mempdisc pdisc                                                          
+cmgrlcup key      grp2code stloc    salloc   sacomp   effdate                             
+cmintra  key      company  type     year     per      commodityserial                     
+cmintra  seckey   company  type     year     per      ndcode   tradref  commodity         
+cmlcont  mgrkey   regmgr   loc                                                            
+cmlocgrp key      locgrp   loc                                                            
+cmlong   key      ctype    product  variant  lang     seq                                 
+cmlprod  key      product  lang                                                           
+cmmanu   mankey   primanu  manu                                                           
+cmmanu   suppkey  supplier manu                                                           
+cmpackm  key      pack     line                                                           
+cmplgrup key      company  supplier grpcode  effdate                                      
+cmprconc prod_key product  lang     type     word                                         
+cmprconc word_key lang     type     word     product                                      
+cmprod   ac1key   category product                                                        
+cmprod   ac2key   usage    product                                                        
+cmprod   altkey   alternateproduct                                                        
+cmprod   barkey   barcode  product                                                        
+cmprod   bbkey    boxbar   product                                                        
+cmprod   commkey  commodityproduct                                                        
+cmprod   edpkey   edpref   product                                                        
+cmprod   enqkey   lkspcode product                                                        
+cmprod   exkey    exprod   product                                                        
+cmprod   famkey   family   product                                                        
+cmprod   grpkey   group    product                                                        
+cmprod   inackey  inactive product                                                        
+cmprod   lpckey   lpcdate  product                                                        
+cmprod   m2key    man2prod product                                                        
+cmprod   noautkey noautoallproduct                                                        
+cmprod   projkey  projcode product                                                        
+cmprod   suppkey  supp     product                                                        
+cmprod   typekey  type     product                                                        
+cmprod   unskey   unspsc   product                                                        
+cmprod   upkey    useprod  product                                                        
+cmprpnym key      product  pnym                                                           
+cmprpnym pnkey    pnym     product                                                        
+cmrepair key      product  service                                                        
+cmres    key      product  type     resource                                              
+cmroute  key      saleloc  route    seq                                                   
+cmroute  key2     route    seq                                                            
+cmrpitem key      rplist   product                                                        
+cmrpitem prodkey  product  rplist                                                         
+cmsanal  key      level    code                                                           
+cmset    prodsetkyproduct  set                                                            
+cmsetprodkey      set      product                                                        
+cmsetprodprodkey  product  set                                                            
+cmstdtestkey      product  testno                                                         
+cmtprod  extkey   table    type     exterp   extuom   extper   fextdef  intern            
+cmtprod  intkey   table    type     intern   intuom   fintdef  exterp                     
+cmtprod  prodkey  intern   table    type     intuom   fintdef  exterp                     
+cmtrade  key      scomp    code     company  div                                          
+cmtrait  key      traittypetrait                                                          
+cmtrait  traitkey trait    traittype                                                      
+cmwores  key      wrkloc   restype                                                        
+cmxref   key      element  code     product                                               
+cnaddint key      ndcode   cotype   introle  link                                         
+cnint    buykey   buyer    company  introle                                               
+cnint    clkkey   trclock  company  introle                                               
+cnint    cmdkey   cmdept   cmsect   company  introle                                      
+cnint    contkey  conref   company  introle                                               
+cnint    credkey  credcont company  introle                                               
+cnint    empkey   chemp    company  introle                                               
+cnint    key      introle  company                                                        
+cnint    opkey    operator company  introle                                               
+cnint    pmkey    prodmngr company  introle                                               
+cnint    repkey   rep      company  introle                                               
+cnint    teamkey  team     company  introle                                               
+cnint    trdkey   trdept   trsect   company  introle                                      
+cnintatt enqkey   attcode  attval   rolecode seq                                          
+cnintatt key      rolecode attcode  seq                                                   
+cninteam intkey   cotype   introle  inteam                                                
+cninteam key      inteam   cotype   introle                                               
+cnintjob key      introle  company  jobfunc                                               
+cnjobfh  key      pjobfunc jobfunc                                                        
+cnparatt key      attlink  attcode                                                        
+cp715    key      account  coid     order                                                 
+cpbkxref key      coid     regvouch cdvvouch                                              
+cpbkxref seckey   cdvvouch regvouch coid                                                  
+cpmas    acckey   cpsysid  account  coid                                                  
+cpmas    key      cpsysid  coid     crtime                                                
+cpmutcodebrowskey coid     product                                                        
+cpmutcodekey      product  coid                                                           
+cpmutcodetckey    coid     tcode                                                          
+cppcal   key      sys      date                                                           
+cpreason key      type     reason                                                         
+cpremit  key      coid     voucher                                                        
+cptext   key      cpsysid  account  line                                                  
+crcalc   key      stream   field    seq                                                   
+crdet    key      report   level                                                          
+crsel    key      report   seq                                                            
+crstream key      stream   field                                                          
+crtext   key      report   seq                                                            
+cvrate   key      currency effdate                                                        
+d11resub key      origbatchorigdocnoclock    day      opno     serial                     
+d11time  clockey  clock    day      opno     batch    document                            
+d11time  key      batch    document clock    day      opno                                
+d11week  clockey  clock    batch    document                                              
+d11week  key      batch    document clock                                                 
+d12time  clockey  clock    day      opno     batch    document                            
+d12time  key      batch    document clock    day      opno                                
+d12week  clockey  clock    batch    document                                              
+d12week  key      batch    document clock                                                 
+d1holcardkey      clock    cardno   type                                                  
+d1holcardtypekey  clock    type     status                                                
+d1mas    key      wt       job                                                            
+d1otrate key      emptype  conttype dayno                                                 
+d1trvexp key      conttype kms                                                            
+d1twop   key      clock    wt       job      subcode  ind                                 
+d1vetted key      group    clock    day      opno                                         
+dcquery  key      ourref   seq                                                            
+dcstat   key      user     type     year     period                                       
+dcstat   ukey     user     year     period                                                
+dctext   key      comment  seq                                                            
+dctran   authkey  auth     status   type     ndcode   account  ourref                     
+dctran   batkey   batch    ourref                                                         
+dctran   dkey     type     divn     account  ourref                                       
+dctran   dockey   ndcode   docref                                                         
+dctran   key      type     ndcode   ourref                                                
+dctran   ledkey   ledger   ndcode                                                         
+deabc    key      letter   number                                                         
+debfile  fkey     filename dataset  field                                                 
+debfile  key      source   license  filename dataset  field                               
+debkeys  key      source   license  dataset  filename keyfield                            
+decomp   syskey   sys      comptyp  comp                                                  
+decomp   typkey   comptyp  comp                                                           
+defile   key      filename seq                                                            
+defile   unikey   filename field                                                          
+defile   vkey     filename vseq     field                                                 
+definfo  key      system   file     type                                                  
+deitem   compkey  item     comptyp  comp     seq                                          
+deitem   key      item     seq      comptyp  comp                                         
+deitem   usekey   comp     item                                                           
+dekeys   key      filename keyfield                                                       
+delayout defkey   lang     file     seq                                                   
+delayout key      lang     file     field                                                 
+delink   fkey     base     link                                                           
+delink   key      type     link                                                           
+delkeys  key      link     seq                                                            
+deselec  key      link     seq      selseq                                                
+detran   key      account  order    date     seq                                          
+detran   keydup   account  t14      t15      t5                                           
+dlarch   batkey   batch    ourref                                                         
+dlarch   custkey  customer trcurr   trandate ourref   type     seq                        
+dlarch   dockey   docref   type     customer seq                                          
+dlarch   expkey   expref   customer trandate seq                                          
+dlarch   mainkey  ourref   seq                                                            
+dlarch   subkey   subacc   trcurr   trandate ourref   type     seq                        
+dlcard   key      customer ourref   seq                                                   
+dlcost   key1     customer costcode                                                       
+dlcredal mainkey  credref  docref                                                         
+dlcredtr custkey  customer duedate                                                        
+dlcstat  key      customer trcurr   year     period                                       
+dlcstat  key2     customer year     period   trcurr                                       
+dlcuprod datekey  customer conref   hshordd  product                                      
+dlcuprod key      customer conref   product                                               
+dlcurr   key      customer trcurr                                                         
+dlcust   areakey  area     customer                                                       
+dlcust   curkey   currency customer                                                       
+dlcust   repkey   rep      customer                                                       
+dlcust   rpkey    rplist   customer                                                       
+dldate   key      customer dtype    stdate                                                
+dlendusr ndkey    ndcode   eucode                                                         
+dlextcustkey      customer ourref                                                         
+dlfcodes key      operationdebcred  movement                                              
+dlfin    currkey  customer currency rectype  seq                                          
+dlfin    key      customer rectype  seq                                                   
+dllink   destkey  destcust origcust                                                       
+dllink   origkey  origcust destcust                                                       
+dllocrep key      loc      rep                                                            
+dllocrep repkey   rep      loc                                                            
+dlmucus  key      grpcode  company  customer                                              
+dlpaydet ourkey   ourref   payref   type     trandate action                              
+dlpaydet paykey   payref   trandate ourref   type     action                              
+dlpayheadcustkey  customer trandate payref   type                                         
+dlpayheadkey      payref   type                                                           
+dlpaypendcustkey  customer pendid                                                         
+dlpayptrnourkey   ourref   seq      pendid                                                
+dlpayptrnpendkey  pendid   ourref   seq                                                   
+dlpltype key      customer dltype   comp     supplier class                               
+dlpltype supkey   comp     supplier dltype   class    customer                            
+dlrepcashkey      master   rep      customer ourref   docref   seq                        
+dlreps   dlrepkey customer rep      group                                                 
+dlreps   repkey   rep      customer group                                                 
+dlstat   key      customer year     period                                                
+dlteam   dlkt2    rep      team                                                           
+dlteam   dltk1    team     rep                                                            
+dltran   batkey   batch    ourref                                                         
+dltran   clearkey customer cleared  seq                                                   
+dltran   custkey  customer trcurr   trandate ourref   type     seq                        
+dltran   dockey   docref   type     customer seq                                          
+dltran   expkey   expref   customer trandate seq                                          
+dltran   mainkey  ourref   seq                                                            
+dltran   subkey   subacc   trcurr   trandate ourref   type     seq                        
+dltran   vouchkey voucher  seq                                                            
+dlvcat   key      ctyp     customer analcode                                              
+dlvcat   key1     analcode ctyp     customer                                              
+dlvstat  key      ctyp     customer analcode year     period                              
+dmhist   datkey   customer letdate  ourref                                                
+dmhist   ourkey   customer ourref   letdate                                               
+dmlett   key      letgrp   lettype  severe                                                
+duimdratekey      dutycod  coocode  company  supplier dutytype prefrate effdate           
+duimdrateratekey  dutycod  coocode  company  supplier enddate  dutytype prefrate          
+dushead  fsdkey   fsdref   loc      subtyp   subdate  subref                              
+dushead  key      loc      subtyp   subdate  subref                                       
+dushead  subkey   subref   loc      subtyp   subdate                                      
+dvcarr   key1     vanarea  stloc    destctry destpc                                       
+dvcarr   key2     vanarea  destctry stloc    destpc                                       
+dvcarr   key3     stloc    destctry vanarea  destpc                                       
+dvcarr   key4     destctry vanarea  stloc    destpc                                       
+dvchmat  key      carrier  loc      destctry packtype serlev   destpc   maxvalue          
+dvcons   key1     vanarea  pickloc  serlev   postcode consign                             
+dvdepvan key      vanarea  depcode                                                        
+dvman    cuskey   company  customer delref                                                
+dvman    cvankey  company  vanarea  serlev   shpref   delref                              
+dvman    key      pickloc  system   ordref   suffix                                       
+dvman    pdatky   system   prntdate ordref                                                
+dvman    prntkey  prntref  prline                                                         
+dvman    pvankey  pickloc  vanarea  serlev   shpref   delref                              
+dvpack   key1     vanarea  packtype                                                       
+dvpcvan  key      vanarea  pcpre    serclass minval                                       
+dvshcomm key      shdref   seq                                                            
+dvshdel  delkey   delref   shdref   seq                                                   
+dvshdel  key      shdref   seq                                                            
+dvshhead cuskey   customer shdref                                                         
+dvshpack key      shdref   seq                                                            
+dvshstat key      loc      andate                                                         
+dvsrvfix key1     vanarea  postcode serlev                                                
+dvtransitkey1     carrier  serlev   stloc    destctry destprop                            
+dvtransitkey2     destctry stloc    destprop carrier  serlev                              
+dvvalink key      vanarea  sequence subva                                                 
+dvvansrv key      vanarea  serlev                                                         
+ecaudit  ley      autype   audate                                                         
+eiex     key      proof    seq                                                            
+epcard   key      cardtype subtype                                                        
+epconfig key1     sloc     type     subtype                                               
+epcurr   key      loc      curr                                                           
+epdesp   key1     ordref   payref                                                         
+epdesp   key2     payref   ordref                                                         
+eplog    key1     ordref   logdate  logtime  serial                                       
+eppay    key1     ordref   credate  cretime  respcode serial                              
+eppay    key2     provider errcode  respcode                                              
+eppay    key3     payref   ordref                                                         
+errlog   progkey  program  time                                                           
+exactobj akey     actsys   actname  objsys   objclass                                     
+exactobj key      objsys   objclass actsys   actname                                      
+exacts   key      actsys   actname                                                        
+exdiaryevdkey     coid     latest   date     time     esn      esseq    version           
+exdiaryevekey     coid     latest   esn      date     time     esseq    version           
+exdiaryevkey      coid     esn      esseq    version                                      
+exdiaryevnkey     esn      esseq    version                                               
+exdiaryevukey     coid     userinf  date     time     esn      esseq    version           
+exevdets fkey     fltnam   fltver   esn      esseq                                        
+exevdets key      esn      esseq                                                          
+exevdets mkey     mapsys   mapname  esn      esseq                                        
+exevdets okey     objsys   objclass esn      esseq                                        
+exfields gkey     fldgrp   objsys   fldref                                                
+exfields key      objsys   fldref                                                         
+exfltel  key      fltnam   fltver   fldref                                                
+exfltel  rkey     fldref   fltnam   fltver                                                
+exfltheadakey     active   fltnam   fltver                                                
+exfltheadkey      fltnam   fltver                                                         
+exfltheadokey     active   objsys   objclass fmsys    fmname   fltnam   fltver            
+exfltheadxkey     active   fmsys    fmname   objsys   objclass fltnam   fltver            
+exmapheadkey      mapsys   mapname                                                        
+exmapitemakey     actsys   actname  mapsys   mapname  msn                                 
+exmapitemkey      mapsys   mapname  msn                                                   
+exmapobj key      mapsys   mapname  objsys   objclass                                     
+exmapobj okey     objsys   objclass mapsys   mapname                                      
+exobjectskey      objsys   objclass                                                       
+exsynobj key      objsys   objclass sysalias clsalias                                     
+extext   key      comment  line                                                           
+extmpobj key      objsys   objclass                                                       
+fgaction akey     source   ref      cldate   type     seq                                 
+fgaction key      source   ref      seq                                                   
+fgaction progkey  cldate   duedate  duetime  source   ref      seq                        
+fgaction rtskey   rtsyear  rtsper   source   ref      seq                                 
+fgactlangkey      type     lang                                                           
+fgactmat key      type     prevact  nextact                                               
+fggrade  key      type     year     period   loc                                          
+fglong   key      src      ref      seq      commseq                                      
+fgrepair pokey    poref    ref                                                            
+fgrqsparekey      ref      seq                                                            
+fgusers  key      dept     user     type                                                  
+fpaudit  datekey  product  loc      chdate   chtime   seq                                 
+fpaudit  key      product  loc      seq                                                   
+fpccadj  catkey   cat      ccat                                                           
+fpfcst   datekey  loc      product  dateord  ref                                          
+fpfcst   prodkey  product  ref                                                            
+fpfcst   suppkey  supplier branch   ref                                                   
+fphist   proofkey proof    buyer    supplier branch   product  loc      serial            
+fpord    bkey     product  loc      supplier branch   dateord  duedate                    
+fpord    key      supplier branch   loc      product  dateord  duedate                    
+fpord    trankey  supplier branch   loc      dateord  product  duedate                    
+fpreq    key      supplier branch   loc      product  dateord  srcloc                     
+fpreqhistkey      proof    buyer    supplier branch   loc      product  serial            
+fpseason key      seascode seq                                                            
+glabud   key      account  year     budref                                                
+glbatch  batkey   batch    docref                                                         
+glbatch  key      account  year     period   trandate unikey                              
+glbudg   key      budcode  period                                                         
+glcode   key      ctype    code                                                           
+glctype  key      ctype    lang                                                           
+gldesc   key      type     anal                                                           
+glhist   batkey   batch    docref                                                         
+glhist   dockey   docref   unikey                                                         
+glhist   key      account  year     period   trandate unikey                              
+glhist   seqkey   year     period   sequence unikey                                       
+glicpacc key      fromcoid tocoid   source                                                
+glmas    catkey   category glcode   account                                               
+glmas    codekey  glcode   centre   account                                               
+glmas    costkey  centre   glcode   account                                               
+glmas    postkey  glcode   control  account                                               
+glmtch   key      account  year     period   trandate mtchser                             
+glmtch   mtchkey  matched  account  mtchref  mtchser                                      
+glmumas  key      coid     account                                                        
+glpbud   key      account  year     period   budref                                       
+glpbud   seqkey   account  perseq   budref                                                
+glpers   extkey   extyear  extper   year     period                                       
+glpers   key      year     period                                                         
+glproof  key      year     proof                                                          
+glproof  perkey   year     period   proofseq                                              
+glpstat  key      account  year     period                                                
+glpstat  perkey   year     period   account                                               
+glpstat  seckey   account  perseq                                                         
+glquery  key      invlgr   ourref   seq                                                   
+glseqdoc key      type     docregid                                                       
+glstan   key      rectype  docref   seq                                                   
+glstat   key      account  year     rectype                                               
+glsubstatacckey   year     ctype    glaccountcode     period                              
+glsubstatprikey   year     ctype    code     glaccountperiod                              
+gltran   batkey   batch    docref                                                         
+gltran   dockey   docref   unikey                                                         
+gltran   key      account  year     period   trandate unikey                              
+gltran   seqkey   year     period   sequence unikey                                       
+grdet    key      report   line                                                           
+grqty    key      qcode    year                                                           
+grsel    key      report   line     seq                                                   
+hbachrg  key      type     charge                                                         
+hbadocdetbytypeseqclient   schedule type     hseq     phase    docref   seq               
+hbadocdetdkey     client   schedule type     phase    docref   hseq                       
+hbadocdetikey     client   schedule hseq                                                  
+hbadocdetkey      client   schedule type     phase    docref   seq                        
+hbadoct  ddkey    client   schedule type     docref   phase                               
+hbadoct  dkey     client   schedule type     actdate  phase    docref                     
+hbadoct  dpkey    client   schedule type     phase                                        
+hbadoct  key      client   schedule type     phase    docref                              
+hbahire  acckey   client   schedule cseq                                                  
+hbahire  asskey   client   schedule aseq     hseq                                         
+hbahire  hokey    supplier order    line                                                  
+hbahire  itkey    branch   item                                                           
+hbahire  key      client   schedule hseq                                                  
+hbahrate key      client   schedule hseq     start                                        
+hbainv   bat_key  batch    iref                                                           
+hbainv   byreftypeclient   group    iref     dtype                                        
+hbainv   key      client   group    dtype    iref                                         
+hbainv   pkey     client   group    dtype    serial                                       
+hbainv   prtkey   dtype    iref     client   group                                        
+hbainva  key      client   group    dtype    iref     schedule hseq     iseq              
+hbainva  pkey     client   group    dtype    schedule hseq     iseq     serial            
+hbainvit byhseq   client   schedule hseq     iref     serial                              
+hbainvit key      client   group    dtype    iref     schedule hseq                       
+hbainvit pkey     client   group    dtype    schedule hseq     serial                     
+hbanal   key      type     analcode                                                       
+hbaretn  akey     client   schedule hseq     sseq     rseq                                
+hbaretn  assemkey client   schedule hseq     rseq     aseq                                
+hbaretn  key      client   schedule hseq     rseq                                         
+hbasale  hirekey  client   schedule hseq     sseq                                         
+hbasale  hkey     client   schedule ahseq                                                 
+hbasale  key      client   schedule sseq                                                  
+hbasched bysite   client   site     schedule                                              
+hbasched key      client   schedule                                                       
+hbass    key      branch   item     dbranch  ditem                                        
+hbatsheetbybrnitembranch   item     line     start    client   schedule hseq              
+hbatsheetbyweek   week     branch   item     line     hseq                                
+hbatsheetgenkey   client   schedule hseq     start    line                                
+hbatsheetkey      client   schedule start    branch   item     hseq     line              
+hbatsheetstartend client   schedule branch   item     start    hseq     line              
+hbaudit  key      user     date     time     seral                                        
+hbauth   key      type     intref                                                         
+hbcode   key      type     code                                                           
+hbdeal   seckey   type     rorp     value                                                 
+hbdealdetkey      deal     line                                                           
+hbdocdet bytypeseqclient   schedule type     hseq     phase    docref   seq               
+hbdocdet dkey     client   schedule type     phase    docref   hseq                       
+hbdocdet ikey     client   schedule hseq                                                  
+hbdocdet key      client   schedule type     phase    docref   seq                        
+hbdocdet rkey     client   schedule type     phase    docref   location seq               
+hbdoct   ddkey    client   schedule type     docref   phase                               
+hbdoct   dkey     client   schedule type     actdate  phase    docref                     
+hbdoct   dpkey    client   schedule type     phase                                        
+hbdoct   key      client   schedule type     phase    docref                              
+hbexch   bynseq   client   schedule nseq     eseq                                         
+hbexch   key      client   schedule hseq     eseq                                         
+hbgracc  key      generic  branch   item                                                  
+hbgradd  key      generic  code                                                           
+hbgrdef  key      generic  ratecd                                                         
+hbgrtime key      group    line                                                           
+hbhchrg  key      client   schedule hseq     seq                                          
+hbhire   acckey   client   schedule cseq                                                  
+hbhire   asskey   client   schedule aseq     hseq                                         
+hbhire   hokey    supplier order    line                                                  
+hbhire   itkey    branch   item                                                           
+hbhire   key      client   schedule hseq                                                  
+hbhrate  key      client   schedule hseq     start                                        
+hbhschrg key      client   schedule hseq     seq                                          
+hbhtime  key      client   schedule hseq     seq                                          
+hbiacc   key      mbranch  mitem    branch   item                                         
+hbiadd   key      branch   item     code                                                  
+hbinv    bat_key  batch    iref                                                           
+hbinv    byreftypeclient   group    iref     dtype                                        
+hbinv    key      client   group    dtype    iref                                         
+hbinv    pkey     client   group    dtype    serial                                       
+hbinv    prtkey   dtype    iref     client   group                                        
+hbinvanalkey      client   group    dtype    iref     schedule hseq     iseq              
+hbinvanalpkey     client   group    dtype    schedule hseq     iseq     serial            
+hbinvitembyhseq   client   schedule hseq     iref     serial                              
+hbinvitemkey      client   group    dtype    iref     schedule hseq                       
+hbinvitempkey     client   group    dtype    schedule hseq     serial                     
+hbirate  datekey  branch   item     effective                                             
+hbirate  key      branch   item     ratecd   effective                                    
+hbitem   ikey     item     branch                                                         
+hbitem   key      branch   item                                                           
+hbitime  key      branch   item     line                                                  
+hbitlist key      itemlist line                                                           
+hblocat  bystatdtebranch   item     status   start                                        
+hblocat  genkey   generic  status   client   location start    seq                        
+hblocat  ikey     item     branch   end      seq                                          
+hblocat  key      branch   item     seq                                                   
+hblocat  lockey   branch   item     status   client   location hseq     start    seq      
+hblocat  loctkey  location seq                                                            
+hbmove   bydate   branch   item     date     hseq     seq                                 
+hbmove   key      branch   item     seq                                                   
+hbnote   key      code     type     status   onoff    line                                
+hbprof   key      profile  field                                                          
+hbretn   akey     client   schedule hseq     sseq     rseq                                
+hbretn   assemkey client   schedule hseq     rseq     aseq                                
+hbretn   key      client   schedule hseq     rseq                                         
+hbsale   hirekey  client   schedule hseq     sseq                                         
+hbsale   hkey     client   schedule ahseq                                                 
+hbsale   key      client   schedule sseq                                                  
+hbsched  bysite   client   site     schedule                                              
+hbsched  key      client   schedule                                                       
+hbschlistkey      code     line                                                           
+hbsite   key      coid     site                                                           
+hbsuspdetkey      suspense line                                                           
+hbtable  key      tabcode  ondate                                                         
+hbtrans  key      client   schedule hseq     tseq                                         
+hbtsheet bybrnitembranch   item     line     start    client   schedule hseq              
+hbtsheet byweek   week     branch   item     line     hseq                                
+hbtsheet genkey   client   schedule hseq     start    line                                
+hbtsheet key      client   schedule start    branch   item     hseq     line              
+hbtsheet startend client   schedule branch   item     start    hseq     line              
+hbuserseckey      user     security                                                       
+hbutil   key      branch   item     year     period                                       
+hoaidet  key      supplier iref     order    line     seq                                 
+hoaidet  okey     supplier order    line                                                  
+hoainv   key      supplier iref                                                           
+hoaitem  key      supplier order    line                                                  
+hoaorder key      supplier order                                                          
+hoaretn  dkey     supplier order    line     rdate                                        
+hoaretn  key      supplier order    line     seq                                          
+hoaretn  rkey     supplier xref     order    line     seq                                 
+hodeliv  dkey     supplier dref                                                           
+hodeliv  key      supplier order    dref     line                                         
+hoidet   key      supplier iref     order    line     seq                                 
+hoidet   okey     supplier order    line                                                  
+hoinv    key      supplier iref                                                           
+hoitem   key      supplier order    line                                                  
+hoorder  key      supplier order                                                          
+hoprod   ikey     item     supplier ratecd                                                
+hoprod   key      supplier item     ratecd                                                
+horetn   dkey     supplier order    line     rdate                                        
+horetn   key      supplier order    line     seq                                          
+horetn   rkey     supplier xref     order    line     seq                                 
+hotext   key      note     line                                                           
+icrate   key      chrgtype enddate                                                        
+l1mast   acckey   account  delivpnt agreement                                             
+l1mast   repkey   rep      account  delivpnt agreement                                    
+l1target key      account  delivpnt group    product  agreement                           
+l1target prodkey  product  group    account  delivpnt agreement                           
+l1text   key      agreementtype     seq                                                   
+lcall    key      shipref  line     costtype seq                                          
+lcall    overkey  shipref  costtype seq      line                                         
+lccomm   key      shipref  seq                                                            
+lchead   agentkey agent    shipref                                                        
+lchead   suppkey  supplier branch   shipref                                               
+lchead   suprkey  code5    shipref                                                        
+lcimpcommkey      impref   seq                                                            
+lcimpheadkey      impstat  impref                                                         
+lcimpitemkey      impref   line                                                           
+lcitem   key      shipref  line                                                           
+lcitem   linekey  lineref  shipref  line                                                  
+lcitem   ordkey   order    shipref  line                                                  
+lcitem   prodkey  product  shipref  line                                                  
+lcover   key      shipref  costtype seq                                                   
+lcover   shipkey  shipref  line     costtype seq                                          
+lcstan   key      agent    costtype seq                                                   
+lcstat   ckey     country  tariff                                                         
+lcstat   key      tariff   country                                                        
+lkmas    dbkey    db       ledger   type                                                  
+lkmas    key      pid      seq                                                            
+lopitem  key      list     part                                                           
+ltitem   key      comp     type     subcomp  subtype  subseq                              
+ltmod    key      lang     comp                                                           
+lttran   dkey     lang     text                                                           
+lttran   key      trseq    lang     subseq                                                
+lucmlnk  key      commcode luprod                                                         
+lucmlnk  prodkey  luprod   commcode                                                       
+luctlnk  majkey   commmaj  commtype                                                       
+luctlnk  typekey  commtype commmaj                                                        
+luprod   actkey   action   luprod   product  lusupp   supplier                            
+luprod   ctkey    chgtyp   luprod   product  lusupp   supplier                            
+luprod   key      luprod   lusupp   product  supplier                                     
+luprod   luskey   lusupp   luprod   supplier product                                      
+luprod   prodkey  product  supplier lusupp   luprod                                       
+luprod   suppkey  supplier product  luprod   lusupp                                       
+lupsupp  key      lusupp   luprod                                                         
+lusupp   actkey   action   lusupp                                                         
+lusupp   key1     supplier lusupp                                                         
+m3cost   key      job      tcode                                                          
+m3mas    spvrkey  material super    job                                                   
+m3mas    supkey   region   branch   super    job                                          
+m3operat key      job      code     hours    rate     days                                
+m3org    brkey    branch   super                                                          
+m3pay    key      empclock job                                                            
+m3sndate intkey   intref   job                                                            
+m3sndate key      job      intref                                                         
+menuln   compkey  coid     menu     sequence                                              
+menuln   key      menu     sequence                                                       
+menuln   srchkey  itemid   menu     sequence                                              
+mmanal   key      campno   analdate opid                                                  
+mmanal   key1     campno   opid     analdate                                              
+mmcomm   key      campno   type     eleno    lineno                                       
+mmele    key      campno   eleno                                                          
+mmhead   key1     linkcamp campno                                                         
+mmhead   key2     profile  campno                                                         
+mmlead   key2     source   customer leadcode                                              
+mmlead   ndkey    ndcode   leadcode                                                       
+mmlead   repkey   rep      leadcode                                                       
+mmlist   key      campno   conref   account  source                                       
+mmlist   key2     opid     status   campno   conref   account  source                     
+mmlist   key3     team     status   campno   conref   account  source                     
+mmlist   key4     campno   status   conref   account  source                              
+mmlist   key5     campno   seq                                                            
+mmlist   key6     account  source   campno   seq                                          
+mmpcom   prikey   profref  seq                                                            
+mmpdet   prikey   profref  seq                                                            
+mmpdsel  prikey   profref  seq      detseq                                                
+mmphsel  prikey   profref  seq                                                            
+mmphsel  typkey   profref  type     seq                                                   
+mmtempe  key      tempno   eleno                                                          
+mubkpymntconkey   coid     remdel   ndcode   code     srccoid                             
+mubkpymntcoykey   coid     srccoid                                                        
+mubkpymntkey      coid     trandate voucher                                               
+mucomm   key      comref   seq                                                            
+mugltran batkey   coid     batch    docref   unikey                                       
+mugltran costkey  coid     centre   glcode   trandate unikey                              
+mugltran key      coid     account  trandate unikey                                       
+mumas    key      coid     wt       job      subcode                                      
+mutran   key      coid     serial                                                         
+muwt     key      coid     wt                                                             
+mxapplog progkey  program  time                                                           
+mxapplog refkey   system   ref      line     serial                                       
+mxcurloc key      currency loc                                                            
+mxmfusr  key      user     pid      mfdef                                                 
+mxmfusr  mfkey    mfdef    mfk1     mfk2     mfkl1    user     pid                        
+mxmfusr  pkey     pid      user     mfdef                                                 
+mxreps   laykey   lang     layout                                                         
+mxreps   progkey  program  report   lang                                                  
+mxreps   repkey   lang     report                                                         
+mxreslockreskey   resl1    resl2    resl3    type     host     pid                        
+ndcon    conkey   conref   ndcode   rolecode                                              
+ndcon    ekey     email    ndcode   seq                                                   
+ndcon    key      ndcode   seq                                                            
+ndcon    namekey  surname  initial  ndcode   seq                                          
+ndcon    rolekey  ndcode   rolecode                                                       
+ndconatt enqkey   attcode  attval   ndcode   rolecode seq                                 
+ndconatt key      ndcode   rolecode attcode  seq                                          
+ndcontel enqkey   telno    ndcode   rolecode teltyp                                       
+ndcontel key      ndcode   rolecode teltyp                                                
+npdata   fromkey  creuser  credat   cretim   noteref                                      
+npdata   mfkey    mfav01   ma01val  noteref                                               
+npdata   notkey   notepad  noteref                                                        
+npdata   tokey    actuser  actdat   acttim   noteref                                      
+npindx   key      mfav     maval    noteref                                               
+npindx   notkey   noteref  mfav     maval                                                 
+npnote   actkey   notepad  actflag  actdate  actuseridseq                                 
+npnote   notekey  notepad  keyval   date     time     seq                                 
+npntxt   key      type     noteref  seq                                                   
+nptemp   key      notepad  action   template seq                                          
+obaudit  key1     comp     product  audate   autime   unqkey                              
+obaudit  key2     comp     audate   keyfield                                              
+obaudit  key3     comp     audate   autime   product  unqkey                              
+obline   key1     pid      ordref   lineno   seq                                          
+oborstat key      sloc     year     period                                                
+obstat   key1     company  year     period   keyfieldssloc     product  customer deladd   
+obstat   key2     company  product  customer year     period   sloc                       
+obstat   key3     company  customer deladd   product  year     period   sloc              
+obtemp   key      pid      sloc     customer deladd   product  keyfield                   
+obtemp   key1     pid      sloc     product                                               
+obtemp   key2     pid      sloc     keyfield                                              
+ow13f1   key      code     desc                                                           
+owabc    key      letter   number                                                         
+owcemp   keysurforsurname  forename                                                       
+owcstr   key      code     comp     retval                                                
+owdpm    key      ordref   seq      linseq                                                
+owdpm    key1     stloc    product  itstat   ordref   seq      linseq                     
+owdpmfil key      ordref   seq      linseq                                                
+owdpmfil key1     stloc    product  itstat   ordref   seq      linseq                     
+owian    key      letter   number                                                         
+owitem   key      ordref   seq      linseq                                                
+owitem   key1     stloc    product  itstat   ordref   seq      linseq                     
+owjemp   namekey  surname  forename                                                       
+owmemp   namekey  surname  forename                                                       
+ownew    andthekeycharacterappcode  dummy    integer  number6                             
+owpemp   surkey   surname  forename                                                       
+owprod   grpkey   group    product                                                        
+owqtk    key      c1       c2       c3       c4       c5       c6       record            
+owserial serkey   product  serial                                                         
+owserial statkey  loc      product  status   serial                                       
+owsmfaultcomp_key ffcod    forr                                                           
+owsmfaultcompkey  forr     ffcod                                                          
+owssmfileprikey   name     date                                                           
+owtdefilekey      filename seq                                                            
+owtdefileunikey   filename field                                                          
+owtdefilevkey     filename vseq     field                                                 
+owtdekeyskey      filename keyfield                                                       
+owtf2    k2       f1       f4                                                             
+owtran   key      account  order    date     seq                                          
+owtran   keydup   account  t14      t15      t5                                           
+owtran3  acctkey  acctref  trandate voucher                                               
+pbreak   key      lang     report   breakno  seq                                          
+pdarc    key      clock    period                                                         
+pdspec   authkey  authorityclock                                                          
+pdspec   key      clock    seq                                                            
+pdspec   paykey   payee    payref                                                         
+pecar    datekey  clock    from     seq                                                   
+pecar    key      clock    seq                                                            
+pecar    makkey   make     model    regno    from                                         
+pecar    regkey   regno    from                                                           
+pecaryr  key      clockno  regno    from     taxyear                                      
+pecaryr  regkey   regno    clockno  from     taxyear                                      
+pecaryr  txyrkey  taxyear  clockno  regno    from                                         
+peemp    depkey   dept     sect     clock                                                 
+peloan   key      clockno  refno                                                          
+peloanyr key      clockno  taxyear  refno                                                 
+peloanyr typkey   type     clockno  taxyear  refno                                        
+pemcode  key      clock    todate                                                         
+perates  key      ratecode enddate                                                        
+perm     usyskey  user     system                                                         
+pesecure key      userid   dept     sect                                                  
+pesumm   empkey   clock    taxyear  dept     sect                                         
+pesumm   key      dept     sect     clock    taxyear                                      
+petran   expdkey  expcode  dept     sect                                                  
+petran   expkey   expcode  clock                                                          
+petran   key      clock    expcode  ourref   seq                                          
+petran   loankey  clock    loanref  paydate  seq                                          
+petran   ourkey   clock    ourref   seq                                                   
+petran   supkey   supan    expcode  costdate                                              
+pevall   key      clockno  from     regno                                                 
+pevall   regkey   regno    from     clockno                                               
+pevehic  makkey   make     model    regno                                                 
+pfield   key      lang     report   altf     stream   seq                                 
+plarch   dockey   supplier docref                                                         
+plarch   expkey   expref   supplier trandate seq                                          
+plarch   mainkey  ourref   seq                                                            
+plarch   suppkey  supplier tcurr    trandate ourref   type     seq                        
+plarch   vouchkey coid     voucher  seq                                                   
+plcstat  key      supplier trcurr   year     period                                       
+plcstat  key2     supplier year     period   trcurr                                       
+plcurr   key      supplier trcurr                                                         
+pllink   key      group    master   plref                                                 
+pllink   plkey    group    plref                                                          
+plpaydet ourkey   ourref   payref   type     trandate action                              
+plpaydet paykey   payref   trandate ourref   type     action                              
+plpayheadkey      payref   type                                                           
+plpayheadsuppkey  supplier trandate payref   type                                         
+plstat   key      supplier year     period                                                
+plsupcustkey      supplier customer                                                       
+plsupp   buykey   buyer    supplier branch                                                
+plsupp   coregkey coregni  supplier                                                       
+plsupp   curkey   currency supplier                                                       
+plsupp   key      supplier branch                                                         
+plsupp   subkey   subcon   supplier branch                                                
+pltran   batkey   batch    ourref                                                         
+pltran   billkey  voucher  seq                                                            
+pltran   dockey   supplier docref                                                         
+pltran   expkey   expref   supplier trandate seq                                          
+pltran   jobkey   contract supplier trandate seq                                          
+pltran   mainkey  ourref   seq                                                            
+pltran   suppkey  supplier trcurr   trandate ourref   type     seq                        
+pltran   vouchkey coid     voucher  seq                                                   
+pmask    key      lang     report   altf     stream                                       
+pmask    repkey   report   stream   lang                                                  
+poaudit  key      order    line     seq                                                   
+pobin    key      order    line     seq      bin                                          
+pocomm   key      order    line     seq                                                   
+podeliv  key      costmeth wt       code     subcode  seq                                 
+podisc   key      supplier disccode                                                       
+pogover  key      order    line     seq      overseq                                      
+pogrn    conkey   costmeth wt       costcode subcode  supplier order    line              
+pogrn    delkey   delref   order    line     seq                                          
+pogrn    invkey   invno    order    line     seq                                          
+pogrn    key      order    line     seq                                                   
+pogrn    mrkey    mrref    order    line     seq                                          
+pogrn    tckey    tcode    costmeth wt       costcode subcode  order    line     seq      
+poiharc  ordkey   ordref   invref                                                         
+poiharc  prockey  procdate invref                                                         
+poiharc  runkey   run      invref                                                         
+poiharc  stat_key impstat  invref                                                         
+poiharc  statkey  status   invref                                                         
+poiharc  suppkey  supplier suppref  ordref   invref                                       
+poihead  ordkey   ordref   invref                                                         
+poihead  prockey  procdate invref                                                         
+poihead  runkey   run      invref                                                         
+poihead  stat_key impstat  invref                                                         
+poihead  statkey  status   invref                                                         
+poihead  suppkey  supplier suppref  ordref   invref                                       
+poilarc  key      invref   ordref   line                                                  
+poilarc  ordkey   ordref   invref   line                                                  
+poilarc  prodkey  product  invref   ordref   line                                         
+poiline  key      invref   ordref   line                                                  
+poiline  ordkey   ordref   invref   line                                                  
+poiline  prodkey  product  invref   ordref   line                                         
+poimpacm key      impref   seq                                                            
+poimpahd key      impstatusimpref                                                         
+poimpaln key      impref   lineref  prodate                                               
+poimpcommkey      impref   type     line     seq                                          
+poimpheadkey      impstat  impref                                                         
+poimplinekey      impref   line                                                           
+poinmatchkey      invno    invseq                                                         
+poinmatchordkey   order    line     seq      invno    invseq                              
+poinmatchparkey   invno    parent                                                         
+poinvdoc despkey  despref  ourref                                                         
+poinvdoc dockey   supplier docref                                                         
+poinvdoc key      batch    ourref                                                         
+poinvdoc postkey  posted   ourref   batch                                                 
+poinvdoc ptokey   postto   ourref                                                         
+poitem   cenqkey  costmeth wt       costcode order    line                                
+poitem   cordkey  costmeth wt       costcode subcode  supplier order    line              
+poitem   costkey  costmeth wt       costcode subcode  product  mastflag status            
+poitem   disckey  supplier disccode order    line                                         
+poitem   key      order    line                                                           
+poitem   mastkey  product  mastflag order                                                 
+poitem   mkey     mastord  product                                                        
+poitem   tckey    tcode    costmeth wt       costcode subcode  order    line              
+poivarc  key      invref   vatcode                                                        
+poivat   key      invref   vatcode                                                        
+polcost  key      order    line     costmeth wt       costcode subcode  tcode    source   
+popitem  key      lang     menu     seq                                                   
+popmenu  key      menu     lang                                                           
+poprice  key      supplier product  effdate                                               
+poprice  prodkey  product  supplier effdate                                               
+poprod   altkey   supplier altprod  product                                               
+poprod   extkey   supprod  supplier                                                       
+poprod   extsupkeysupplier supprod                                                        
+poprod   key      product  supplier                                                       
+poprod   sbarkey  supplier sbarcode product                                               
+poprod   supkey   supplier product                                                        
+poprstk  datekey  supplier product  avdate   suploc                                       
+poprstk  key      supplier product  suploc   avdate                                       
+poptprof key      ourref   termno                                                         
+porcomm  key      notetype noteref  comline  comseq                                       
+porder   apkey    apstat   div      order                                                 
+porder   apprkey  author   supplier order                                                 
+porder   callkey  call     order                                                          
+porder   costkey  costmeth wt       costcode subcode  order                               
+porder   divkey   div      order                                                          
+porder   ireqkey  irref    order                                                          
+porder   statkey  delqty   costmeth wt       costcode subcode  order                      
+porder   suppkey  supplier branch   order                                                 
+porder   typekey  type     supplier branch   order                                        
+porecdoc delkey   delref   supplier branch   order                                        
+porecdoc key      delref   mrsref   order                                                 
+porecdoc mrskey   mrsref   supplier branch   order                                        
+porecdoc ordkey   order    delref   mrsref                                                
+poretn   key      order    line     grnseq   retref   seq                                 
+poretn   retkey   retref   seq      order    line     grnseq                              
+poretn   seckey   order    suffix   line     grnseq   retref   seq                        
+porhead  key      notetype noteref                                                        
+porhead  supkey   supplier notetype noteref                                               
+poritem  key      notetype noteref  line                                                  
+poritem  ordkey   order    poline   seq      notetype noteref  line                       
+poship   key      supplier shipmeth                                                       
+pospover key      product  supplier overseq                                               
+potaxcon key      supplier ichref                                                         
+potcvratekey      supplier ichref   vatcode                                               
+potsupp  extkey   exterc   extbra                                                         
+potsupp  intkey   intern   intbra                                                         
+povar    key      rtype    order    line     seq                                          
+povar    prodkey  product  rtype    order    line     seq                                 
+povarn   key      type     order    line     vardate  dumkey                              
+povarn   ordkey   order    type     vardate  line     dumkey                              
+povarn   prodkey  product  vardate  type     order    line                                
+povarn   suppkey  supplier type     vardate  order    line                                
+povreasonkey      type     reason                                                         
+pqline   key      quoteno  section  itemno                                                
+pqline   pkey     product  quoteno  itemno                                                
+pqline   prikey   quoteno  itemno                                                         
+pqrlink  key      quoteno  itemno   reqno    reqline  linkseq                             
+pqsectionkey      quoteno  section                                                        
+pqsectionskey     section  quoteno                                                        
+pqtermsi key      quoteno  itemno   vendor   type     seq      terms                      
+pqtermsi prikey   quoteno  itemno   vendor   type     seq                                 
+pqtermsi tnckey   terms    quoteno  itemno   vendor   type     seq                        
+pqtext   key      comment  line                                                           
+pqvhead  key      vendor   quoteno                                                        
+pqvhead  mkey     quoteno  vendor                                                         
+pqvitem  key      vendor   quoteno  itemno                                                
+pqvitem  mkey     quoteno  itemno   vendor                                                
+pqvitem  skey     vendor   quoteno  section  itemno                                       
+prcalc   fldkey   lang     report   field                                                 
+prcalc   key      lang     report   mask     seq                                          
+prccomm  key      ref      seq      comseq                                                
+prchead  accntkey acctyp   wt       account  subcode  custreq                             
+prchead  appkey   currapprvapproved custreq                                               
+prchead  deptkey  dept     section  custreq                                               
+prchead  reqkey   reqdate  custreq                                                        
+prchead  statkey  status   custreq                                                        
+prchead  userkey  userid   custreq                                                        
+prcitem  key      custreq  seq                                                            
+prcsupp  key      custreq  seq      supplier branch                                       
+prcsupp  refkey   ref      line     supplier branch   custreq  seq                        
+prdata   key      stream   field                                                          
+pricomm  key      impreq   seq      comseq                                                
+prihead  statkey  status   impref                                                         
+priitem  key      impref   seq                                                            
+primpsbt key      impref   ref      line                                                  
+primpscm key      impref   ref      line     seq                                          
+primpshd key      status   impref                                                         
+primpsln key      impref   ref      line                                                  
+printque compkey  coid     userid                                                         
+printque srchkey  printid  printst  pstatus  revprior serial                              
+printque userkey  userid   progid                                                         
+prqcomm  key      type     ref      line     comseq                                       
+prqdisc  key      ref      line                                                           
+prqitem  key      ref      line                                                           
+prqitem  prodkey  product  ref      line                                                  
+prquote  custkey  custreq  ref                                                            
+prquote  key      status   supplier branch   ref                                          
+prquote  suppkey  supplier branch   ref                                                   
+prview   key      report   view                                                           
+prvmask  key      report   view     seq                                                   
+pvaccnts key      comp     divn     ref      ledger                                       
+pvaccnts key2     ref      comp     divn     ledger                                       
+pvaccnts key3     ref      ledger   comp     divn                                         
+pvaccnts key4     ledger   comp     ref      divn                                         
+pvaccnts key5     account  ledger   comp     divn                                         
+pvanal   key      anal     mcde     scde                                                  
+pvarea   key      type     area                                                           
+pvcatgorykey      type     category                                                       
+pvccmas  key      comp     wt       job                                                   
+pvccwt   key      comp     wt                                                             
+pvcmplinkkey      comp     divn     type     ref                                          
+pvcmplinkkey2     type     ref      comp     divn                                         
+pvcmplinkkey3     ref      type     comp     divn                                         
+pvcmplinkkey4     ref      comp     divn     type                                         
+pvcredit key      type     credit                                                         
+pvdivn   key      comp     divn                                                           
+pvenquirykey      comp     divn     referencetype     seq                                 
+pvenquirykey2     type     referencecomp     divn     seq                                 
+pvfield  key      type     ref                                                            
+pvfield  key2     ref      type                                                           
+pvgrlink key1     grtyp    vref     sgrref   grref                                        
+pvgrlink key2     vref     grtyp    sgrref   grref                                        
+pvgrlink key3     sgrref   grtyp    vref     grref                                        
+pvgrlink key4     grref    grtyp    vref     sgrref                                       
+pvhistorykey      ref      seq                                                            
+pvlevel  key      type     category level                                                 
+pvmcde   key      type     mcde                                                           
+pvmemberskey      type     ref      code                                                  
+pvmemberskey2     type     code     ref                                                   
+pvmemberskey3     ref      type     code                                                  
+pvmxref  key      type     mcde     mcdex                                                 
+pvmxref  key2     type     mcdex    mcde                                                  
+pvnotepadkey      comp     comment  seq                                                   
+pvnotepadkey2     comment  comp     seq                                                   
+pvoa     key      ref      oatype   oacode                                                
+pvoperatekey      type     ref      area                                                  
+pvoperatekey2     type     area     ref                                                   
+pvoperatekey3     ref      type     area                                                  
+pvorgan  key      type     code                                                           
+pvorgan  key2     ndcode   type     code                                                  
+pvperformkey      type     ref      comp     divn                                         
+pvperformkey2     comp     divn     type     ref                                          
+pvperformkey3     ref      type     comp     divn                                         
+pvpovals key      type     ref      comp     divn     order                               
+pvpovals key2     comp     divn     type     ref      order                               
+pvpovals key3     type     ref      comp     divn     date     order                      
+pvpovals key4     ref      type     comp     divn     order                               
+pvqasts  key      type     qasts                                                          
+pvquerieskey      comp     divn     referencetype     seq      ref                        
+pvquerieskey2     type     ref      comp     divn     seq      reference                  
+pvquerieskey3     ref      type     comp     divn     referenceseq                        
+pvrcon   key      comp     divn     ndcode   seq      code                                
+pvrcon   key2     code     comp     divn     ndcode   seq                                 
+pvrcon   key3     ndcode   seq      comp     divn     code                                
+pvrcon   key4     code     ndcode   comp     divn     seq                                 
+pvresp   key      comp     divn     code                                                  
+pvscde   key      type     mcde     scde                                                  
+pvscord  key      type     ref      comp     order                                        
+pvscord  key2     comp     type     ref      order                                        
+pvscord  key3     type     comp     wt       job      ref      order                      
+pvscord  key4     ref      type     comp     order                                        
+pvsmxref key      type     mcde     scde     mcdex                                        
+pvsmxref key2     type     mcdex    mcde     scde                                         
+pvstatus key      type     status                                                         
+pvsxref  key      type     mcde     scde     mcdex    scdex                               
+pvsxref  key2     type     mcdex    scdex    mcde     scde                                
+pvtcon   key      comp     divn     ndcode   seq                                          
+pvtcon   key2     ndcode   seq      comp     divn                                         
+pvtcon   key3     code     ndcode   seq      comp     divn                                
+pvtitles key      comp     divn     code                                                  
+pvtrades key      type     mcde     scde     ref                                          
+pvtrades key2     type     ref      mcde     scde                                         
+pvtrades key3     type     mcde     ref      scde                                         
+pvtrades key4     ref      type     mcde     scde                                         
+pvtradingkey      ref      date                                                           
+pvverify key      type     ref                                                            
+pvverify key2     ref      type                                                           
+pvvgroup key      grtype   grref                                                          
+pvvgroup refkey   grref    grtype                                                         
+pycalc   key      parset   seq      fldnam   caltyp   calseq                              
+pycalc   prockey  parset   caltyp   seq      calseq                                       
+pycalc   ratekey  parset   calfld                                                         
+pycomm   key      tablecodefreq     limit                                                 
+pyds     datekey  effecdaterecnumber                                                      
+pyds     key      recnumberstart    prfield                                               
+pyglacct codekey  glcode   centre   account                                               
+pyglacct costkey  centre   glcode   account                                               
+pyglacct mainkey  mainacc  account                                                        
+pygldesc key      type     anal                                                           
+pyglmas  codekey  coid     glcode   centre   glacc                                        
+pyglmas  costkey  coid     centre   glcode   glacc                                        
+pyglmas  key      coid     glacc                                                          
+pynirate key      nicode   band                                                           
+pypic    fieldkey group    field                                                          
+pypic    key      group    seq                                                            
+pyrecord fldkey   parset   fldnam                                                         
+pyrecord seqkey   parset   seq                                                            
+pyreport key      parset   menrep                                                         
+pyseq    key      parset   type     seq                                                   
+pyslip   key      parset   befaft   stream   seq                                          
+pytax    key      country  band                                                           
+pytfld   key      parset   agree    fldno                                                 
+pzemerge key      freq     period                                                         
+pzrsiratekey      rsicode  band                                                           
+pztaxratekey      table    band                                                           
+raadhoc  key      rmaref   seq                                                            
+racomm   key      rmaref   comref   seq                                                   
+rahead   cuskey   status   customer rmaref                                                
+rahead   loadkey  loadno   rmaref                                                         
+rahead   statkey  status   rmaref                                                         
+raitem   compkey  company  rmaref   seq      soordref soline   solinseq product           
+raitem   crgenkey status   soordref soline   solinseq rmaref   seq      product           
+raitem   crkey    crref    crline                                                         
+raitem   key      rmaref   soordref soline   solinseq seq      product                    
+raitem   keycr    cryear   crper    rmaref                                                
+raitem   prodkey  product  rmaref   seq      soordref soline   solinseq                   
+raitem   prstatkeystatus   product  soordref soline   solinseq rmaref   seq               
+raitem   putkey   putaway  status   soordref soline   solinseq rmaref   seq      product  
+raitem   seqkey   rmaref   seq      soordref soline   solinseq product                    
+raitem   sokey    soordref soline   solinseq rmaref   seq      product                    
+raitem   statkey  status   rmaref   soordref soline   solinseq seq      product           
+raloctyp key      type     sloc                                                           
+rarestat key      loc      andate   custrea                                               
+raserial key      rmaref   seq      type     serial                                       
+raserial serkey   serial   rmaref   seq      type                                         
+rastat   key      year     period   type     loc                                          
+rastat   key1     loc      year     period   type                                         
+ratyplangkey      type     lang                                                           
+rbcat    key      supplier rbcat                                                          
+rbcatgrp grpkey   supplier grpcat   rbcat                                                 
+rbcatgrp key      supplier rbcat    grpcat                                                
+rbcatloc key      supplier rbcat    loc                                                   
+rbschdet key      supplier loc      rbcat    rbcode   effdate  trdate   serial            
+rbscheme key      supplier loc      direct   rbcat    rbcode   effdate                    
+rbscheme rbckey   supplier rbcat    loc      rbcode   effdate                             
+rbscheme rbkey    supplier loc      rbcat    expdate                                      
+rcgroup  cuskey   customer group                                                          
+rcgroup  grpkey   group    customer                                                       
+rcschdet key      schemereftrdate   serial                                                
+rcscheme custkey  ctype    customer effdate  schemeref                                    
+rcscheme usekey   useschemeschemeref                                                      
+rcsqual  itemkey  itemtype item     schemeref                                             
+rcsqual  key      schemerefitemtype item                                                  
+ref      key      lang     prefix   code     seq      coid     opid                       
+reflog   key      reftype  reference                                                      
+rmdivn   key      comp     divn                                                           
+rmglink  key      comp     divn     userid   grpname                                      
+rmglink  revkey   userid   grpname  comp     divn                                         
+rmgpnote key      genprod  seq                                                            
+rmgroup  key      grpname  userid                                                         
+rmgroup  ukey     userid   grpname                                                        
+rmgrpitemkey      grpname  userid   divn     reqno    lineno   reqseq                     
+rmgrpitemsk       reqno    lineno   reqseq   grpname  divn     userid                     
+rmgrpitemtk       comp     divn     grpname  userid   reqno    lineno   reqseq            
+rmhead   apkey    approvebyreqno                                                          
+rmhead   enkey    enterby  datein   reqno                                                 
+rmhead   inp_key  datein   reqno                                                          
+rmline   akey     source   vendtype mcde     scde     reqno    lineno                     
+rmline   atkey    author   reqno    lineno                                                
+rmline   delkey   source   delndcodereqno    lineno                                       
+rmline   desyskey source   destsys  reqno    lineno                                       
+rmline   linkey   source   reqno    lineno                                                
+rmline   pgkey    source   pgroup   reqno    lineno                                       
+rmline   pkey     source   actprod  reqno    lineno                                       
+rmline   prodkey  actprod  reqno    lineno                                                
+rmline   reqkey   source   deldate  reqno    lineno                                       
+rmline   rkey     reqno    lineno                                                         
+rmline   statkey  source   linestat reqno    lineno                                       
+rmline   sugs     source   ssup     reqno    lineno                                       
+rmlink   ddatekey deldate  reqno    lineno   seq                                          
+rmlink   glkey    glacct   reqno    lineno   seq                                          
+rmlink   key      reqno    lineno   seq                                                   
+rmlink   okey     account  ordno    reqno    lineno   seq                                 
+rmlink   pord_key ordno    ordlinenoreqno    lineno   seq                                 
+rmlink   rkey     status   reqno    lineno   seq                                          
+rmlink   skey     wt       job      subcode  reqno    lineno   seq                        
+rmlink   stkkey   stkacct  reqno    lineno   seq                                          
+rmlink   tkey     wt       job      tcode    reqno    lineno   seq                        
+rmlink   vekey    reqno    lineno   seq      wt       job      deldate                    
+rmndcodeskey      ndtype   ndcode                                                         
+rmnotes  key      comment  seq                                                            
+rmpvanal key      type     mcde     scde     prodcode vtype                               
+rmpvanal pkey     prodcode type     mcde     scde     vtype                               
+rmschlinekey      schedno  seq      repdate                                               
+rmschlinereqkey   reqno    schedno  seq                                                   
+rmschlinestatkey  status   schedno  seq                                                   
+rmsdetailkey      pid      link     delndcodeproduct  reqno    lineno   deldate  seq      
+rmshead  key      pid      link     coid     divn     costmeth costcode wt       subcode  
+rmstatus statkey  type     status                                                         
+rmstlink key      reqno    line     reqseq                                                
+rmstlink stkey    streqno  stline                                                         
+rpfield  key      report   seq      position                                              
+rpline   key      report   seq                                                            
+rpselec  key      report   seq      selseq                                                
+rpsort   key      report   seq                                                            
+sacomrat key1     code1    code2                                                          
+sacomrat key2     code2    code1                                                          
+sacuprod key      customer product  idate    seq                                          
+sacustat key      pcode    cust     deladd   year     loc      keyfields                  
+sacustat key1     cust     pcode    year                                                  
+sacustat key2     cust     deladd   pcode    year                                         
+sacustat key3     year     cust     pcode                                                 
+sarepstatkey      stloc    type     code1    code2    yearst                              
+sarepstatkey1     stloc    type     code2    code1    yearst                              
+sarepstatkey2     type     code1    code2    yearst   stloc                               
+sarepstatkey3     type     code2    code1    yearst   stloc                               
+sarepstatkey4     type     yearst                                                         
+satemp   key      pid      conc     conc2                                                 
+satemp   seckey   pid      conc     sortval  conc2                                        
+sc715    acctkey  account  type     voucher  seq                                          
+sc715    key      type     account  voucher  seq                                          
+scanal   key      account  order    glaccountwt       job      subcode  tcode    element  
+scapp    appkey   account  appref                                                         
+scapp    key      account  order    trandate ourref                                       
+scarch   dockey   docref   seq                                                            
+scarch   key      account  order    trantype trandate seq                                 
+scarch   mergekey account  order    trantype div      trandate seq                        
+scatr    acctkey  account  type     voucher                                               
+scatr    key      type     account  voucher                                               
+scauth   key      account  nino                                                           
+scbatch  key      account  order    trandate trantype seq                                 
+sccard   datekey  account  startdate                                                      
+sccard   key      account  cisno                                                          
+sccomm   key      account  order    comref   element  seq                                 
+sccvufl  bkey     batch    cisvouch                                                       
+scelpar  key      account  order    status   element                                      
+scgpv    key      account  cisvouch                                                       
+scgpva   key      account  cisvouch                                                       
+sclink   key      type     master   scref                                                 
+sclink   mkey     master   type     scref                                                 
+sclink   skey     scref    type                                                           
+scmas    coregkey coregno  account                                                        
+scmas    ninokey  nino     account                                                        
+scmas    putrkey  ptnutr   account                                                        
+scmas    utrkey   subutr   account                                                        
+scnote   key      note     seq                                                            
+scocdet  key      account  order    element                                               
+scontrol key      formatid fieldid                                                        
+scoprint key      account  order                                                          
+scord    acctkey  account  wt       job      subcode                                      
+scord    jobkey   wt       job      subcode                                               
+scord    key      account  order                                                          
+scord    mhckey   wt       job      account  order                                        
+scoverp  key      account  order    date     seq                                          
+scpayarchbatkey   batch    utrtype  subutr   paydate  bkvouchertext                       
+scpayarchkey      subutr   bkvouchertext                                                  
+scpaymnt batkey   batch    utrtype  subutr   paydate  bkvouchertext                       
+scpaymnt key      subutr   bkvouchertext                                                  
+scpaymnt yrendkey utrtype  taxyear  subutr                                                
+scphoto  key      account  cisno                                                          
+screten  key      account  order    seq                                                   
+scstat   key      account  year     period                                                
+sctax    key      taxyear  account  paydate  voucher                                      
+sctemplatkey      status   template                                                       
+sctran   dockey   docref   seq                                                            
+sctran   key      account  order    trandate trantype seq                                 
+sctran   mergekey account  order    trantype div      trandate seq                        
+scuser   key      userid   ctlr                                                           
+scvanal  key      docref   taxcode                                                        
+scvlarch pkey     subutr   bkvoucherlinkno                                                
+scvlarch vkey     linkno   subutr   bkvoucher                                             
+scvlink  pkey     subutr   bkvoucherlinkno                                                
+scvlink  vkey     linkno   subutr   bkvoucher                                             
+scvouarchbatkey   batch    subutr   linkno                                                
+scvouarchvkey     utrtype  subutr   linkno                                                
+scvoucherbatkey   batch    subutr   linkno                                                
+scvouchervkey     utrtype  subutr   linkno                                                
+security key      user     database file                                                  
+sfagcomm prikey   agreeref plot     product  seq                                          
+sfagcust custkey  company  customer agreeref                                              
+sfagcust prikey   agreeref company  customer                                              
+sfagfhistagekey   company  altdate                                                        
+sfagfhistfcstkey  agreeref product  company  customer loc      fordate  frcstref seq      
+sfagfhistprikey   agreeref frcstref product  company  customer loc      fordate  seq      
+sfagfor  fordkey  company  customer agreeref product  loc      fordate  frcstref          
+sfagfor  prikey   agreeref frcstref product  company  customer loc      fordate           
+sfaglnup key      agreeref product  upseq                                                 
+sfagprd  cpkey    agreeref custprod product                                               
+sfagprd  prikey   agreeref product                                                        
+sfagree  custkey  company  customer agreeref                                              
+sfagstk  prikey   agreeref product  company  customer loc                                 
+sfagtran key1     agreeref plot     trantype ref                                          
+sfagtran key2     ref      trantype agreeref plot                                         
+sfagupg  key1     agreeref ordref   cusref   seq                                          
+sfagupg  key2     agreeref plot     ordref   seq                                          
+sfauagreekey1     agreeref plot     seq                                                   
+sfautemp key1     temp     seq                                                            
+sffrcst  custkey  company  customer sgrp     year     period   loc      product  agreeref 
+sffrcst  prikey   loc      product  company  sgrp     customer year     period   agreeref 
+sffrcst  prodkey  company  product  sgrp     customer loc      year     period   agreeref 
+sffrcst  psummkey loc      product  company  year     period   sgrp     customer agreeref 
+sffrcst  ssummkey loc      product  company  sgrp     year     period   customer agreeref 
+sfield   altkey   lang     formatid alt      sequence                                     
+sfield   langkey  lang     formatid sequence                                              
+sformat  key      formatid lang                                                           
+sfplot   key1     agreeref plot                                                           
+sfplot   key2     agreeref plotid   plot                                                  
+sfplot   key3     temp     agreeref plot                                                  
+sfplotd  key1     agreeref plot     product  mainprod                                     
+sfplotd  key2     agreeref plot     mainprod product                                      
+sfplottr key1     agreeref plot     traittypetrait                                        
+sftemp   key1     customer temp                                                           
+sftempd  key1     temp     product  altern                                                
+sftempd  key2     temp     altern   product                                               
+sftempd  key3     product  altern   temp                                                  
+sftempd  key4     altern   product  temp                                                  
+shaudit  mfkey    type     mfdef    mfval1   mfval2   resource serial                     
+shaudit  newkey   resource ndate    ntime    nseq     serial                              
+shaudit  typekey  type     resource edate    etime    seq      serial                     
+shcal    groupkey group    resource sdate    stime    seq                                 
+shcal    key      resource edate    etime    group    seq                                 
+shcal    reskey   resource availtimesdate    stime                                        
+shcal    taskkey  task     taskseq  resource edate    etime                               
+shcalout key      resource edate    etime    group    seq                                 
+shgres   key      group    resource                                                       
+shgres   wherekey resource group                                                          
+shgroup  ownkey   owned    group                                                          
+shgroup  teamkey  team     group                                                          
+shgrpall key      group    year     period                                                
+shhol    key      day      holdate  holtime                                               
+shhour   key      day      effdate                                                        
+shidest  acckey   task     seq      accepted resource                                     
+shidest  key      task     seq      resource                                              
+shidest  reskey   resource accepted tentativetask     seq                                 
+shidest  tenkey   task     seq      tentativeresource                                     
+shitem   endkey   tdate    task     seq                                                   
+shitem   grpkey   group    tdate    ttime    task     seq                                 
+shitem   grpstkey group    stat     source   task     seq                                 
+shitem   key      task     seq                                                            
+shitem   mfstkey  alert    mfdef    mfval1   mfval2   stat     task     seq               
+shitem   mfvalkey mfdef    mfval1   mfval2   stat     task     seq      alert             
+shitem   reskey   resource tdate    ttime    task     seq                                 
+shitem   resstkey resource stat     source   task     seq                                 
+shitem   srckey   source   task     seq                                                   
+shitem   statkey  stat     source   task     seq                                          
+shovday  key      resource overdate                                                       
+shover   key      resource sdate    stime                                                 
+shres    ownkey   owned    resource                                                       
+shres    typekey  type     resource                                                       
+shres    userkey  userid   resource                                                       
+shresworkdaykey   day      resource effdate                                               
+shresworkkey      resource effdate                                                        
+shtask   slinkkey source   linkord  linkline task                                         
+shtask   userkey  userid   task                                                           
+shuntimedkey      resource sdate    task     taskseq                                      
+shuntimedtaskkey  task     taskseq  sdate    resource                                     
+sidetail key      ordref   line                                                           
+sidetail ordkey   ordref   addref   delref   suffix   batch    bin                        
+sihead   addkey   source   addref   ordref                                                
+sihead   delkey   addref   suffix   locn                                                  
+sihead   keydate  customer status   tdate    ordref                                       
+sihead   keyorder customer ordref                                                         
+sitext   key      ordref   ordline  seq                                                   
+smadjust key      cdate    ctime    user                                                  
+smconfig key      wt       job      seq      product  serial                              
+smconfig serkey   serial   product  wt       job      seq                                 
+smdeal   key      account  delcode  type     code     table    exterp   dteff             
+smdeal   key2     code     account  delcode  type     dteff                               
+smdel    atypkey  account  delcode  atype                                                 
+smdel    key      account  delcode                                                        
+smitem   key      wt       job      seq      effdate                                      
+smitem   manskey  manser   wt       job      seq      effdate                             
+smitem   ndkey    ndcode   wt       job      seq      effdate                             
+smitem   ndkey2   wt       job      ndcode   seq      effdate                             
+smitem   ourskey  ourser   wt       job      seq      effdate                             
+smitem   prodkey  product  wt       job      seq      effdate                             
+smitem   sokey    sorder   soseq    solineseqwt       job      seq      effdate           
+smitem   sprodkey sproduct wt       job      seq      effdate                             
+smmas    key      wt       job                                                            
+smprice  key2     pdcode   ptype    ctype    curr                                         
+smprice  pricekey ctype    curr     ptype    pdcode   table    exterp                     
+smupgmat key      type     code                                                           
+smupmat  key      code     effdate  bandvalue                                             
+soaudit  key      ordref   lineseq  datover  timeover seq                                 
+sobulk   key      serial   loc      bin      product  ordref   suffix   batch             
+soclaim  batchtypebatch    csource                                                        
+soclaim  clmkey   stloc    product  trandate ordref                                       
+soclaim  cuskey   supplier customer product  batch    recseq                              
+soclaim  ordkey   ordref   supplier batch    recseq                                       
+soclaim  prodkey  supplier product  customer batch    recseq                              
+soclaim  suppbat  supplier batch    recseq                                                
+soclaim  suppdate supplier trandate                                                       
+soclink  key      type     customer pcode    div      startdatesalecurr                   
+soclink  key1     type     salecurr linkcurr div      customer pcode    startdate         
+socomm   key      ordref   ordline  comseq                                                
+soconfig key      ordref   ordline  seq                                                   
+socons   key1     pikloc   ordref   suffix   consign  line                                
+socons   key2     consign  ordref                                                         
+socons   packkey  packref  consign  line                                                  
+socrdinv invkey   invref   invord   invoseq  ordref   seq                                 
+socrdinv key      ordref   seq      invref   invord   invoseq                             
+sodelday key      stloc    customer deladd                                                
+sodelday key1     customer deladd   stloc                                                 
+sodeliv  acckey   pikloc   account  deladd   ordref   suffix                              
+sodeliv  bulkkey  pikloc   bulkref  ordref   suffix                                       
+sodeliv  delkey   pikloc   delref   ordref                                                
+sodeliv  delrkey  delref   ordref                                                         
+sodeliv  key1     account  ordref   condate                                               
+sodeliv  key2     carrier  condate  ordref                                                
+sodeliv  key3     condate  carrier  ordref                                                
+sodeliv  loadkey  pikloc   loadno   ordref   suffix                                       
+sodeliv  ordkey   pikloc   ordref   suffix                                                
+sodeliv  shdkey   shdref   cntry    pikloc   ordref   suffix                              
+sodeliv  undlkey  undlref  pikloc   ordref   suffix                                       
+sodels   areakey  area     vanarea  serlev   trcode   deltyp                              
+sodels   key      trcode   area     vanarea  serlev   deltyp                              
+sodels   zonekey  pcode    area     vanarea  serlev   deltyp   trcode                     
+sodelzonekey      vanarea  outwpc                                                         
+sodummy  k1       f1       f2                                                             
+soextra1 key      ordref   seq                                                            
+soextractkey      location vanarea  rectype  reference                                    
+soextractpostkey  location postcode                                                       
+soextractreqkey   location vanarea  rectype  reqdate  reference                           
+sohdeu   key      ordref   eucode                                                         
+sohead   acckey   account  ordref                                                         
+sohead   actkey   status   account  deladd   ordref                                       
+sohead   agrkey   agreeref ordref                                                         
+sohead   callkey  call     ordref                                                         
+sohead   compkey  company  status   ordref                                                
+sohead   credkey  company  account  status   ordref                                       
+sohead   cuskey   cusref   ordref                                                         
+sohead   hldkey   status   stopcode credcont ordref                                       
+sohead   invkey   invflag  company  account  deladd   ordref                              
+sohead   key      account  deladd   ordref                                                
+sohead   lockey   stloc    ordref                                                         
+sohead   pickkey  despfl   account  deladd   ordref                                       
+sohead   projkey  projref  ordref                                                         
+sohead   ref1key  ref1     ordref                                                         
+sohead   reparkey repcode  area     ordref                                                
+sohead   rinvkey  rinvref  ordref                                                         
+sohead   rmakey   rmaref   ordref                                                         
+sohead   trankey  trancont ordref                                                         
+sohish   acckey   account  ordref                                                         
+sohish   callkey  call     ordref                                                         
+sohish   compkey  company  account  ordref                                                
+sohish   cuskey   cusref   ordref                                                         
+sohish   key      account  deladd   ordref                                                
+sohish   lockey   stloc    ordref                                                         
+sohish   reparkey repcode  area     ordref                                                
+sohish   rinvkey  rinvref  ordref                                                         
+sohish   rmakey   rmaref   ordref                                                         
+soiahd   datkey   impref   chdate   chtime   seq                                          
+soiahd   key      impref   seq                                                            
+soialn   key      impref   suppline aseq     seq                                          
+soiindex key      loc      product  ordref   seq                                          
+soimpcom key      impref   comtype  comline  seq                                          
+soimpdc  key      impref   dealcode                                                       
+soimphd  cuskey   customer custloc  impref                                                
+soimphd  key      impstat  impref                                                         
+soimpln  key      impref   suppline                                                       
+soinvdat key      perend   customer                                                       
+soinvex  key      proof    seq                                                            
+soinvoicekey1     invref   ordref                                                         
+soinvoicekey2     account  invref   ordref                                                
+soinvoicekey3     proof    invref                                                         
+soitem   agrkey   agreemnt ordref   seq      linseq                                       
+soitem   creqkey  custreq  custseq  ordref   seq      linseq                              
+soitem   key      ordref   seq      linseq                                                
+soitem   key1     stloc    product  itstat   ordref   seq      linseq                     
+soitem   prodkey  product  ordref   seq      linseq                                       
+soitem   seckey   secref   suffix   ordref   seq      linseq                              
+soitemh  key      ordref   seq      linseq                                                
+soitemh  key1     stloc    product  itstat   ordref   seq      linseq                     
+soitemh  prodkey  product  ordref   seq      linseq                                       
+soitemh  seckey   secref   suffix   ordref   seq      linseq                              
+solarge  key      ordref   loc      line     lineseq  unique                              
+solarge  lockey   loc      line     lineseq  ordref   unique                              
+solarge  ordkey   ordref   line     lineseq  loc      unique                              
+solarge  statkey  status   ordref   loc      line     lineseq  unique                     
+soldet   key      loadno   seq      order                                                 
+soldet   key1     loadno   order    seq                                                   
+solinup  key      ordref   seq      upseq                                                 
+soload   datekey  desdate  loadno   routeno                                               
+soload   key      loadno   desdate  routeno                                               
+soload   seckey   desdate  routeno                                                        
+soload   statkey  status   loadno                                                         
+somast   key      record   master   subord   subline                                      
+somast   key1     customer type     master                                                
+somast   key2     subord   subline  master                                                
+soolab   key      ordref   suffix   seq                                                   
+sopay    key      ordref   payref   seq                                                   
+sopcodes key      type     code                                                           
+sopdisc  key      type     ordref   dealcode                                              
+sopick   key      pid      ordref   status   loc                                          
+soprices key      pcode    currency type     xcode    icode    effdate                    
+soprod   key      account  product                                                        
+soprod   prodkey  product  account                                                        
+sopy     key      ordref   payref                                                         
+soqafhis key      pikloc   ordref   suffix   seq                                          
+soquote  key1     ordref   ref                                                            
+soquote  key2     ref      ordref                                                         
+soquote  key3     linked   ordref                                                         
+sorcomm  key      retno    line     seq                                                   
+sorecov  key      ordref   seq      product  reqdate                                      
+soreview key      oper     sloc     ordref   line                                         
+soreview ordkey   ordref   line     sloc     oper                                         
+sorhead  custkey  customer retno                                                          
+soritem  key      retno    seq                                                            
+soritem  prodkey  product  retno    seq                                                   
+sosdcust classkey custtype quotref                                                        
+sosdcust key      quotref  custtype                                                       
+sosdeu   key      quotref  eucode                                                         
+sosdhead agrkey   agreeref quotref                                                        
+sosdhead expkey   expiry   status   quotref                                               
+sosdhead pokey    pomast   quotref                                                        
+sosdhead sarefkey supplier supparef                                                       
+sosdhead sqrefkey supplier suppqref                                                       
+sosditem prodkey  product  quotref                                                        
+sosditem quotkey  quotref  product                                                        
+sosdreg  key      product  custcomp customer desref                                       
+sosite   key      customer name     addr1    postcode seq                                 
+sosite   seqkey   customer seq      name     addr1    postcode                            
+sotcust  extkey   exterc   extdel                                                         
+sotcust  intkey   intern   intdel                                                         
+sotyprul key      sotype   seq                                                            
+sounpick key      ordref   line     unqkey                                                
+sovan    key      stloc    vanarea  ordref   suffix                                       
+soxecost key      type     code                                                           
+spcus    cuskey   customer pcode                                                          
+spcus    key      pcode    customer                                                       
+spcususe cuskey   customer pcode    ordref                                                
+spcususe key      pcode    customer ordref                                                
+spcususe ordkey   customer ordref   pcode                                                 
+sppgrp   key      pgrp     product                                                        
+sppgrp   prodkey  product  pgrp                                                           
+spprom   actkey   active   pcode                                                          
+spprom   benckey  benctyp  bencode  pcode                                                 
+spprom   camkey   campaign pcode                                                          
+spprom   eckey    etype    ecode    active   pcode                                        
+spprom   opkey    ordprom  active   pcode                                                 
+sptext   prikey   pcode    type     seq                                                   
+srband   key      client   schedid  section  code     type     band     startdate         
+srbill   clkey    client   section  code                                                  
+srbill   jobkey   wt       job      section  code                                         
+srbill   key      wt       job      subcode  section  code                                
+srcal    key      client   contract                                                       
+srcomm   key      client   contract invno    suffinvnoitseq    amdseq   comseq            
+srcomps  key      client   schedid  section  code     rectype  maingrp  startdate         
+srcont   conkey   contract client                                                         
+srcont   key      client   contract                                                       
+srcpa    key      cpatype  client   contract cpacode  startdate                           
+srdeals  key      client   contract wt       job      gangno   schseccdecode     startdate
+srdesc   key      client   code                                                           
+srdisc   key      client   contract code     seq                                          
+srgang   key      wt       job      gangno                                                
+srinv    actkey   client   contract actinv   invno    sufinvno amendno                    
+srinv    clijobkeyclient   contract wt       job      invno    sufinvno amendno           
+srinv    conkey   wt       job      invno    sufinvno amendno                             
+srinv    key      client   contract invno    sufinvno amendno                             
+srinva   actkey   client   contract actinv   invno    sufinvno amendno                    
+srinva   clijobkeyclient   contract wt       job      invno    sufinvno amendno           
+srinva   conkey   wt       job      invno    sufinvno amendno                             
+srinva   key      client   contract invno    sufinvno amendno                             
+srperc   clikey   client   tpvcode  contract region   startdate                           
+srperc   key      client   contract region   tpvcode  startdate                           
+srrate   key      client   schedid  section  code     startdate                           
+srsched  key      client   section  code                                                  
+srseq    key      client   contract seq                                                   
+srsheet  key      client   wt       job      gang     startseq                            
+srstages key      client   contract seq                                                   
+srstages stgkey   client   contract stage                                                 
+srtran   gangkey  wt       job      subcode  wrkdate  invno    sufinvno seq      amendno  
+srtran   key      invno    sufinvno seq      amendno                                      
+srtrana  gangkey  wt       job      subcode  wrkdate  invno    sufinvno seq      amendno  
+srtrana  key      invno    seq      sufinvno amendno                                      
+srwork   key      wt       job      subcode  section  code     year                       
+srwork   ykey     wt       job      section  code     year                                
+stbatch  key1     loc      product  batch                                                 
+stbatch  sdikey   sdiref   loc      recdate  batch                                        
+stbatch  srckey   srcbat   batch                                                          
+stbatdut key      batch    seq                                                            
+stbin    catkey   cat      loc      bin                                                   
+stbin    key      loc      bin                                                            
+stbin    keyprod  loc      prod     bin                                                   
+stbin    multkey  loc      zone     binsize  bintype  bin                                 
+stbin    qtykey   loc      binsize  qty      bin                                          
+stbin    typekey  loc      bintype  prod     bin                                          
+stbin    zonekey  loc      zone     bin                                                   
+stbulk   bulreq   bulkref  reqref                                                         
+stbulk   custkey  bulkref  loc      account  bin      product  ordref   suffix   batch    
+stbulk   key      bulkref  loc      bin      product  ordref   suffix   batch    serial   
+stbulk   key2     bulkref  loc      ordref   suffix   bin      product  batch    serial   
+stbulk   lockey   loc                                                                     
+stbulk   refkey   bulkref  loc      product  reqref                                       
+stbulk   reqkey   reqref                                                                  
+stbulkpckkey      loc      picked   pickpri  reqdate  bulkref                             
+stcat    key      group    cat                                                            
+stcdlink key      stref    stline   soordref soseq                                        
+stcdlink pokey    poorder  poline   stref    stline   soordref soseq                      
+stcdlink sokey    soordref soseq    stref    stline                                       
+stcdock  key      loc      system   ordref                                                
+stcomm   key      ref      line     seq                                                   
+stconfig key      assem    serial   seq                                                   
+stconfig key2     product  sernum   assem    serial   seq                                 
+stcons   key1     pikloc   system   ordref   suffix   consign  line                       
+stcons   key2     consign  system   ordref                                                
+stcons   packkey  packref  consign  line                                                  
+stcusage compkey  loc      product  company  year     period                              
+stcusage key      loc      product  year     period   company                             
+stdeliv  acckey   pikloc   account  deladd   system   ordref   suffix                     
+stdeliv  delkey   pikloc   delref   system   ordref                                       
+stdeliv  key1     account  system   ordref   condate                                      
+stdeliv  key2     carrier  condate  system   ordref                                       
+stdeliv  key3     condate  carrier  system   ordref                                       
+stdeliv  loadkey  pikloc   loadno   system   ordref   suffix                              
+stdeliv  ordkey   pikloc   system   ordref   suffix                                       
+stdeliv  shdkey   shdref   pikloc   ordref   suffix                                       
+stdeliv  undlkey  undlref  pikloc   system   ordref   suffix                              
+stdrate  key      dutycod  effdate                                                        
+stextra1 key      reqref   line                                                           
+stfifo   dockey   product  source   ourref   line     sequence loc      seq               
+stfifo   key      loc      product  seq                                                   
+sthcons  prikey   pikloc   system   ordref   suffix   consign  line     seq               
+stifcons key      reqref   consign                                                        
+stifhead commkey  whoproc  srcloc   command  serial                                       
+stifhead key      srcloc   reqref                                                         
+stifhead serkey   whoproc  srcloc   serial                                                
+stifitem key      reqref   line     seq                                                   
+stiflock key      loc      command                                                        
+stimpcom key      impref   impline  seq                                                   
+stimpln  key      impref   impline                                                        
+stimprq  key      impstat  impref                                                         
+stinsptstkey      product  batch    test     ordref   line                                
+stitem   fbinkey  loc      bin      stat     ref      line     seq                        
+stitem   key      ref      line     seq                                                   
+stitem   lockey   loc      product  stat     ref      line     seq                        
+stitem   prodkey  product  toloc    stat                                                  
+stitem   prordkey product  ref      line     seq                                          
+stitem   seckey   ref      suffix   line     seq                                          
+stitem   ssckey   secref   suffix   ref      line     seq                                 
+stitem   statkey  status   ref      line     seq                                          
+stitem   tbinkey  toloc    tobin    stat     ref      line     seq                        
+stitem   trankey  toloc    stat     ref      line     seq                                 
+stlink   key      dsource  dordref  dordline ssource  sordref  sordline                   
+stlink   prodkey  loc      product  supdate                                               
+stlink   supkey   ssource  sordref  sordline resseq   reqdate  priority dsource  dordref  
+stloc    jobkey   wt       job      subcode                                               
+stloc    physkey  physloc  loc                                                            
+stlocgrpikey      locgroup loc                                                            
+stlocgrpilockey   loc      locgroup                                                       
+stmeter  key      serial   product  readdate                                              
+stmove   datekey  loc      product  trandate movement                                     
+stmove   sdwkey   sdwref   loc      product  trandate movement                            
+stnetbil key      company  supplier trdate   seq                                          
+stnetbil prodkey  company  product  trdate   seq                                          
+stock    binkey   loc      binref   product                                               
+stock    buykey   buyer    loc      product                                               
+stock    lockey   loc      product                                                        
+stock    pbinkey  loc      pickbin  product                                               
+stock    prodkey  product  loc                                                            
+stock    supkey   supplier loc      product                                               
+stpackd  key      packref  source   ordref   suffix   seq      linseq                     
+stpackd  key2     source   ordref   suffix   seq      linseq   packref                    
+stpackx  key      source   pikloc   ordref   suffix   consign  consline packref           
+stpackx  key1     packref  source   pikloc   ordref   suffix   consign  consline          
+stpagelckkey      company  bulkref  pzone    page                                         
+stpagelckpidkey   pid      company  bulkref  pzone    page                                
+stpckwalkkey      bulkref  loc      bin      product  ordref   suffix   batch    serial   
+stpckwalkkeybin   loc      bin      product  bulkref  ordref   suffix   batch    serial   
+stpickqu cuskey   picktype status   location account                                      
+stpickqu key      picktype status   location seq      kefields serial                     
+stpickqu key1     picktype location kefields seq                                          
+stpickqu key2     ordref   suffix                                                         
+stpickqu key3     pckref   ordref                                                         
+stpickqu key4     picktype status   account  location                                     
+stpickqu prikey   location picktype pickpri  reqdate  serial                              
+stpiglst key      pigrp    seq      pickins                                               
+stpins   key      system   ref      line     seq      pickins                             
+stpinsex key      pickins  language seq                                                   
+stplcvup key      company  supplier currency effdate                                      
+stposi   key      loc      product  batch    bin                                          
+stposi   key1     loc      product  bin      batch                                        
+stposi   keybin   loc      bin      product                                               
+stposi   keyuse   loc      product  status   expdate  batch    bin                        
+stpzone  key      loc      pzone                                                          
+stqa     key      loc      product                                                        
+stquestatkey      statdate pickgp   picker                                                
+streel   key      binsize  reelcode                                                       
+streel   reelkey  reelcode binsize                                                        
+streqn   callkey  call     ref                                                            
+streqn   costkey  costmeth wt       costcode subcode  ref                                 
+streqn   cuskey   customer ref                                                            
+streqn   exrefkey extref   ref                                                            
+streqn   ireqkey  irref    ref                                                            
+streqn   lockey   loc      ref                                                            
+streqn   statkey  status   loc      ref                                                   
+streslistlockey   loc      product  seq                                                   
+strestempkey      loc      product  seq                                                   
+stresult key      product  batch    test     source   ordref   line                       
+strevcs  key      loc      product                                                        
+strevoverkey      loc      product  overseq                                               
+stsassoc asskey   assocref product  serial   prod2    ser2                                
+stsassoc key      product  serial   prod2    ser2                                         
+stschlst key      loc      product                                                        
+stserext key      product  serial                                                         
+stserial iskey    product  intser   serial                                                
+stserial isky2    intser   product  serial                                                
+stserial isskey   isource  idocref  product  iline    iseq     serial                     
+stserial ndkey    ndcode   product  serial                                                
+stserial newkey   newser   newprod  serial   product                                      
+stserial poskey   loc      product  batch    bin      serial                              
+stserial refkey   product  isource  idocref  iline    iseq     serial                     
+stserial serkey   product  serial                                                         
+stserial serky2   serial   product                                                        
+stserial serky3   serial   serstat  product                                               
+stserial srckey   product  rsource  rdocref  rline    rseq     serial                     
+stserial statkey  loc      product  status   expdate  serial                              
+stsermovemkey     loc      product  trandate movement serial                              
+stsermoveskey     product  serial   trandate trantime seq                                 
+stsocvup key      stcurr   socurr   effdate                                               
+stsupbat key      supplier product  batref                                                
+sttake   ac1key   ref      loc      category product  batch    bin                        
+sttake   ac2key   ref      loc      usage    product  batch    bin                        
+sttake   binkey   loc      bin      ref      product  batch                               
+sttake   dupkey   loc      product  batch    bin                                          
+sttake   key      ref      loc      product  batch    bin                                 
+sttake   key2     ref      loc      bin      product  batch                               
+sttaudit key      loc      product  batch    bin      chdate   serial                     
+sttaudit purkey   loc      chdate   serial                                                
+sttlist  key      loc      product  batch                                                 
+sttref   datekey  tdate    ref                                                            
+stusage  key      loc      product  year     period                                       
+stviaexp reqkey   reqref   sys      ourref                                                
+stviaexp trankey  sys      ourref   reqref                                                
+stviaint key1     clocstx  stxerr   corderid seq                                          
+stviaint key2     corderid cordref  cseq     clinseq  ctransty seq      clocstx           
+stviaint seckey   clocstx  seq      stxerr                                                
+stxreq   reqkey   reqref   line     seq                                                   
+stxresp  prikey   reqref   line     xseq     seq                                          
+svcomm   key      viscode  schedule seq                                                   
+svsched  key      viscode  item                                                           
+svvisits callkey  call     visit                                                          
+svvisits conkey   wt       job      item     effdate  visitdatevisittimevisit             
+svvisits custkey  customer visitdatevisittimevisit                                        
+svvisits statkey  status   visitdatevisittimevisit                                        
+svvisits viskey   viscode  schedule visit                                                 
+t1pltrk  key      ourref   seq                                                            
+t1pytrdefkey      group    trade    field                                                 
+t2cont   ckey     wt       job      subcode                                               
+terminal lgon     user     inuse                                                          
+tract    actkey   wt       job      activity                                              
+trdept   key      dept     sect                                                           
+trdept   skey     sarea    dept     sect                                                  
+treffect effkey   clock    year     week                                                  
+treffect key1     dept     sect     clock    year     week                                
+trhist   deptkey  dept     sect     year     week     clock                               
+trhist   jobkey   clock    wt       job      subcode  activity ratetype year     week     
+trhist   key      clock    year     week     wt       job      subcode  activity ratetype 
+trhist   wtjobkey wt       job      subcode  year     week     clock                      
+trhist   yrwkkey  year     week     clock                                                 
+trmatrix key      mattype  tabname  year     week     jobtype  emptype                    
+trmatrix key1     mattype  tabname  year     week     emptype                             
+trmatrix key2     mattype  tabname  jobtype  emptype  year     week                       
+trmhead  key      mattype  tabname  year     week                                         
+trsheet  deptkey  dept     sect     year     week     clock                               
+trsheet  key      clock    year     week     wt       job      subcode  activity ratetype 
+trsheet  wtjobkey wt       job      subcode  year     week     clock                      
+trsheet  yrwkkey  year     week     clock                                                 
+tscomm   key      callref  type     lineno                                                
+tslist   campkey  campno   serial                                                         
+tslist   datekey  userid   datedue  timedue  priority source   serial                     
+tslist   key      complete userid   datedue  timedue  priority source   serial            
+txcomm   key      fcomp    tcomp    fregref  tregref  enddate                             
+txpaymnt key      year     regref   period   docref                                       
+txpers   key      regref   year     period                                                
+txrate   key      regref   taxcode  enddate                                               
+txregs   key      txregno  branch                                                         
+txstat   regkey   year     regref   period   docreg   taxcode                             
+txstat   taxkey   regref   year     period   taxcode  docreg                              
+txsummarykey      year     source   account  coid                                         
+txtran   codekey  taxcode  source   trantype ourref   seq      regref                     
+txtran   dckey    docreg   ourref   trantype taxcode  seq      regref                     
+txtran   dockey   regref   docreg   ourref   trantype taxcode  seq                        
+txtran   enqkey   source   taxcode  ourref   seq                                          
+txtran   key      regref   taxcode  source   trantype ourref   seq                        
+txtran   paykey   payref   ourref   taxcode  seq                                          
+txtran   srckey   regref   source   taxcode  ourref   seq                                 
+udefault key      lang     code     sequence                                              
+users    key      user     coid                                                           
+vaadetailittkey   vendor   itt      section  line                                         
+vaadetailkey      vendor   agmref   section  line                                         
+vaadetailpkey     product  vendor   agmref   section  line                                
+vaadetailvpkey    vendor   product                                                        
+vaahead  ckey     comp     divn     wt       job                                          
+vaahead  key      vendor   agmref                                                         
+vaahead  linkkey  vendor   basedon                                                        
+vaaprice key      vendor   agmref   section  line     start                               
+vaaprice keyprod  vendor   agmref   product  section  line     start                      
+vaaprice pricekey vendor   product  type     start                                        
+vaaprice prodkey  product  type     start                                                 
+vadetail ittkey   vendor   itt      section  line                                         
+vadetail key      vendor   agmref   section  line                                         
+vadetail pkey     product  vendor   agmref   section  line                                
+vadetail vpkey    vendor   product                                                        
+vahead   ckey     comp     divn     wt       job                                          
+vahead   key      vendor   agmref                                                         
+vahead   linkkey  vendor   basedon                                                        
+vaprice  key      vendor   agmref   section  line     start                               
+vaprice  keyprod  vendor   agmref   product  section  line     start                      
+vaprice  pricekey vendor   product  type     start                                        
+vaprice  prodkey  product  type     start                                                 
+vasectionkey      vendor   agmref   section                                               
+vatext   key      comment  line                                                           
+vecell   ikey     ref      userid   type     included                                     
+vecell   key      ref      userid   type     row      vendor                              
+vecell   skey     ref      userid   type     vendor   row                                 
+vecolumn key      ref      userid   type     column                                       
+velink   key      ref      userid   type     row      seq                                 
+verow    key      ref      userid   type     row                                          
+verow    okey     ref      userid   type     product  vendor                              
+verow    skey     ref      userid   type     section  line                                
+vesheet  key      ref      userid   type                                                  
+vetext   key      comment  line                                                           
+waaldisp key      lang     dispform seq                                                   
+waalert  wfkey    wfnum    alert                                                          
+waalproc key      alert    seq                                                            
+waalproc optkey   alert    option   seq                                                   
+waalqu   akey     alert    action   user     mfdef    mfval1   mfval2   sepval   prikey   
+waalqu   alkey    alval    user     prikey                                                
+waalqu   mkey     company  mfdef    mfval1   mfval2   sepval   prikey                     
+waalqu   nxtkey   nxtdate  nxttime  prikey                                                
+waalqu   ukey     user     prikey                                                         
+waalval  catkey   taskcat  taskstat compdate comptime prikey                              
+waalval  fukey    fromuser taskstat prikey                                                
+waalval  schkey   schref   schseq   prikey                                                
+waaudit  datekey  audate   autime   prikey                                                
+waaudit  valkey   alval    prikey                                                         
+wacon    compkey  company  alert    action   seq                                          
+wacon    key      alert    company  action   seq                                          
+wadest   key      prikey   seq                                                            
+walic    key      alert    licdate                                                        
+waopgrp  key      group    memtyp   member                                                
+waopgrp  memkey   memtyp   member   group                                                 
+warulcondkey      lang     type     alert    fprop    seq                                 
+warulpropkey      lang     alert    property                                              
+wastat   key      alert    syear    sper     segcode                                      
+wastat   yrkey    syear    sper     alert    segcode                                      
+wathform key      profname seq                                                            
+wathist  key      task     seq                                                            
+wathist  mfkey    mfdef    string1  strng2   task     seq                                 
+wathist  tagkey   tagname  task     seq                                                   
+wathpqs  key      profname seq                                                            
+wathpqs  tagkey   profname tagname                                                        
+wathpqt  key      profname tagname  seq                                                   
+wattrans key      user     startdatestarttime                                             
+wfevent  key      eventno  company                                                        
+wfgroup  key      wfgroup  company                                                        
+wflist   key1     taruser  datecomp datedue  timedue  priority serial                     
+wflist   key2     eventref lineno                                                         
+whpodcommkey      delref   type     line     seq                                          
+whpodel  lockey   loc      priority deldate  deltime  delref                              
+whpodel  repkey   loc      deldate  deltime  delref                                       
+whpodel  statkey  loc      status   priority deldate  deltime  delref                     
+whpodlinekey      delref   line                                                           
+whpodscrprtnkey   retref   delref                                                         
+whqarul  key      loc      type     tyval                                                 
+windows  key      name     lang                                                           
+wobill   key      billname variant                                                        
+wobill   prodkey  product  billname variant                                               
+wocomm   key      ordref   ordline  comseq                                                
+wodept   key      dept     section                                                        
+wohead   billkey  atype    billname variant  ordref                                       
+wohead   costkey  costmeth wt       costcode subcode  ordref                              
+wohead   deptkey  dept     section  product  ordref                                       
+wohead   pokey    product  ordref                                                         
+wohead   prodkey  product  dept     section  ordref                                       
+wohead   projkey  projref  ordref                                                         
+wohead   wrkkey   status   wrkloc   ordref                                                
+woitem   bulkkey  bulkref  ordref   line     seq                                          
+woitem   key      ordref   line     seq                                                   
+woitem   key1     product  ordref   line     seq                                          
+woitem   key2     loc      product  itstat   ordref   line     seq                        
+woproj   custkey  customer projref                                                        
+wostage  despkey  despnote supplier branch   startdatestartshft                           
+wostage  key      ordref   line                                                           
+xmexdet  key      atype    account  taskcode dtype    expcode                             
+xmexp    datekey  nextdate nexttime atype    account  taskcode                            
+xmexp    key      atype    account  taskcode                                              
+xmrepfiltkey      mfdef    rule     seq                                                   
+y1contrctmtrjkey  worktype mentorjobyegjob                                                
+y1contrctyegjkey  yegjob   worktype mentorjob                                             
+y1trcodesfromkey  yegccfromtcode                                                          
+y1trcodestcodekey tcode    yegccfrom                                                      
+y1trcodestokey    yegccto  tcode                                                          
+y1work   wtkey    wt       yegcc                                                          
+y1work   yegcckey yegcc    wt                                                             
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
