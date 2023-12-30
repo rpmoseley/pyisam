@@ -1,0 +1,10 @@
+'''
+This module provides the ability of configuring the backend support
+'''
+
+# Define the backend to be used by the package, valid options are:
+#   'cffi'    - CFFI backend
+#   'ctypes'  - CTYPE backend
+#   'cython'  - CYTHON backend
+backend = '@PYISAM_BACKEND@'
+isamlib = '@PYISAM_ISAMLIB@'
