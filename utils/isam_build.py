@@ -20,13 +20,14 @@ szlong = '64'  if on_64bit else '32'
 join = os.path.join
 
 # Define the location of the libraries according to the bit size
-libdir = join('libisam', szlong')
+libdir = join('libisam', szlong)
+
 # Build the library directly into the path expected by the pyisam package
 ffi = FFI()
 ffi.set_source(
   'pyisam.backend.cffi._isam_cffi',
   '#include "isam.h"',
-  library_dirs = [join('libisam', szlong)],
+  library_dirs = [libdir],
   runtime_library_dirs = ['$ORIGIN/../lib'],
   libraries = ['ifisam', 'ifisamx'],
   include_dirs = [join(libdir, 'include')],
