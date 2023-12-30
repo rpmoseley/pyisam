@@ -20,7 +20,7 @@ szlong = '64'  if on_64bit else '32'
 join = os.path.join
 
 # Define the location of the libraries according to the bit size
-libdir = join('libisam', szlong)
+libdir = join('libifisam', szlong)
 
 # Build the library directly into the path expected by the pyisam package
 ffi = FFI()
@@ -76,7 +76,7 @@ struct dictinfo {{
     short di_nkeys;
     short di_recsize;
     short di_idxsize;
-    long di_nrecords;
+    {longsz} di_nrecords;
 }};
 extern int    iserrno;
 extern int    iserrio;
