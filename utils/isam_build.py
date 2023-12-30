@@ -30,7 +30,7 @@ ffi.set_source(
   library_dirs = [libdir],
   runtime_library_dirs = ['$ORIGIN/../lib'],
   libraries = ['ifisam', 'ifisamx'],
-  include_dirs = [join(libdir, 'include')],
+  include_dirs = [libdir],
 )
 
 # Define items found in decimal.h
