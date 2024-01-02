@@ -3,7 +3,6 @@ vbisam_src = files([
   'isaudit.c',
   'isbuild.c',
   'ischeck.c',
-  'iscommon.c',
   'isdecimal.c',
   'isdelete.c',
   'ishelper.c',
@@ -13,6 +12,7 @@ vbisam_src = files([
   'isrewrite.c',
   'istrans.c',
   'iswrite.c',
+  'vbcompat.c',
   'vbdataio.c',
   'vbindexio.c',
   'vbkeysio.c',
@@ -24,6 +24,8 @@ vbisam_src = files([
 vbisam_hdr = files([
   'byteswap.h',
   'isinternal.h',
+  'vbdecimal.h',
+  'vbisam.h',
 ])
 vbisam_incl = include_directories(['.'])
 

@@ -17,7 +17,11 @@
  * Suite 330, Boston, MA 02111-1307 USA
  */
 
-#define NEED_VBINLINE_FUNCS 1
+#define NEED_VBINLINE_INT_LOAD 1
+#define NEED_VBINLINE_INT_STORE 1
+#define NEED_VBINLINE_LONG_STORE 1
+#define NEED_VBINLINE_QUAD_LOAD 1
+#define NEED_VBINLINE_QUAD_STORE 1
 #include	"isinternal.h"
 
 /* Globals */

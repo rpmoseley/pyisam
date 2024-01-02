@@ -1,10 +1,12 @@
 '''
-Test 01: Dump the list of error codes and meanings from the ISAM library
+Test 02: Print the version string from the ISAM library
 '''
-
 from pyisam import ISAMobject
+from pyisam.backend import use_conf, use_isamlib
+from pyisam.utils import ISAM_str
 
 def test(opts):
+  print(f"Using '{use_conf}' backend and '{use_isamlib}' library")
   isobj = ISAMobject()
-  for errno in range(100, isobj.is_nerr):
-    print(errno, isobj.strerror(errno))
+  print(isobj.isversnumber)
+  print(isobj.iscopyright)

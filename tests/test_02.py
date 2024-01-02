@@ -1,9 +1,10 @@
 '''
-Test 02: Print the version string from the ISAM library
+Test 01: Dump the list of error codes and meanings from the ISAM library
 '''
+
 from pyisam import ISAMobject
-from pyisam.utils import ISAM_str
 
 def test(opts):
   isobj = ISAMobject()
-  print(ISAM_str(isobj.isversnumber))
+  for errno in range(100, isobj.is_nerr):
+    print(errno, isobj.strerror(errno))

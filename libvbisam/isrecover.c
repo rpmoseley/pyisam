@@ -17,7 +17,9 @@
  * Suite 330, Boston, MA 02111-1307 USA
  */
 
-#define NEED_VBINLINE_FUNCS 1
+#define NEED_VBINLINE_INT_LOAD 1
+#define NEED_VBINLINE_INT_STORE 1
+#define NEED_VBINLINE_QUAD_LOAD 1
 #include	"isinternal.h"
 
 struct RCV_HDL {
@@ -325,7 +327,6 @@ static int
 ircvdelete (VB_CHAR *pcbuffer)
 {
     vb_rtd_t *vb_rtd =VB_GET_RTD;
-    VB_CHAR *pcrow;
     off_t   trownumber;
     int ihandle, ipid;
 
@@ -339,7 +340,6 @@ ircvdelete (VB_CHAR *pcbuffer)
         return ENOTOPEN;
     }
     trownumber = inl_ldquad (pcbuffer + INTSIZE);
-    pcrow = pcbuffer + INTSIZE + QUADSIZE + INTSIZE;
     isdelrec (ihandle, trownumber);
     return vb_rtd->iserrno;
 }
@@ -405,10 +405,9 @@ ircvfileclose (VB_CHAR *pcbuffer)
 {
     vb_rtd_t *vb_rtd =VB_GET_RTD;
     struct RCV_HDL  *psrcv;
-    int     ihandle, ivarlenflag, ipid;
+    int     ihandle, ipid;
 
     ihandle = inl_ldint (pcbuffer);
-    ivarlenflag = inl_ldint (pcbuffer + INTSIZE);
     ipid = inl_ldint (psvblogheader->cpid);
     if (iignore (ipid)) {
         return 0;
@@ -555,7 +554,7 @@ static int
 ircvuniqueid (VB_CHAR *pcbuffer)
 {
     vb_rtd_t *vb_rtd =VB_GET_RTD;
-    off_t   tuniqueid;
+    vbisam_off_t   tuniqueid;
     int ihandle, ipid;
 
     ihandle = inl_ldint (pcbuffer);

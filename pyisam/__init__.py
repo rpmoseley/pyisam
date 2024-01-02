@@ -4,17 +4,16 @@ open source VBISAM replacement library). Additional modules add the ability to a
 definitions and the idea of rowsets to the underlying library of choice.
 '''
 
-from .isam import ISAMobject
+from .backend.common import MaxKeyParts
 from .constants import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
 from .error import IsamException, IsamNotOpen, IsamOpen, IsamNotWritable, IsamRecordMutable, IsamFunctionFailed, IsamNoRecord
-
-MaxKeyParts = 8  # Define the maximum number of parts a key may contain
+from .isam import ISAMobject
 
 __all__ = ('ISAMobject', 
            'IndexFlags', 'LockMode', 'OpenMode', 'ReadMode', 'StartMode',
-           'IsamException', 'IsamNotOpen', 'IsamOpened', 'IsamNotWritable',
+           'IsamException', 'IsamNotOpen', 'IsamOpen', 'IsamNotWritable',
            'IsamRecordMutable', 'IsamFunctionFailed', 'IsamNoRecord',
            'MaxKeyParts',
            '__version__',
           )
-__version__ = '0.05'
+__version__ = '0.10'

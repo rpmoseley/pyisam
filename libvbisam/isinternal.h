@@ -201,7 +201,7 @@ typedef unsigned short  mode_t;
 typedef VB_UCHAR * ucharptr;
 
 /* Inline versions of load/store routines */
-#if NEED_VBINLINE_FUNCS
+#if defined(NEED_VBINLINE_INT_LOAD) && NEED_VBINLINE_INT_LOAD
 static VB_INLINE int
 inl_ldint (void *pclocation)
 {
@@ -227,7 +227,9 @@ inl_ldint (void *pclocation)
     return(int)ivalue;
 #endif
 }
+#endif
 
+#if defined(NEED_VBINLINE_INT_STORE) && NEED_VBINLINE_INT_STORE
 static VB_INLINE void
 inl_stint (int ivalue, void *pclocation)
 {
@@ -252,7 +254,9 @@ inl_stint (int ivalue, void *pclocation)
 #endif
     return;
 }
+#endif
 
+#if defined(NEED_VBINLINE_LONG_LOAD) && NEED_VBINLINE_LONG_LOAD
 static VB_INLINE int
 inl_ldlong (void *pclocation)
 {
@@ -277,7 +281,9 @@ inl_ldlong (void *pclocation)
     return lvalue;
 #endif
 }
+#endif
 
+#if defined(NEED_VBINLINE_LONG_STORE) && NEED_VBINLINE_LONG_STORE
 static VB_INLINE void
 inl_stlong (int lvalue, void *pclocation)
 {
@@ -298,7 +304,9 @@ inl_stlong (int lvalue, void *pclocation)
 #endif
     return;
 }
+#endif
 
+#if defined(NEED_VBINLINE_QUAD_LOAD) && NEED_VBINLINE_QUAD_LOAD
 static VB_INLINE off_t
 inl_ldquad (void *pclocation)
 {
@@ -349,7 +357,9 @@ inl_ldquad (void *pclocation)
     return tvalue;
 #endif
 }
+#endif
 
+#if defined(NEED_VBINLINE_QUAD_STORE) && NEED_VBINLINE_QUAD_STORE
 static VB_INLINE void
 inl_stquad (off_t tvalue, void *pclocation)
 {
@@ -391,7 +401,7 @@ inl_stquad (off_t tvalue, void *pclocation)
 #endif
     return;
 }
-#endif /*NEED_VBINLINE_FUNCS*/
+#endif
 
 
 #define SLOTS_PER_NODE  ((MAX_NODE_LENGTH >> 2) - 1)  /* Used in vbvarlenio.c */

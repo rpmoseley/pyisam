@@ -41,13 +41,13 @@ vb_rtd_t vb_rtd_data = {0};
     #endif
 #endif
 
+#if defined(HAVE_PTHREAD_H) && !defined(HAVE__THEAD_ATTR)
 static void
 vb_allocate_rtd (void)
 {
-#if defined(HAVE_PTHREAD_H) && !defined(HAVE__THEAD_ATTR)
     pthread_key_create(&tlsKey, NULL);
-#endif
 }
+#endif
 
 void
 vb_init_rtd (void)
@@ -97,7 +97,9 @@ vb_get_rtd (void)
 #else
 	res = &vb_rtd_data;
 #endif
+#ifdef _MSC_VER
 end_get_rtd:
+#endif
     if (!(res->vb_isinit)) {
         res->vb_isinit =  1;
         vb_init_rtd();
@@ -285,10 +287,10 @@ vvbkeyunmalloc (const int ihandle, const int ikeynumber)
 	ilength = sizeof (struct VBKEY) + psvbptr->pskeydesc[ikeynumber]->k_len;
 	while (pskeycurr) {
 		psvbptr->pskeyfree[ikeynumber] =
-		    psvbptr->pskeyfree[ikeynumber]->psnext;
-		vvbfree (pskeycurr, ilength);
-		pskeycurr = psvbptr->pskeyfree[ikeynumber];
-	}
+	     psvbptr->pskeyfree[ikeynumber]->psnext;
+	 vvbfree (pskeycurr, ilength);
+	 pskeycurr = psvbptr->pskeyfree[ikeynumber];
+  }
 }
 
 #ifdef	VBDEBUG

@@ -3,7 +3,16 @@ Overview
 
 This directory contains the source code for the VBISAM which is
 an open source replacement for the Informix (IBM) C-ISAM library,
-whose original readme is available in the following section.
+whose original readme is available at the end of the file.
+
+Extra functions added to provide consistency to IFISAM
+------------------------------------------------------
+The current version of libifisam has split the confusing isindexinfo()
+function into two separate functions, isdictinfo() and iskeyinfo(),
+removing the void pointer required by isindexinfo(). The original 
+function is preserved but now calls the other two internally, if the
+given key is 0 then isdictinfo() is called, otherwise iskeyinfo() is
+called, as keys are numbered from 1 onwards in IFISAM.
 
 Original README file contents
 -----------------------------

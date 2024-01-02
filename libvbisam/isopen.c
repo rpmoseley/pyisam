@@ -17,7 +17,8 @@
  * Suite 330, Boston, MA 02111-1307 USA
  */
 
-#define NEED_VBINLINE_FUNCS 1
+#define NEED_VBINLINE_INT_LOAD 1
+#define NEED_VBINLINE_QUAD_LOAD 1
 #include	"isinternal.h"
 
 /* Local functions */
@@ -49,6 +50,7 @@ ivbforceexit (const int ihandle)
     return 0;
 }
 
+#ifdef NEED_COUNT_ROWS
 static off_t
 tcountrows (const int ihandle)
 {
@@ -70,6 +72,7 @@ tcountrows (const int ihandle)
     }
     return tdatacount;
 }
+#endif
 
 /* Global functions */
 
@@ -240,8 +243,8 @@ isindexinfo (int ihandle, void *pskeydesc, int ikeynumber)
         vb_rtd->iserrno = ENOTOPEN;
         return -1;
     }
-    vb_rtd->iserrno = EBADKEY;
     if (ikeynumber < 0 || ikeynumber > psvbfptr->inkeys) {
+        vb_rtd->iserrno = EBADKEY;
         return -1;
     }
     vb_rtd->iserrno = 0;
@@ -262,10 +265,11 @@ isindexinfo (int ihandle, void *pskeydesc, int ikeynumber)
     }
     sdict.di_recsize = psvbfptr->imaxrowlength;
     sdict.di_idxsize = psvbfptr->inodesize;
-/* RXW
+#ifdef NEED_COUNT_ROWS
     sdict.di_nrecords = tcountrows (ihandle);
-*/
+#else
     sdict.di_nrecords = 0;
+#endif
     vb_rtd->isreclen = psvbfptr->iminrowlength;
     memcpy (pskeydesc, &sdict, sizeof (struct dictinfo));
 

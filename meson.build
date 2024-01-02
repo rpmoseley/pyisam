@@ -33,7 +33,7 @@ if use_vbisam
   pyisam_conf.set('PYISAM_ISAMLIB', 'vbisam', description: 'Default backend to be used')
   conf.set10('HAVE_LFS64', true, description: 'Set if the system supports 64-bit I/O')
   conf.set10('VDEBUG', false, description: 'Enable internal debug of vbisam')
-  conf.set10('HAVE_STRUCT_FLOCK64', cc.has_header_symbol('fcntl.h', 'flock64'), description: 'Define if have the struct flock64')
+  conf.set10('NEED_IFISAM_COMPAT', true, description: 'Enable extra functions not directly implemented')
   std_hdrs = ['fcntl.h', 'unistd.h']
   req_func = []
 else
@@ -54,6 +54,9 @@ foreach fun: req_func
     cc.has_function(fun),
     description: 'Define if have the @fun@ function')
 endforeach
+
+# Check if the fcntl.h header defines struct flock64
+conf.set10('HAVE_STRUCT_FLOCK64', cc.has_header_symbol('fcntl.h', 'flock64'), description: 'Define if you use the flock64 structure')
 
 # Create the config.h file for compilations
 conf_h = configure_file(configuration: conf, output: 'config.h')

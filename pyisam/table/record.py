@@ -187,7 +187,7 @@ class ISAMrecordBase:
       if not tupfields:
         raise ValueError('Provided fields produces no suitable columns to use')
     else:
-      tupfields = [fld.name for fld in self._namedtuple._fields]
+      tupfields = [fld.name for fld in self._fields]
     self._namedtuple = collections.namedtuple(recname, tupfields)
 
     # Create a record buffer which will produce suitable instances for this table when

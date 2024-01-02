@@ -30,13 +30,13 @@
 /*  #define VBISAM_NO_CISAM_CONFLICT */
 
     #ifdef      VBISAM_USE_LONG_LONG
-        #define vbisam_off_t    long long
+        typedef long long vbisam_off_t;
     #else
-        #define vbisam_off_t    signed int
+        typedef signed int vbisam_off_t;
     #endif
 
-    #define VB_CHAR     signed char
-    #define VB_UCHAR    unsigned char
+    typedef signed char VB_CHAR;
+    typedef unsigned char VB_UCHAR;
 
     #if defined(VBISAM_NO_CISAM_CONFLICT)
         #include "vbisam_rename.h"
@@ -341,4 +341,19 @@ extern void     stdblnull (double dsource, void *pcdestination, int inullflag);
 extern int      lddecimal (VB_UCHAR *cp, int len, dec_t *dp);
 extern void     stdecimal (dec_t *dp, VB_UCHAR *cp, int len);
 
+/* The following functions provide extra information not present in the vbisam library */
+/* but are provided in the vbcompat.c source file.                                     */
+extern int          isdictinfo (int ihandle, struct dictinfo *psdictinfo);
+extern int          iskeyinfo (int ihandle, struct keydesc *pskeydesc, int ikeynumber);
+extern int          iserrno (void);
+extern int          iserrio (void);
+extern vbisam_off_t isrecnum (void);
+extern int          isreclen (void);
+extern int          set_isreclen (int ireclen);
+extern const char  *isversnumber (void);
+extern const char  *iscopyright (void);
+extern const char  *isserial (void);
+extern const int    issingleuser (void);
+extern const int    is_nerr (void);
+extern const char **is_errlist (void);
 #endif  /* VBISAM_INCL */

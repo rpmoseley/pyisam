@@ -17,7 +17,8 @@
  * Suite 330, Boston, MA 02111-1307 USA
  */
 
-#define NEED_VBINLINE_FUNCS 1
+#define NEED_VBINLINE_QUAD_LOAD 1
+#define NEED_VBINLINE_QUAD_STORE 1
 #include	"isinternal.h"
 
 static VB_CHAR  *gpsdatarow;        /*  Buffer to hold rows read */
@@ -146,7 +147,7 @@ ibittestandreset (VB_CHAR *psmap, off_t tbit)
 }
 
 static int
-ipreamble (ihandle)
+ipreamble (int ihandle)
 {
     vb_rtd_t *vb_rtd =VB_GET_RTD;
     struct DICTINFO *psvbptr;
@@ -638,6 +639,7 @@ iindexcheck (int ihandle)
     return 0;
 }
 
+#if 0 /* not used */
 static void
 vrebuildindexfree (int ihandle)
 {
@@ -662,7 +664,9 @@ vrebuildindexfree (int ihandle)
     }
     return;
 }
+#endif /* not used */
 
+#if 0 /* not used */
 static void
 vrebuilddatafree (int ihandle)
 {
@@ -682,7 +686,9 @@ vrebuilddatafree (int ihandle)
     }
     return;
 }
+#endif /* not used */
 
+#if 0 /* not used */
 static void
 vaddkeyforrow (int ihandle, int ikey, off_t trownumber)
 {
@@ -717,9 +723,11 @@ vaddkeyforrow (int ihandle, int ikey, off_t trownumber)
                   NULL);
     return;
 }
+#endif /* not used */
 
 int VBiaddkeydescriptor (const int ihandle, struct keydesc *pskeydesc);
 
+#if 0 /* usage commented out */
 static int
 localaddindex (int ihandle, struct keydesc *pskeydesc, int ikey)
 {
@@ -770,6 +778,7 @@ localaddindex (int ihandle, struct keydesc *pskeydesc, int ikey)
     }
     return 0;
 }
+#endif /* not used */
 
 
 static void
@@ -823,7 +832,7 @@ vrebuildkeys (int ihandle)
     sprintf (name, "VBISAM_REBUILD_%d", getpid());
     iserase((VB_CHAR *)name);
     vb_rtd->isreclen = psvbptr->iminrowlength;
-    iNewhandel = isbuild(name, (size_t)psvbptr->imaxrowlength, psvbptr->pskeydesc[0], 
+    iNewhandel = isbuild((VB_CHAR *)name, (size_t)psvbptr->imaxrowlength, psvbptr->pskeydesc[0], 
                          ISINOUT | ISEXCLLOCK | (psvbptr->iminrowlength != psvbptr->imaxrowlength ? ISVARLEN : 0));
     for ( ikey = 1; ikey < MAXSUBS; ikey++ ) {
         if ( psvbptr->pskeydesc[ikey] ) {
