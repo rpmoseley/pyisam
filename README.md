@@ -16,6 +16,12 @@ Also as part of the repository is a slightly modified version of VBISAM (v2.1.1)
 at the time, which can be built using the meson build system, a copy of the library
 is included built as a 64-bit library.
 
+Required packages
+-----------------
+It is best to run the pyisam module from within a virtual environment, and ensure
+that at least the packages in 'requirements.txt' are installed. To compile new
+modules ensure that the packages in 'requirements-dev.txt' are also installed.
+
 Generate support extension modules
 ----------------------------------
 In order to generate the necessary lowlevel interface extensions, use the following

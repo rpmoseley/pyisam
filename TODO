@@ -25,5 +25,4 @@ are marked with TODO or FIXME in the source code.
 
 * Need to write the interface to the APSW Virtual Table support feature
 
-* Add support for the commerical DISAM library in addition to adding support for the open source
-  VBISAM library which appears to be a dead project.
+* Add support for the commerical DISAM library in addition to VBISAM and C-ISAM.
