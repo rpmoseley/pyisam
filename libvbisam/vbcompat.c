@@ -301,7 +301,7 @@ isdictinfo (int ihandle, struct dictinfo *psdictinfo)
         return -1;
     }
     vb_rtd->iserrno = 0;
-    if (ivbenter (ihandle, 1))
+    if (ivbenter (ihandle, 0))
         return -1;
     sdict.di_nkeys = psvbfptr->inkeys;
     if (psvbfptr->iopenmode & ISVARLEN)

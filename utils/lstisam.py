@@ -1,11 +1,12 @@
 '''
 Python implementation of the C program lstisam
 '''
+import sys
 from pyisam import ISAMobject
 from pyisam.backend import use_conf, use_isamlib
 
 isfd = ISAMobject()
-isfd.isopen('data/decomp')
+isfd.isopen(sys.argv[1])
 print(f'Using {use_conf} and {use_isamlib} library')
 print(f'Library: {isfd.isversnumber}')
 dictinfo = isfd.isdictinfo()
@@ -32,6 +33,4 @@ for cidx in range(0, dictinfo.nkeys):
   for cprt in range(keyinfo.nparts):
     keypart = keyinfo[cprt]
     print(' Part ', cprt, ' : (', keypart.start, ', ', keypart.leng, ', ', keypart.type, ')', sep='')
-# Cause an error to occur
-isfd.iskeyinfo(dictinfo.nkeys)
 isfd.isclose()

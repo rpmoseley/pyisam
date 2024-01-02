@@ -185,61 +185,24 @@ class ISAMcommonMixin:
   def_openmode = OpenMode.ISINOUT
   def_lockmode = LockMode.ISMANULOCK
 
-  @property
-  def iserrno(self):
-    return self._lib_.iserrno
-
-  @property
-  def iserrio(self):
-    return self._lib_.iserrio
-
-  @property
-  def isrecnum(self):
-    return self._lib_.isrecnum
-
-  @property
-  def isreclen(self):
-    return self._lib_.isreclen
-
-  """ NOT USED :
-  @property
-  def isversnumber(self):
-    return self._ffi_.string(self._lib_.isversnumber).decode('utf-8')
-
-  @property
-  def iscopyright(self):
-    return self._ffi_.string(self._lib_.iscopyright).decode('utf-8')
-
-  @property
-  def isserial(self):
-    return self._ffi_.string(self._lib_.isserial).decode('utf-8')
-
-  @property
-  def issingleuser(self):
-    return bool(self._lib_.issingleuser)
-
-  @property
-  def is_nerr(self):
-    return self._lib_.is_nerr
-  END NOT USED """
-
-  def _chkerror(self, result, args=None):
+  def _chkerror(self, result, func, args=None):
     '''Perform checks on the running of the underlying ISAM function by
        checking the iserrno provided by the ISAM library, if ARGS is
        given return that on sucessfull completion of this method'''
     if result < 0:
-      if self.iserrno == 101:
+      errno = self.iserrno()
+      if errno == 101:
         raise IsamNotOpen
-      elif self.iserrno == 111:
+      elif errno == 111:
         raise IsamNoRecord
-      elif self.iserrno != 0:
-        raise IsamFunctionFailed(ISAM_str(args), self.iserrno, self.strerror(self.iserrno))
+      elif errno != 0:
+        raise IsamFunctionFailed(func, errno, self.strerror(errno))
     return result
 
   def strerror(self, errno=None):
     'Return the error message related to the error number given'
     if errno is None:
-      errno = self.iserrno
+      errno = self.iserrno()
     if 100 <= errno < self.is_nerr:
       return ISAM_str(self._ffi_.string(self.is_errlist()[errno - 100]))
     else:
@@ -287,7 +250,7 @@ class ISAMcommonMixin:
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
     fdmode = OpenMode.ISINOUT.value + LockMode.ISEXCLLOCK.value
-    self._isfd_ = self._chkerror(self._lib_.isbuild(ISAM_bytes(tabname), reclen, kdesc, fdmode), 'isbuild')
+    self._isfd_ = self._chkerror(self._lib_.isbuild(ISAM_bytes(tabname), reclen, kdesc._kinfo, fdmode), 'isbuild')
 
   def iscleanup(self):
     'Cleanup the ISAM library'
@@ -433,7 +396,7 @@ class ISAMcommonMixin:
 
 class ISAMindexMixin:
   'This class provides the cffi specific methods for ISAMindex'
-  def create_keydesc(self, record, optimize=False):
+  def create_keydesc(self, isobj, record, optimize=False):
     'Create a new keydesc using the column information in RECORD'
     # NOTE: The information stored in an instance of _TableIndexCol
     #       is relative to the associated column within in the
@@ -464,7 +427,7 @@ class ISAMindexMixin:
       kdesc.k_part[idxno].kp_type = colinfo.type.value
       return kdesc.k_part[idxno].kp_leng
 
-    kdesc = self._ffi_.new('struct keydesc *')
+    kdesc = isobj._ffi_.new('struct keydesc *')
     kdesc.k_flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc: kdesc.k_flags |= IndexFlags.DESCEND
     if isinstance(self._colinfo, (tuple, list)):

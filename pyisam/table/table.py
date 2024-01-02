@@ -98,12 +98,12 @@ class TableIndexMapElem:
       raise ValueError("'Attempt to fill fields of undefined 'TableIndex'")
     return self._tabind.fill_fields(record, *args, **kwds)
 
-  def as_keydesc(self, record):
+  def as_keydesc(self, isobj, record):
     if self._keydesc:
       return self._keydesc
     if self._tabind is None:
       raise ValueError("Attempt to return keydesc of undefined 'TableIndex'")
-    return self._tabind.as_keydesc(record)
+    return self._tabind.as_keydesc(isobj, record)
 
     
 class TableIndexMapping:
@@ -353,7 +353,7 @@ class ISAMtable:
       reclen = self._record_._recsize
     else:
       self._isobj_.isreclen, reclen = varlen
-    self._isobj_.isbuild(path, reclen, index.as_keydesc(self._record_))
+    self._isobj_.isbuild(path, reclen, index.as_keydesc(self._isobj_, self._record_))
 
   def open(self, tabpath=None, mode=None, lock=None, **kwd):
     'Open an existing ISAM table with the specified mode, lock and TABPATH'
@@ -408,7 +408,7 @@ class ISAMtable:
       _index.fill_fields(_record, *args, **kwd)
     
       # Issue the restart followed by the read of the record itself
-      self._isobj_.isstart(_index.as_keydesc(_record), smode, _record._buffer)
+      self._isobj_.isstart(_index.as_keydesc(self._isobj_, _record), smode, _record._buffer)
       self._isobj_.isread(_record._buffer, ReadMode.ISNEXT)
 
       # Make this the current index for the next invocation of the method

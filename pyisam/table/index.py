@@ -103,9 +103,9 @@ class TableIndex(ISAMindexMixin):
     else:
       raise ValueError('Unhandled type of column information')
 
-  def as_keydesc(self, record, optimize=False):
+  def as_keydesc(self, isobj, record, optimize=False):
     if self._kdesc is None:
-      self._kdesc = self.create_keydesc(record, optimize=optimize)
+      self._kdesc = self.create_keydesc(isobj, record, optimize=optimize)
     return self._kdesc
 
   def fill_fields(self, record, *args, **kwd):

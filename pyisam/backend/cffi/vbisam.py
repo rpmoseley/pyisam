@@ -6,7 +6,7 @@ and is designed to be a direct replacement for the ctypes based module.
 '''
 
 from ._vbisam_cffi import ffi, lib
-from .common import ISAMcommonMixin
+from .common import ISAMcommonMixin, dictinfo, keydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
@@ -20,21 +20,17 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   _ffi_ = ffi
   _lib_ = lib
 
-  @property
   def iserrno(self):
-    return self._lib_.iserrno
+    return self._lib_.iserrno()
 
-  @property
   def iserrio(self):
-    return self._lib_.iserrio
+    return self._lib_.iserrio()
 
-  @property
   def isrecnum(self):
-    return self._lib_.isrecnum
+    return self._lib_.isrecnum()
 
-  @property
   def isreclen(self):
-    return self._lib_.isreclen
+    return self._lib_.isreclen()
 
   @property
   def isversnumber(self):

@@ -20,23 +20,17 @@ class ISAMifisamMixin(ISAMcommonMixin):
   _ffi_ = ffi
   _lib_ = lib
 
-  """ NOT USED:
-  @property
   def iserrno(self):
     return self._lib_.iserrno
 
-  @property
   def iserrio(self):
     return self._lib_.iserrio
 
-  @property
   def isrecnum(self):
     return self._lib_.isrecnum
 
-  @property
   def isreclen(self):
     return self._lib_.isreclen
-  END NOT USED """
 
   @property
   def isversnumber(self):
@@ -93,7 +87,7 @@ class ISAMifisamMixin(ISAMcommonMixin):
       raise ValueError('Index must be a positive number starting from 0')
     else:
       kinfo = ffi.new('struct keydesc *')
-      self._chkerror(self._lib_.iskeyinfo(self._isfd_, kinfo, keynum+1))
+      self._chkerror(self._lib_.iskeyinfo(self._isfd_, kinfo, keynum+1), 'iskeyinfo')
     return self.isindexinfo(keynum)
 
   def islangchk(self):
