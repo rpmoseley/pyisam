@@ -1,6 +1,4 @@
 #! /usr/bin/env python3
-# This is the entry point for WingIDE to avoid problems with relative
-# imports which occur as the package is not installed.
 import argparse
 import importlib
 import os
@@ -63,7 +61,9 @@ class AvailableTest:
   max_test = property(_max_test)
 
   def run_test(self, testnum, opts):
-    def _do_test(testnum):
+    def _do_test(testnum, verbose=False):
+      if verbose:
+        print('TEST:', testnum)
       mod = importlib.import_module(f'.{self._lmap[testnum].name[:-3]}', self._dir)
       if opts.dry_run and hasattr(mod, 'attr') and 'write' in mod.attr:
         if opts.debug:
@@ -76,7 +76,7 @@ class AvailableTest:
         return tfunc(opts)
 
     if testnum in (None, 0):
-      return [_do_test(testnum) for testnum in self._ltst]
+      return [_do_test(testnum, True) for testnum in self._ltst]
     else:
       return _do_test(testnum)
 
@@ -84,7 +84,7 @@ class AvailableTest:
 avail_tests = AvailableTest('tests')
 
 parser = argparse.ArgumentParser(prog='pyisam',
-                                 description='PyISAM command line interface',
+                                 description='PyISAM testing command line interface',
                                  argument_default=False)
 parser.add_argument('-n', '--dry-run',
                     dest='dry_run',
@@ -131,13 +131,13 @@ def run_test(testdir, testnum, opts, avail_tests=avail_tests):
   except AttributeError:
     return None
   
-  
-# Give the version if requested and finish without further processing
-if opts.version:
+def give_version():
   from pyisam import __version__
-  from pyisam.backend import use_conf
-  print(f'pyisam early version {__version__} using {use_conf}')
-  sys.exit(1)
+  from pyisam.backend import use_conf, use_isamlib
+  print(f'pyisam version {__version__}, backend {use_conf} and {use_isamlib} library')
 
-# Make use of the routine provided by the avail_tests object instead.
-avail_tests.run_test(opts.run_mode, opts)
+# Give the version if requested and finish without further processing
+if opts.version or opts.debug:
+  give_version()
+if not opts.version:
+  avail_tests.run_test(opts.run_mode, opts)

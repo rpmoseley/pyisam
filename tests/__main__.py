@@ -1,11 +1,4 @@
 #! /usr/bin/env python3
-"""IMPORT JUST THOSE REQUIRED:
-from pyisam import ISAMobject, ReadMode, OpenMode, LockMode
-from pyisam.table import ISAMtable
-from pyisam.utils import ISAM_str
-from pyisam.tabdefns.stxtables import DEFILEdefn, DEKEYSdefn, DECOMPdefn, DEITEMdefn
-from pyisam.autoselect import dump_record_imp
-"""
 import argparse
 import importlib
 import os
@@ -91,7 +84,7 @@ class AvailableTest:
 avail_tests = AvailableTest('tests')
 
 parser = argparse.ArgumentParser(prog='pyisam',
-                                 description='PyISAM command line interface',
+                                 description='PyISAM testing command line interface',
                                  argument_default=False)
 parser.add_argument('-n', '--dry-run',
                     dest='dry_run',

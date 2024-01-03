@@ -6,8 +6,8 @@ It looks for the lines starting with 'from .X import' and transform them into
 'from pyisam.X import' unless X is '' when it is 'from pyisam import'
 '''
 
-# This will only create the file 'run_wing.py' from 'pyisam/__main__.py'
-i_name = 'pyisam/__main__.py'
+# This will only create the file 'run_wing.py' from 'tests/__main__.py'
+i_name = 'tests/__main__.py'
 o_name = 'run_wing.py'
 with open(i_name) as fd, open(o_name, 'w') as ofd:
   for line in fd:
