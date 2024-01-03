@@ -22,6 +22,12 @@ It is best to run the pyisam module from within a virtual environment, and ensur
 that at least the packages in 'requirements.txt' are installed. To compile new
 modules ensure that the packages in 'requirements-dev.txt' are also installed.
 
+The script 'mkvenv' in the root directory will create a virtualenv using the system
+python version and ensure that the pip and setuptools packages are upto date and
+then install the packages listed in requirements.txt, and finally will perform a
+manual copy of the pyisam package into the virtualenv. To use a specific version
+of python pass its full path as an argument to the script.
+
 Generate support extension modules
 ----------------------------------
 In order to generate the necessary lowlevel interface extensions, use the following
@@ -55,6 +61,10 @@ $ python -m tests -tNUM
 To get help on the tests, run the following command:
 
 $ python -m tests -h
+
+To displaying the backend and ISAM variant being used, issue the following command:
+
+$ python -m tests -V
 
 Defining the row layout
 -----------------------

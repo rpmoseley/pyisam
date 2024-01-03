@@ -34,8 +34,8 @@ class ISAMifisamMixin(ISAMcommonMixin):
   }
   
   # Load the ISAM library once and share it in other instances
-  # To make use of vbisam instead link the libpyisam.so accordingly
-  _lib_ = CDLL('libpyisam', handle=_dlopen(os.path.normpath(os.path.join(os.path.dirname(__file__), 'libpyisam.so')))) # FIXME: Make 32/64-bit correct
+  # To make use of vbisam instead link the libpyifisam.so accordingly
+  _lib_ = CDLL('libpyifisam', handle=_dlopen(os.path.normpath(os.path.join(os.path.dirname(__file__), 'libpyifisam.so'))))
 
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library

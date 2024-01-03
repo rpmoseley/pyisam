@@ -1,0 +1,36 @@
+
+# This script will create a new virtual environment under .venv and then copy the current
+# contents of the pyisam package into place. The optional argument is the path to the
+# python version required to be used in the virtual environment, the default is to use
+# the system provided python3.
+
+case $# in
+1) PYTHON=$1               ;;
+*) PYTHON=/usr/bin/python3 ;;
+esac
+PYDIR_VENV=.venv
+PYDIR=$($PYTHON -c 'import sysconfig; print(sysconfig.get_config_var("LDVERSION"))')
+PYDIR_SITE=$PYDIR_VENV/lib/python$PYDIR/site-packages
+PIP_EXEC=$PYDIR_VENV/bin/pip3
+
+if test -d $PYDIR_VENV; then
+  # Check if the required packages are installed
+  printf "Updating required packages\n"
+  $PIP_EXEC install -U -r requirements.txt --disable-pip-version-check
+else
+  # Create a new virtual environment if necessary
+  printf "Creating new virtual environment\n"
+  $PYTHON -m venv $PYDIR_VENV
+
+  printf "Installing required packages\n"
+  $PIP_EXEC install -U pip setuptools
+  $PIP_EXEC install -r requirements.txt
+fi
+
+if test -d $PYISAM_SITE/pyisam; then
+  printf "Updating existing files\n"
+  cp -r pyisam/* $PYDIR_SITE/pyisam
+else
+  printf "Creating pyisam package\n"
+  cp -a pyisam $PYDIR_SITE
+fi
