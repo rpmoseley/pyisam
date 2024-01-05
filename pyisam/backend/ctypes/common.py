@@ -434,7 +434,7 @@ class ISAMcommonMixin:
 
 class ISAMindexMixin:
   'This class provides the ctypes specific methods for ISAMindex'
-  def create_keydesc(self, record, optimize=False):
+  def create_keydesc(self, isobj, record, optimize=False):
     'Create a new keydesc using the column information in RECORD'
     # NOTE: The information stored in an instance of _TableIndexCol
     #       is relative to the associated column within in the

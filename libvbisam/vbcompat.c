@@ -4,6 +4,8 @@
  * are not translated.
  */
 
+#define NEED_VBINLINE_INT_LOAD 1
+#define NEED_VBINLINE_QUAD_LOAD 1
 #include "isinternal.h"
 
 /* Provide the error messages for the standard CISAM error codes */
@@ -280,6 +282,28 @@ NUM: 172
 */
 
 /* Provide the newer iskeyinfo() and isdictinfo() */
+static off_t my_tcountrows(int ihandle, struct DICTINFO *fptr) {
+    off_t   tnodenumber, tdatacount;
+    int     inodeused;
+    VB_CHAR cvbnodetmp[MAX_NODE_LENGTH];
+
+    tnodenumber = inl_ldquad((VB_CHAR *)fptr->sdictnode.cdatafree);
+    tdatacount = inl_ldquad((VB_CHAR *)fptr->sdictnode.cdatacount);
+    printf("COUNT: INIT: %zd, %zd\n", tdatacount, tnodenumber);
+    while (tnodenumber) {
+        if (ivbblockread(ihandle, 1, tnodenumber, cvbnodetmp)) {
+            return -1;
+        }
+        inodeused = inl_ldint(cvbnodetmp);
+        inodeused -= INTSIZE + QUADSIZE;
+        tdatacount -= (inodeused / QUADSIZE);
+        tnodenumber = inl_ldquad(cvbnodetmp + INTSIZE);
+        printf("COUNT: CALC: %zd (%zd)\n", tdatacount, tnodenumber);
+    }
+    printf("COUNT: FINI: %zd\n", tdatacount);
+    return tdatacount;
+}
+
 int
 isdictinfo (int ihandle, struct dictinfo *psdictinfo)
 {
@@ -308,7 +332,7 @@ isdictinfo (int ihandle, struct dictinfo *psdictinfo)
         sdict.di_nkeys |= 0x80;
     sdict.di_recsize = psvbfptr->imaxrowlength;
     sdict.di_idxsize = psvbfptr->inodesize;
-    sdict.di_nrecords = 0;
+    sdict.di_nrecords = my_tcountrows(ihandle, psvbfptr);
     vb_rtd->isreclen = psvbfptr->iminrowlength;
     memcpy (psdictinfo, &sdict, sizeof (struct dictinfo));
     ivbexit (ihandle);
@@ -331,7 +355,7 @@ iskeyinfo (int ihandle, struct keydesc *pskeydesc, int ikeynumber)
         return -1;
     }
     if (ikeynumber < 0 || ikeynumber > psvbfptr->inkeys) {
-        vb_rtd->iserrno = EBADKEY;
+        vb_rtd->iserrno = EBADARG;
         return -1;
     }
     memcpy (pskeydesc, psvbfptr->pskeydesc[ikeynumber - 1],
@@ -383,7 +407,7 @@ is_nerr (void)
     return _is_nerr;
 }
 
-const char *[]
+const char **
 is_errlist (void)
 {
     return _is_errlist;

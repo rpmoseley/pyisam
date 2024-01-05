@@ -341,8 +341,6 @@ extern void     stdblnull (double dsource, void *pcdestination, int inullflag);
 extern int      lddecimal (VB_UCHAR *cp, int len, dec_t *dp);
 extern void     stdecimal (dec_t *dp, VB_UCHAR *cp, int len);
 
-/* The following functions provide extra information not present in the vbisam library */
-/* but are provided in the vbcompat.c source file.                                     */
 extern int          isdictinfo (int ihandle, struct dictinfo *psdictinfo);
 extern int          iskeyinfo (int ihandle, struct keydesc *pskeydesc, int ikeynumber);
 extern int          iserrno (void);
