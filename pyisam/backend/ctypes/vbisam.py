@@ -8,11 +8,11 @@ library without requiring an explicit extension to be compiled.
 import os
 from ctypes import c_char_p, c_int, c_int32
 from ctypes import _SimpleCData, CDLL, _dlopen
-from .common import ISAMcommonMixin, ISAMfunc
+from .common import ISAMcommonMixin, ISAMfunc, ISAMindexMixin, dictinfo, keydesc, RecordBuffer
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed
 from ...utils import ISAM_str
 
-__all__ = 'ISAMvbisamMixin'
+__all__ = 'ISAMvbisamMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
 class ISAMvbisamMixin(ISAMcommonMixin):
   '''This provides the interface to the underlying ISAM libraries.
@@ -20,12 +20,6 @@ class ISAMvbisamMixin(ISAMcommonMixin):
      prefix of an underscore, so isopen becomes _isopen.
   '''
   __slots__ = ()
-  
-  # The _const_ dictionary initially consists of the ctypes type
-  # which will be mapped to the correct variable when accessed.
-  _const_ = {
-    'is_nerr'      : c_int,    'is_errlist'   : None
-  }
   
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
@@ -38,47 +32,10 @@ class ISAMvbisamMixin(ISAMcommonMixin):
       raise AttributeError(name)
     elif name.startswith('_is'):
       return getattr(self._lib_, name[1:])
-    elif name.startswith('_'):
-      raise AttributeError(name)
     elif name == 'is_errlist':
-      val = self._const_['is_errlist']
-      if val is None:
-        errlist = c_char_p * (self.is_nerr - 100)
-        val = self._const_['is_errlist'] = errlist.in_dll(self._lib_, 'is_errlist')
-    else:
-      val = self._const_.get(name)
-      if val is None:
-        raise AttributeError(name)
-      elif not isinstance(val, _SimpleCData) and hasattr(val, 'in_dll'):
-        val = self._const_[name] = val.in_dll(self._lib_, name)
-    return val.value if hasattr(val, 'value') else val
+      return getattr(self._lib_, 'is_errlist')
+    raise AttributeError(name)
 
-  """ NOT USED:
-  def _chkerror(self, result=None, func=None, args=None):
-    '''Perform checks on the running of the underlying ISAM function by
-       checking the iserrno provided by the ISAM library, if ARGS is
-       given return that on successfull completion of this method'''
-    print('CHK: R=', result, 'F=', func.__name__, 'A=', args)
-    if result is None or result < 0:
-      if self.iserrno == 101:
-        raise IsamNotOpen
-      elif self.iserrno == 111:
-        raise IsamNoRecord
-      elif result is not None and (result < 0 or self.iserrno != 0):
-        # NOTE: What if args is None?
-        raise IsamFunctionFailed(func.__name__, self.iserrno, self.strerror(self.iserrno))
-    return args
-  END NOT USED """
-
-  def strerror(self, errno=None):
-    '''Return the error message related to the error number given'''
-    if errno is None:
-      errno = self.iserrno()
-    if 100 <= errno < self.is_nerr:
-      return ISAM_str(self.is_errlist[errno - 100])
-    else:
-      return os.strerror(errno)
-  
   @property
   @ISAMfunc(restype=c_int)
   def iserrno(self):
@@ -98,6 +55,24 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   @ISAMfunc(restype=c_int)
   def isreclen(self):
     return self._lib_.isreclen()
+
+  @ISAMfunc(c_int, restype=c_char_p)
+  def is_strerror(self, errcode):
+    return self._lib_.is_strerror(errcode)
+
+  def strerror(self, errcode=None):
+    if errcode is None:
+      errcode = self.iserrno()
+    errnum = errcode - self._vld_errno[0]
+    if self._vld_errno[0] <= errcode < self._vld_errno[1]:
+      return ISAM_str(self.is_strerror(errcode))
+    else:
+      return os.strerror(errcode)
+
+  @property
+  @ISAMfunc(restype=c_char_p)
+  def is_errlist(self):
+    return self._lib_is_errlist()
 
   @property
   def isversnumber(self):

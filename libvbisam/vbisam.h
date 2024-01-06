@@ -348,10 +348,10 @@ extern int          iserrio (void);
 extern vbisam_off_t isrecnum (void);
 extern int          isreclen (void);
 extern int          set_isreclen (int ireclen);
+extern const char  *is_strerror (int errcode);
 extern const char  *isversnumber (void);
 extern const char  *iscopyright (void);
 extern const char  *isserial (void);
 extern const int    issingleuser (void);
 extern const int    is_nerr (void);
-extern const char **is_errlist (void);
 #endif  /* VBISAM_INCL */

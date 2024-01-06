@@ -138,25 +138,30 @@ class ISAMcommonMixin:
   with a prefix of underscore once the arguments and return type have been set'''
   def_openmode = OpenMode.ISINOUT
   def_lockmode = LockMode.ISMANULOCK
+  
+  _vld_errno = (100, 172)
 
   def _chkerror(self, result=None, func=None, args=None):
     '''Perform checks on the running of the underlying ISAM function by
        checking the iserrno provided by the ISAM library, if ARGS is
        given return that on successful completion of this method'''
+    if isinstance(result, (str, bytes)):
+      return result
     if not isinstance(result, int):
       raise ValueError(f'Unexpected result: {result}')
     elif result < 0:
-      errno = self.iserrno
-      if errno == 101:
+      # Make the error code relative to range for variant
+      errcode = self.iserrno
+      errnum = errcode - self._vld_errno[0]
+      if errnum == 1:
         raise IsamNotOpen
-      elif errno == 111:
+      if errnum == 11:
         raise IsamNoRecord
-      elif 100 <= errno < 172:
-        raise IsamFunctionFailed(func.__name__, errno, ISAM_str(self.is_errlist[errno - 100]))
-      elif errno:
-        raise IsamFunctionFailed(func.__name__, errno, 'Unkown')
-    else:
-      return args
+      if self._vld_errno[0] <= errcode < self._vld_errno[1]:
+        raise IsamFunctionFailed(func.__name__, errcode, ISAM_str(self.is_errlist[errnum]))
+      if errnum:
+        raise IsamFunctionFailed(func.__name__, errcode, 'Unkown')
+    return result
 
   @ISAMfunc(c_int, POINTER(keydesc))
   def isaddindex(self, kdesc):

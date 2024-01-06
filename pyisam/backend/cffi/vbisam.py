@@ -6,11 +6,11 @@ and is designed to be a direct replacement for the ctypes based module.
 '''
 
 from ._vbisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, dictinfo, keydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc, RecordBuffer
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMcommonMixin', 'ffi', 'lib'
+__all__ = 'ISAMcommonMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'ffi', 'lib', 'RecordBuffer'
 
 class ISAMvbisamMixin(ISAMcommonMixin):
   ''' This provides the interface to underlying ISAM libraries adding the context
@@ -52,10 +52,14 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   def is_nerr(self):
     return 172
 
-  @property
-  def is_errlist(self):
-    return self._lib_.is_errlist()
-  
+  def strerror(self, errno=None):
+    if errno is None:
+      errno = self.iserrno()
+    if self._vld_errno[0] <= errno < self._vld_errno[1]:
+      return ISAM_str(self._ffi_.string(self._lib_.is_strerror(errno)))
+    else:
+      return os.strerror(errno)
+
   def isdictinfo(self):
     'Return the dictinfo for the table'
     if self._isfd_ is None: raise IsamNotOpen
@@ -106,6 +110,3 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   def isnolangchk(self):
     'Switch off language checks'
     self._chkerror(self._lib_.isnolangchk(), 'isnolangchk')
-
-  def is_errlist(self):
-    return self._lib_.is_errlist()

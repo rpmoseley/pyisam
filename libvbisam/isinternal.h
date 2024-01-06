@@ -476,21 +476,21 @@ struct  VBTREE {
 #endif  /* ISAMMODE == 1 */
 };
 
-struct  DICTNODE {          /* Offset 32Val 64Val */
+struct  DICTNODE {                     /* Offset      32Val   64Val */
     /* 32IO 64IO */
-    VB_CHAR    cvalidation[2];     /* 0x00  0x00  0xfe53  0x5642 */
-    VB_CHAR    cheaderrsvd;        /* 0x02 0x02 0x02  Same */
-    VB_CHAR    cfooterrsvd;        /* 0x03  0x03  0x02  Same */
-    VB_CHAR    crsvdperkey;        /* 0x04  0x04  0x04  0x08 */
-    VB_CHAR    crfu1;          /* 0x05 0x05 0x04  Same */
-    VB_CHAR    cnodesize[INTSIZE]; /* 0x06  0x06  0x03ff  0x0fff */
+    VB_CHAR    cvalidation[2];         /* 0x00  0x00  0xfe53  Same */
+    VB_CHAR    cheaderrsvd;            /* 0x02  0x02  0x02    Same */
+    VB_CHAR    cfooterrsvd;            /* 0x03  0x03  0x02    Same */
+    VB_CHAR    crsvdperkey;            /* 0x04  0x04  0x04    0x08 */
+    VB_CHAR    crfu1;                  /* 0x05  0x05  0x04    Same */
+    VB_CHAR    cnodesize[INTSIZE];     /* 0x06  0x06  0x03ff  Same */
     VB_CHAR    cindexcount[INTSIZE];   /* 0x08  0x08  Varies  Same */
-    VB_CHAR    crfu2[2];       /* 0x0a  0x0a  0x0704  Same */
-    VB_CHAR    cfileversion;       /* 0x0c  0x0c  0x00  Same */
+    VB_CHAR    crfu2[2];               /* 0x0a  0x0a  0x0704  Same */
+    VB_CHAR    cfileversion;           /* 0x0c  0x0c  0x00    Same */
     VB_CHAR    cminrowlength[INTSIZE]; /* 0x0d  0x0d  Varies  Same */
     VB_CHAR    cnodekeydesc[QUADSIZE]; /* 0x0f  0x0f  Normally 2 */
-    VB_CHAR    clocalindex;        /* 0x13  0x17  0x00  Same */
-    VB_CHAR    crfu3[5];       /* 0x14  0x18  0x00... Same */
+    VB_CHAR    clocalindex;            /* 0x13  0x17  0x00    Same */
+    VB_CHAR    crfu3[5];               /* 0x14  0x18  0x00... Same */
     VB_CHAR    cdatafree[QUADSIZE];    /* 0x19  0x1d  Varies  Same */
     VB_CHAR    cnodefree[QUADSIZE];    /* 0x1d  0x25  Varies  Same */
     VB_CHAR    cdatacount[QUADSIZE];   /* 0x21  0x2d  Varies  Same */
@@ -499,7 +499,7 @@ struct  DICTNODE {          /* Offset 32Val 64Val */
     VB_CHAR    cuniqueid[QUADSIZE];    /* 0x2d  0x45  Varies  Same */
     VB_CHAR    cnodeaudit[QUADSIZE];   /* 0x31  0x4d  Varies  Same */
     VB_CHAR    clockmethod[INTSIZE];   /* 0x35  0x55  0x0008  Same */
-    VB_CHAR    crfu4[QUADSIZE];    /* 0x37  0x57  0x00... Same */
+    VB_CHAR    crfu4[QUADSIZE];        /* 0x37  0x57  0x00... Same */
     VB_CHAR    cmaxrowlength[INTSIZE]; /* 0x3b  0x5f  Varies  Same */
     VB_CHAR    cvarleng0[QUADSIZE];    /* 0x3d  0x61  Varies  Same */
     VB_CHAR    cvarleng1[QUADSIZE];    /* 0x41  0x69  Varies  Same */

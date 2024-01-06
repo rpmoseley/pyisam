@@ -24,6 +24,9 @@ class BuildException(Exception):
   def __str__(self):
     return self._msg
 
+class BuilderNoLibraryFound(FileNotFoundError):
+  'Exception raised when the requested ISAM library is not available'
+
 class Builder:
   'Base class providing shared CFFI and CTYPES support'
   _soext = sysconfig.get_config_var('SHLIB_SUFFIX')
@@ -65,16 +68,20 @@ class Builder:
       shutil.copyfile(srcfile, dstfile)
       shutil.copymode(srcfile, dstfile)
 
-  def source_on_change(self, filename):
+  def source_on_change(self, srcdir, *filename):
     '''Copy a new version of the given FILENAME into the working direcroy if
     has changed or not present'''
-    if filename.is_absolute() or len(filename.parts) > 1:
-      src_file = filename
-      dst_file = self._workdir / filename.parts[-1]
-    else:
-      src_file = self._srcdir / filename
-      dst_file = self._workdir / filename
-    self._copy_on_change(src_file, dst_file)
+    if srcdir is None:
+      srcdir = self._srcdir
+    for name in filename:
+      iname = pathlib.Path(name)
+      if iname.is_absolute() or len(iname.parts) > 1:
+        src_file = iname
+        dst_file = self._workdir / iname.parts[-1]
+      else:
+        src_file = srcdir / iname
+        dst_file = self._workdir / iname
+      self._copy_on_change(src_file, dst_file)
 
   def install_on_change(self, libname, subdir=None):
     'Copy a new version of the given library if it has changed or not present'
@@ -100,9 +107,6 @@ class CFFI_Builder(Builder):
     raise NotImplementedError
 
   def compile(self):
-    raise NotImplementedError
-
-  def _compile(self):
     if self.decimal_h_code:
       self._ffi.cdef(self.decimal_h_code.format(self=self))
     if self.isam_h_code:
@@ -219,13 +223,13 @@ extern int           iswrite(int, char *);
     self._ifisam_so = pathlib.Path(f'libifisam{self._soext}')
     self._ifisamx_so = pathlib.Path(f'libifisamx{self._soext}')
     libdir = self._srcdir / 'libifisam' / str(self._bits)
+    if not libdir.exists():
+      raise BuilderNoLibraryFound('ifisam')
     incldir = libdir / 'include'
     if not incldir.exists():
       incldir = libdir 
-    self.source_on_change(incldir / 'isam.h')
-    self.source_on_change(incldir / 'decimal.h')
-    self.source_on_change(libdir / self._ifisam_so)
-    self.source_on_change(libdir / self._ifisamx_so)
+    self.source_on_change(incldir,'isam.h', 'decimal.h')
+    self.source_on_change(libdir, self._ifisam_so, self._ifisamx_so)
 
   def compile(self, modname):
     self._ffi.set_source(
@@ -236,7 +240,7 @@ extern int           iswrite(int, char *);
       libraries=['ifisam', 'ifisamx'],
       include_dirs=[self._workdir],
     )
-    self._compile()
+    super().compile()
 
   def install(self, addmissing=True):
     if addmissing:
@@ -294,11 +298,11 @@ struct dictinfo {{
     {self.lngsz} di_nrecords;
 }};
 extern int             is_nerr(void);
-extern const char    **is_errlist(void);
 extern int             iserrno(void);
 extern int             iserrio(void);
 extern {self.lngsz}   isrecnum(void);
 extern int             isreclen(void);
+extern const char     *is_strerror(int);
 extern int             isaddindex(int, struct keydesc *);
 extern int             isaudit(int, signed char *, int);
 extern int             isbegin(void);
@@ -348,14 +352,10 @@ extern int             iswrite(int, signed char *);
     self._vbisam_so = pathlib.Path(f'libvbisam{self._soext}')
     libdir = self._srcdir / 'libvbisam'
     blddir = self._blddir / 'libvbisam'
-    self.source_on_change(libdir / 'vbisam.h')
-    self.source_on_change(libdir / 'vbdecimal.h')
-    # Prefer a newly build version of libvbisam.so rather the one part of
-    # the repository.
-    if blddir.exists():
-      self.source_on_change(blddir / self._vbisam_so)
-    else:
-      self.source_on_change(libdir / self._vbisam_so)
+    if not libdir.exists():
+      raise BuilderNoLibraryFound('vbisam')
+    self.source_on_change(libdir, 'vbisam.h', 'vbdecimal.h')
+    self.source_on_change(blddir / self._vbisam_so)
 
   def compile(self, modname):
     self._ffi.set_source(
@@ -365,21 +365,150 @@ extern int             iswrite(int, signed char *);
       libraries=['vbisam'],
       runtime_library_dirs=['$ORIGIN/../lib'],
       include_dirs=[self._workdir],
+      define_macros=[('NEED_IFISAM_COMPAT', '1')],
     )
-    self._compile()
+    super().compile()
 
   def install(self):
     self.install_on_change(self._mod_so, 'cffi')
     self.install_on_change(self._vbisam_so, 'lib')
 
+class CFFI_DISAM_Builder(CFFI_Builder):
+  'Class encapsulating the information to compile the DISAM CFFI module'
+  # Define items found in ddecimal.h
+  decimal_h_code = None
+
+  # Define items found in disam.h
+  isam_h_code = '''
+struct keypart {{
+    short kp_start;
+    short kp_leng;
+    short kp_type;
+}};
+struct keydesc {{
+    short k_flags;
+    short k_nparts;
+    struct keypart k_part[{self.max_key_parts}];
+    short k_len;
+    ...;
+}};
+struct dictinfo {{
+    short        di_nkeys;
+    short        di_recsize;
+    short        di_idxsize;
+    {self.lngsz} di_nrecords;
+}};
+extern int           iserrno;
+extern int           iserrio;
+extern {self.lngsz}  isrecnum;
+extern int           isreclen;
+extern char         *isversnumber;
+extern char         *iscopyright;
+extern char         *isserial;	
+extern int           issingleuser;
+extern int           is_nerr;
+extern char         *is_errlist[];
+extern int           isaddindex(int, struct keydesc *);
+extern int           isaudit(int, char *, int);
+extern int           isbegin(void);
+extern int           isbuild(char *, int, struct keydesc *, int);
+extern int           iscleanup(void);
+extern int           isclose(int);
+extern int           iscluster(int, struct keydesc *);
+extern int           iscommit(void);
+extern int           isdelcurr(int);
+extern int           isdelete(int, char *);
+extern int           isdelindex(int, struct keydesc *);
+extern int           isdelrec(int, {self.lngsz});
+extern int           isdictinfo(int, struct dictinfo *);
+extern int           iserase(char *);
+extern int           isflush(int);
+extern int           isindexinfo(int, void *, int);
+extern int           iskeyinfo(int, struct keydesc *, int);
+extern void          islangchk(void);
+extern char         *islanginfo(char *);
+extern int           islock(int);
+extern int           islogclose(void);
+extern int           islogopen(char *);
+extern int           isnlsversion(char *);
+extern int           isglsversion(char *);
+extern void          isnolangchk(void);
+extern int           isopen(char *, int);
+extern int           isread(int, char *, int);
+extern int           isrecover(void);
+extern int           isrelease(int);
+extern int           isrename(char *, char *);
+extern int           isrewcurr(int, char *);
+extern int           isrewrec(int, {self.lngsz}, char *);
+extern int           isrewrite(int, char *);
+extern int           isrollback(void);
+extern int           issetunique(int, {self.lngsz});
+extern int           isstart(int, struct keydesc *, int, char *, int);
+extern int           isuniqueid(int, {self.lngsz} *);
+extern int           isunlock(int);
+extern int           iswrcurr(int, char *);
+extern int           iswrite(int, char *);
+'''
+  def __init__(self, workdir, srcdir, instdir, bits=64):
+    super().__init__(workdir, srcdir, instdir, 'uint32_t')
+    self._bits = bits
+
+  def prepare(self):
+    'Populate the working directory with the files required'
+    self._disam_so = pathlib.Path(f'libdisam72{self._soext}')
+    libdir = self._srcdir / 'libd_isam'
+    if not libdir.exists():
+      raise BuilderNoLibraryFound('disam')
+    incldir = libdir / 'include'
+    if not incldir.exists():
+      incldir = libdir
+    self.source_on_change(incldir, 'disam.h', 'isconfig.h', 'isintstd.h', 'iswrap.h')
+    self.source_on_change(libdir / self._disam_so)
+
+  def compile(self, modname):
+    self._ffi.set_source(
+      modname,
+      '#include <stdint.h>\n#include "disam.h"',
+      library_dirs=[str(self._workdir)],
+      runtime_library_dirs=['$ORIGIN/../lib'],
+      libraries=['disam'],
+      include_dirs=[self._workdir],
+    )
+    super().compile()
+
+  def install(self, addmissing=False):
+    if addmissing:
+      self.patchlibrary(self._ifisam_so, b'$ORIGIN')
+      self.patchlibrary(self._ifisamx_so)
+    self.install_on_change(self._mod_so, 'cffi')
+    self.install_on_change(self._ifisam_so, 'lib')
+    self.install_on_change(self._ifisamx_so, 'lib')
+
 if __name__ == '__main__':
   WORKDIR.mkdir(exist_ok=True)
-  ifisam_bld = CFFI_IFISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
-  ifisam_bld.prepare()
-  ifisam_bld.compile('_ifisam_cffi')
-  ifisam_bld.install()
-  vbisam_bld = CFFI_VBISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR, 'mbuild')
-  vbisam_bld.prepare()
-  vbisam_bld.compile('_vbisam_cffi')
-  vbisam_bld.install()
-  
+  try:
+    print('Compiling CFFI for IFISAM variant ...')
+    ifisam_bld = CFFI_IFISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
+    ifisam_bld.prepare()
+    ifisam_bld.compile('_ifisam_cffi')
+    ifisam_bld.install()
+  except BuilderNoLibraryFound:
+    print('LIBIFISAM runtime libraries not present')
+  try:
+    print('Compiling CFFI for VBISAM variant ...')
+    vbisam_bld = CFFI_VBISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR, 'mbuild')
+    vbisam_bld.prepare()
+    vbisam_bld.compile('_vbisam_cffi')
+    vbisam_bld.install()
+  except BuilderNoLibraryFound:
+    print('LIBVBISAM runtime libraries not present')
+  """ NOT USED:
+  try:
+    print('Compiling CFFI for DISAM support ...')
+    disam_bld = CFFI_DISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
+    disam_bld.prepare()
+    disam_bld.compile('_disam_cffi')
+    disam_bld.install()
+  except BuilderNoLibraryFound:
+    print('DISAM runtime libraries not present')
+  END NOT USED """

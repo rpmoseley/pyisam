@@ -184,6 +184,7 @@ class ISAMcommonMixin:
 
   def_openmode = OpenMode.ISINOUT
   def_lockmode = LockMode.ISMANULOCK
+  _vld_errno = (100, 172)
 
   def _chkerror(self, result, func, args=None):
     '''Perform checks on the running of the underlying ISAM function by
@@ -199,6 +200,7 @@ class ISAMcommonMixin:
         raise IsamFunctionFailed(func, errno, self.strerror(errno))
     return result
 
+  """ NOT CODE:
   def strerror(self, errno=None):
     'Return the error message related to the error number given'
     if errno is None:
@@ -207,6 +209,7 @@ class ISAMcommonMixin:
       return ISAM_str(self._ffi_.string(self.is_errlist()[errno - 100]))
     else:
       return os.strerror(errno)
+  END NOT CODE"""
 
   def isaddindex(self, kdesc):
     'Add an index to an open ISAM table'

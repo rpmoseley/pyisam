@@ -28,60 +28,21 @@ static const char *_is_errlist[] = {
   "File name too long",                     /* 114 - EFNAME */
   "Bad lock device",                        /* 115 - ENOLOK */
   "Can't allocate memory",                  /* 116 - EBADMEM */
-  "",                                       /* 117 - */
   "Can't read log record",                  /* 118 - ELOGREAD */
   "Bad log record",                         /* 119 - EBADLOG */
   "Can't open log file",                    /* 120 - ELOGOPEN */
   "Can't write log record",                 /* 121 - ELOGWRIT */
   "No transaction",                         /* 122 - ENOTRANS */
-  "",                                       /* 123 - */
   "No begin work yet",                      /* 124 - ENOBEGIN */
-  "",                                       /* 125 - */
-  "",                                       /* 126 - */
   "No primary key",                         /* 127 - ENOPRIM */
   "No logging",                             /* 128 - ENOLOG */
-  "",                                       /* 129 - */
-  "",                                       /* 130 - */
   "No free disk space",                     /* 131 - ENOFREE */
   "Rowsize too big",                        /* 132 - EROWSIZE */
   "Audit trail exists",                     /* 133 - EAUDIT */
   "No more locks",                          /* 134 - ENOLOCKS */
-  "",                                       /* 135 - */
-  "",                                       /* 136 - */
-  "",                                       /* 137 - */
-  "",                                       /* 138 - */
-  "",                                       /* 139 - */
-  "",                                       /* 140 - */
-  "",                                       /* 141 - */
-  "",                                       /* 142 - */
   "Deadlock detected",                      /* 143 - EDEADLOK */
-  "",                                       /* 144 - */
-  "",                                       /* 145 - */
-  "",                                       /* 146 - */
-  "",                                       /* 147 - */
-  "",                                       /* 148 - */
-  "",                                       /* 149 - */
-  "",                                       /* 150 - */
-  "",                                       /* 151 - */
-  "",                                       /* 152 - */
   "Not in ISMANULOCK mode",                 /* 153 - ENOMANU */
-  "",                                       /* 154 - */
-  "",                                       /* 155 - */
-  "",                                       /* 156 - */
   "Interrupted isam call",                  /* 157 - EINTERUPT */
-  "",                                       /* 158 - */
-  "",                                       /* 159 - */
-  "",                                       /* 160 - */
-  "",                                       /* 161 - */
-  "",                                       /* 162 - */
-  "",                                       /* 163 - */
-  "",                                       /* 164 - */
-  "",                                       /* 165 - */
-  "",                                       /* 166 - */
-  "",                                       /* 167 - */
-  "",                                       /* 168 - */
-  "",                                       /* 169 - */
-  "",                                       /* 170 - */
   "isam file format change detected",       /* 171 - EBADFORMAT */
 };
 /* The following are the globals defined in ifisam/isam.h:
@@ -205,81 +166,6 @@ static const char *_is_errlist[] = {
  * #define ENODEFULL     26061     * NODE overflow *
  * #define ETREEFULL     26062     * BTREE limit exceeded *
  */
- /*
-NUM: 172
-100 Duplicate record
-101 File not open
-102 Illegal argument
-103 Bad key descriptor
-104 Too many files
-105 Corrupted isam file
-106 Need exclusive access
-107 Record or file locked
-108 Index already exists
-109 Primary index
-110 End of file
-111 Record not found
-112 No current record
-113 File is in use
-114 File name too long
-115 Bad lock device
-116 Can't allocate memory
-117 Bad collating table
-118 Can't read log record
-119 Bad log record
-120 Can't open log file
-121 Can't write log record
-122 No transaction
-123 No shared memory
-124 No begin work yet
-125 Can't use nfs
-126 Bad rowid
-127 No primary key
-128 No logging
-129 Too many users
-130 No such dbspace
-131 No free disk space
-132 Rowsize too big
-133 Audit trail exists
-134 No more locks
-135 Tblspace does not exist
-136 No more extents
-137 Chunk table overflow
-138 Dbspace table overflow
-139 Logfile table overflow
-140 Global section disallowing access
-141 Table overflow
-142 Overflow of tblspace page
-143 Deadlock detected
-144 Key value locked
-145 System does not have disk mirroring
-146 The other copy of this disk is currently disabled or non-existent
-147 Archive in progress
-148 Dbspace is not empty
-149 INFORMIX-TURBO daemon is no longer running
-150 The limits of the INFORMIX Demo Version have been exceeded.
-151 illegal value in varchar length field
-152 Illegal message type received from remote process.
-153 Not in ISMANULOCK mode.
-154 Deadlock Timeout Expired - Possible Deadlock.
-155 Primary and Mirror chunks are bad
-156 reserved for future use
-157 reserved for future use
-158 reserved for future use
-159 Collation sequence invalid
-160 only one blob may be open at any time.
-161 no blob is open.
-162 BlobSpace does not exist.
-163 begin and end page stamps are different.
-164 Blob stamp is incorrect
-165 Blob Column does not exist.
-166 BlobSpace is full
-167 BlobPage size is not multiple of RPAGESIZ.
-168 archive is blocking BlobPage allocation.
-169 BLOB pages can't be allocated from a chunk until chunk add is logged.
-170 invalid use ob blob space.
-171 isam file format change detected
-*/
 
 /* Provide the newer iskeyinfo() and isdictinfo() */
 static off_t my_tcountrows(int ihandle, struct DICTINFO *fptr) {
@@ -289,7 +175,6 @@ static off_t my_tcountrows(int ihandle, struct DICTINFO *fptr) {
 
     tnodenumber = inl_ldquad((VB_CHAR *)fptr->sdictnode.cdatafree);
     tdatacount = inl_ldquad((VB_CHAR *)fptr->sdictnode.cdatacount);
-    printf("COUNT: INIT: %zd, %zd\n", tdatacount, tnodenumber);
     while (tnodenumber) {
         if (ivbblockread(ihandle, 1, tnodenumber, cvbnodetmp)) {
             return -1;
@@ -298,9 +183,7 @@ static off_t my_tcountrows(int ihandle, struct DICTINFO *fptr) {
         inodeused -= INTSIZE + QUADSIZE;
         tdatacount -= (inodeused / QUADSIZE);
         tnodenumber = inl_ldquad(cvbnodetmp + INTSIZE);
-        printf("COUNT: CALC: %zd (%zd)\n", tdatacount, tnodenumber);
     }
-    printf("COUNT: FINI: %zd\n", tdatacount);
     return tdatacount;
 }
 
@@ -407,8 +290,55 @@ is_nerr (void)
     return _is_nerr;
 }
 
-const char **
-is_errlist (void)
+const char *
+is_strerror(int errcode)
 {
-    return _is_errlist;
+    int corr = 100;
+    switch (errcode) {
+    case 171:
+        corr += 13;
+    case 157:
+        corr += 3;
+    case 153:
+        corr += 9;
+    case 143:
+        corr += 8;
+    case 131:
+    case 132:
+    case 133:
+    case 134:
+        corr += 2;
+    case 127:
+    case 128:
+        corr += 2;
+    case 124:
+        corr++;
+    case 118:
+    case 119:
+    case 120:
+    case 121:
+    case 122:
+        corr++;
+    case 116:
+        corr++;
+    case 100:
+    case 101:
+    case 102:
+    case 103:
+    case 104:
+    case 105:
+    case 106:
+    case 107:
+    case 108:
+    case 109:
+    case 110:
+    case 111:
+    case 112:
+    case 113:
+    case 114:
+        break;
+    default:
+        return "";
+    }
+    return _is_errlist[errcode - corr];
 }

@@ -6,11 +6,11 @@ library.
 '''
 
 from ._ifisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, dictinfo, keydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc, RecordBuffer
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMifisamMixin', 'ffi', 'lib'
+__all__ = 'ISAMifisamMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'ffi', 'lib', 'RecordBuffer'
 
 class ISAMifisamMixin(ISAMcommonMixin):
   ''' This provides the common CFFI interface which provides the IFISAM specific
@@ -34,15 +34,15 @@ class ISAMifisamMixin(ISAMcommonMixin):
 
   @property
   def isversnumber(self):
-    return ffi.string(self._lib_.isversnumber).decode('utf-8')
+    return ISAM_str(ffi.string(self._lib_.isversnumber))
 
   @property
   def iscopyright(self):
-    return ffi.string(self._lib_.iscopyright).decode('utf-8')
+    return ISAM_str(ffi.string(self._lib_.iscopyright))
 
   @property
   def isserial(self):
-    return ffi.string(self._lib_.isserial).decode('utf-8')
+    return ISAM_str(ffi.string(self._lib_.isserial))
 
   @property
   def issingleuser(self):
@@ -52,9 +52,15 @@ class ISAMifisamMixin(ISAMcommonMixin):
   def is_nerr(self):
     return self._lib_.is_nerr
 
-  def is_errlist(self):
-    return self._lib_.is_errlist
-
+  def strerror(self, errno=None):
+    'Return the error description for the given ERRNO or current one if None'
+    if errno is None:
+      errno = self.iserrno()
+    if self._vld_errno[0] <= errno < self._vld_errno[1]:
+      return ISAM_str(self._ffi_.string(self._lib_.is_errlist[errno - self._vld_errno[0]]))
+    else:
+      return os.strerror(errno)
+      
   def isdictinfo(self):
     'New method introduced in CISAM 7.26, returning dictinfo'
     if self._isfd_ is None: raise IsamNotOpen

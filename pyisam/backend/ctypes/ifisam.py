@@ -10,11 +10,11 @@ can be verified.
 import os
 from ctypes import c_char_p, c_int, c_int32
 from ctypes import _SimpleCData, CDLL, _dlopen
-from .common import ISAMcommonMixin
+from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc, RecordBuffer
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed
 from ...utils import ISAM_str
 
-__all__ = 'ISAMifisamMixin'
+__all__ = 'ISAMifisamMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
 
 class ISAMifisamMixin(ISAMcommonMixin):
   '''This provides the interface to the underlying ISAM libraries.
@@ -63,27 +63,11 @@ class ISAMifisamMixin(ISAMcommonMixin):
         val = ISAM_str(val)
     return val
 
-  """ NOT USED:
-  def _chkerror(self, result=None, func=None, args=None):
-    '''Perform checks on the running of the underlying ISAM function by
-       checking the iserrno provided by the ISAM library, if ARGS is
-       given return that on successfull completion of this method'''
-    print('CHK: R=', result, 'F=', func.__name__, 'A=', args)
-    if result is None or result < 0:
-      if self.iserrno == 101:
-        raise IsamNotOpen
-      elif self.iserrno == 111:
-        raise IsamNoRecord
-    elif result is not None and (result < 0 or self.iserrno != 0):
-      raise IsamFunctionFailed(func.__name__, self.iserrno, self.strerror(self.iserrno))
-    return args
-  END NOT USED """
-
-  def strerror(self, errno=None):
-    '''Return the error message related to the error number given'''
-    if errno is None:
-      errno = self.iserrno
-    if 100 <= errno < self.is_nerr:
-      return ISAM_str(self.is_errlist[errno - 100])
+  def strerror(self, errcode=None):
+    if errcode is None:
+      errcode = self.iserrno
+    errnum = errcode - self._vld_errno[0]
+    if self._vld_errno[0] <= errcode < self._vld_errno[1]:
+      return ISAM_str(self.is_errlist[errnum])
     else:
-      return os.strerror(errno)
+      return os.strerror(errcode)
