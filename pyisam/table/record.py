@@ -8,31 +8,46 @@ Typical usage of a fixed definition using the ISAMrecordBase is as follows:
 class DEFILErecord(ISAMrecordBase):
   _database = 'utool'
   _prefix = 'def'
-  filename = TableText(9)
-  seq      = TableShort()
-  field    = TableText(9)
-  refptr   = TableText(9)
-  type     = TableChar()
-  size     = TableShort()
-  keytype  = TableChar()
-  vseq     = TableShort()
-  stype    = TableShort()
-  scode    = TableChar()
-  fgroup   = TableText(10)
-  idxflag  = TableChar()
+  filename = TextColumn(9)
+  seq      = ShortColumn()
+  field    = TextColumn(9)
+  refptr   = TextColumn(9)
+  type     = CharColumn()
+  size     = ShortColumn()
+  keytype  = CharColumn()
+  vseq     = ShortColumn()
+  stype    = ShortColumn()
+  scode    = CharColumn()
+  fgroup   = TextColumn(10)
+  idxflag  = CharColumn()
 '''
 
 import collections
+import dataclasses
+import datetime
 import struct
 from keyword import iskeyword
 from ..backend import RecordBuffer
 from ..constants import ColumnType
 
-__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn', 'DoubleColumn', 'ColumnInfo', 'recordclass')
+__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn',
+           'DoubleColumn', 'DateColumn', 'SerialColumn', 'ColumnInfo', 'recordclass')
 
 # Create a special tuple for storing the column information avoiding the
 # descriptor lookup that would otherwise occur
-ColumnInfo = collections.namedtuple('ColumnInfo', 'name offset size type')
+@dataclasses.dataclass
+class ColumnInfo:
+  name: int
+  offset: int
+  size: int
+  type: int
+
+  def __eq__(self, other):
+    if self.offset != other.offset:
+      return False
+    if self.size != other.size:
+      return False
+    return  self.type == other.type
 
 class _BaseColumn:
   'Base class providing the shared functionality for columns'
@@ -69,20 +84,25 @@ class _BaseColumn:
       owner._fields = list()
     owner._flddict[name] = colinfo
     owner._fields.append(colinfo)
+    # Mark record has having a serial field if one is present
+    if hasattr(self, '_serial') and self._serial:
+      owner._serial = colinfo
 
   def __get__(self, inst, objtype):
     if self._offset < 0:
       raise ValueError('Column offset not known')
-    return self._struct.unpack_from(inst._buffer, self._offset)[0]
+    val = self._struct.unpack_from(inst._buffer, self._offset)[0]
+    if hasattr(self, '_postprocess') and callable(self._postprocess):
+      val = self._postprocess(val)
+    return val
 
   def __set__(self, inst, value):
     if self._offset < 0:
       raise ValueError('Column offset not known')
-    if value is None:
-      if hasattr(self, '_convnull'):
-        value = self._convnull()
-      elif hasattr(self, '_nullval'):
-        value = self._nullval
+    if hasattr(self, '_preprocess') and callable(self._preprocess):
+      value = self._preprocess(value)
+    if value is None and hasattr(self, '_nullval'):
+      value = self._nullval() if callable(self._nullval) else self._nullval
     self._struct.pack_into(inst._buffer, self._offset, value)
 
   # Template for this column
@@ -110,35 +130,36 @@ class CharColumn(_BaseColumn):
   _struct = struct.Struct('c')
   _nullval = b' '
   _type = ColumnType.CHAR
-  def __get__(self, inst, objtype):
-    return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()
 
-  def __set__(self, obj, value):
-    super().__set__(obj, value.encode('utf-8').replace(b'\x00', b' '))
+  def _postprocess(self, value):
+    return value.decode('utf-8').replace('\x00', ' ').rstrip()
+
+  def _preprocess(self, value):
+    return value.encode('utf-8').replace(b'\x00', b' ') 
   
 class TextColumn(_BaseColumn):
-  __slots__ = ()
+  __slots__ = ('_blankval', )
   _type = ColumnType.CHAR
+
   def __init__(self, size, offset=-1):
     if not isinstance(size, int) or size <= 0:
       raise ValueError('Must provide an positive integer size for column')
-    self._struct = struct.Struct('{}s'.format(size))
-    self._nullval = b' ' * size
+    self._struct = struct.Struct(f'{size}s')
+    self._blankval = b' ' * self._struct.size
     super().__init__(offset)
 
-  def __get__(self, inst, objtype):
-    return super().__get__(inst, objtype).replace(b'\x00', b' ').decode('utf-8').rstrip()
+  def _postprocess(self, value):
+    return value.decode('utf-8').replace('\x00', ' ').rstrip()
 
-  def __set__(self, inst, value):
+  def _preprocess(self, value):
     if value is None:
-      value = self._convnull() if hasattr(value, '_convnull') else self._nullval
-    else:
-      value = value.encode('utf-8')
-      if self._size < len(value):
-        value = value[:self._size]
-      elif len(value) < self._size:
-        value += self._nullval[:self._size - len(value)]
-    super().__set__(inst, value.replace(b'\x00', b' '))
+      return self._blankval
+    value = value.encode('utf-8')
+    if self._size < len(value):
+      value = value[:self._size]
+    elif len(value) < self._size:
+      value += self._blankval[-self._size:]
+    return value
 
   # Template for fields of this column type
   _template = '{0.length}'
@@ -155,6 +176,27 @@ class LongColumn(_BaseColumn):
   _nullval = 0
   _type = ColumnType.LONG
 
+class SerialColumn(LongColumn):
+  __slots__ = ()
+  _serial = True
+
+class DateColumn(LongColumn):
+  __slots__ = ()
+  _since_1900 = datetime.date(1899, 12, 31).toordinal()
+  _nullval = -2147483648   # '\x80\x00\x00\x00' used for NUL dates
+
+  def _postprocess(self, value):
+    if value == self._nullval:
+      return None
+    else:
+      return datetime.date.fromordinal(value + self._since_1900)
+
+  def _preprocess(self, value):
+    if value is None:
+      return None
+    else:
+      return value.toordinal() - self._since_1900
+
 class FloatColumn(_BaseColumn):
   __slots__ = ()
   _struct = struct.Struct('=f')
@@ -166,6 +208,9 @@ class DoubleColumn(_BaseColumn):
   _struct = struct.Struct('=d')
   _nullval = 0.0
   _type = ColumnType.DOUBLE
+
+class MoneyColumn(DoubleColumn):
+  __slots__ = ()
 
 class ISAMrecordBase:
   '''Base class providing access to the current record providing access to the
@@ -236,10 +281,11 @@ class ISAMrecordBase:
     'Return the current values as a string'
     fldval = []
     for fld in self._namedtuple._fields:
-      if fld.type == ColumnType.CHAR:
-        fldval.append("{}='{}'".format(fld.name, getattr(self, fld.name)))
+      finfo = self._flddict[fld]
+      if finfo.type == ColumnType.CHAR:
+        fldval.append(f"{fld}='{getattr(self, fld)}'")
       else:
-        fldval.append('{}={}'.format(fld.name, getattr(self, fld.name)))
+        fldval.append(f'{fld}={getattr(self, fld)}')
     return ''.join(('{}({})'.format(self.__class__.__name__, ', '.join(fldval))))
 
 # Define the templates used to generate the record definition class at runtime
@@ -260,10 +306,13 @@ _record_namespace = {
     'LongColumn'      : LongColumn,
     'FloatColumn'     : FloatColumn,
     'DoubleColumn'    : DoubleColumn,
+    'DateColumn'      : DateColumn,
+    'SerialColumn'    : SerialColumn,
+    'MoneyColumn'     : MoneyColumn,
     'ISAMrecordBase'  : ISAMrecordBase,
 }
 
-def recordclass(tabdefn, recname=None, *args, **kwd):
+def recordclass(tabdefn, recname=None, keepsrc=True, *args, **kwd):
   'Create a new class for the given table definition'
   seen, fdefn = set(), []
   if isinstance(tabdefn._columns_, (collections.OrderedDict, dict)):
@@ -278,15 +327,13 @@ def recordclass(tabdefn, recname=None, *args, **kwd):
 
     # Validate the field name using a similar rule to that in collections.namedtuple
     if not fldname.isidentifier() or iskeyword(fldname) or fldname.startswith('_'):
-      raise NameError("Field '{}' is not a valid identifier".format(fldname))
+      raise NameError(f"Field '{fldname}' is not a valid identifier")
     elif fldname in seen:
-      raise NameError("Field '{}' already present in definition".format(fldname))
+      raise NameError(f"Field '{fldname}' already present in definition")
     seen.add(fldname)
 
     # Generate the template for the particular type of field
-    fld_template = _record_namespace[klassname]._template
-    if '{' in fld_template:
-      fld_template = fld_template.format(fld)
+    fld_template = _record_namespace[klassname]._template.format(fld)
 
     # Create the field template (the offset is calculated by the metaclass)
     fdefn.append(_record_field_template.format(name=fldname,
@@ -298,11 +345,11 @@ def recordclass(tabdefn, recname=None, *args, **kwd):
     fqname = [getattr(tabdefn, '_database_', None),
               getattr(tabdefn, '_prefix_', None),
               kwd.get('idname', getattr(tabdefn, '_tabname_', None))]
-    recname = '_'.join(filter(None, fqname))
+    recname = '_'.join([str(x) for x in fqname if x is not None])
+  if recname.isalnum() or recname.find('_') >= 0:
+    record_name = f'Rec_{recname}'
   else:
-    # TODO: Check the given record name is valid
-    pass
-  record_name = f'Rec_{recname}'
+    raise NameError(f"Record '{recname} is not a valid identifier")
   record_definition = _record_class_template.format(rec_name=record_name,
                                                     fld_defn=''.join(fdefn))
 
@@ -314,5 +361,6 @@ def recordclass(tabdefn, recname=None, *args, **kwd):
   namespace.update(_record_namespace)
   exec(record_definition, namespace)
   result = namespace[record_name]
-  result._source = record_definition
+  if keepsrc:
+    result._source = record_definition
   return result

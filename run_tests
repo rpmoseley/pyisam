@@ -1,0 +1,49 @@
+python_exe=.venv12/bin/python
+case $# in
+0) # Assume default backend and variant and all tests
+  test_num=
+  ;;
+1) # Assume default backend and variant,  specifies testnum
+  case $1 in
+  ifisam|vbisam|disam) backend=.$1 ;;
+  [123456789])         test_num=-t$1 ;;
+  [1234][0123456789])  test_num=-t$1 ;;
+  *)                   echo 'Bad arguments'; exit 2 ;;
+  esac
+  ;;
+2) # Assume default backend, specified variant and testnum
+  case $1 in
+  cffi|ctypes)         backend=$1. ;;
+  ifisam|vbisam|disam) backend=.$1 ;;
+  *)                   echo 'Bad arguments'; exit 2 ;;
+  esac
+  case $2 in
+  ifisam|vbisam|disam) backend=.$2 ;;
+  [123456789])         test_num=-t$2 ;;
+  [1234][0123456789])  test_num=-t$2 ;;
+  *)                   echo 'Bad arguments'; exit 2 ;;
+  esac
+  ;;
+3) # Use speecified backend, variant and testnum
+  case $1 in
+  cffi|ctypes)         backend=$1. ;;
+  *)                   echo 'Bad arguments'; exit 2 ;;
+  esac
+  case $2 in
+  ifisam|vbisam|disam) backend=$backend$2 ;;
+  *)                   echo 'Bad arguments'; exit 2 ;;
+  esac
+  case $3 in
+  [123456789])         test_num=-t$3 ;;
+  [1234][0123456789])  test_num=-t$3 ;;
+  *)                   echo 'Bad arguments'; exit 2 ;;
+  esac
+  ;;
+*)
+  echo 'Bad arguments'; exit 2 ;;
+esac
+printf 'BCK: %s\nTST: %s\n' ${backend:-DEF} ${test_num:-ALL}
+case $backend in
+'') $python_exe -m tests $test_num ;;
+*)  PYISAM_CHECK=$backend $python_exe -m tests $test_num ;;
+esac

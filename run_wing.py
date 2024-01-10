@@ -71,6 +71,9 @@ class AvailableTest:
         return None
       if opts.debug:
         print(f'Test {testnum}:')
+      tstdata = os.path.join(self._dir, 'tstdata', str(testnum))
+      if os.path.exists(tstdata):
+        opts.tstdata = tstdata
       tfunc = getattr(mod, 'test', None)
       if tfunc:
         return tfunc(opts)
@@ -84,7 +87,7 @@ class AvailableTest:
 avail_tests = AvailableTest('tests')
 
 parser = argparse.ArgumentParser(prog='pyisam',
-                                 description='PyISAM testing command line interface',
+                                 description='PyISAM command line interface',
                                  argument_default=False)
 parser.add_argument('-n', '--dry-run',
                     dest='dry_run',

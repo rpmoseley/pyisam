@@ -1,13 +1,13 @@
 '''
 This is the CFFI specific implementation of the pyisam package
 
-This module provides a cffi based interface to the underlying IBM C-ISAM or
-VBISAM library and is designed to be a direct replacement for the ctypes based
-module in that it aims to provide the same classes for situations when
-performance is required.
+This module provides a cffi based interface to the underlying IBM C-ISAM, DISAM
+or open source VBISAM library and is designed to be a direct replacement for
+the ctypes based module in that it aims to provide the same classes for
+situations when performance is required.
 '''
 
-from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed
+from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamEndFile
 from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
 import os
@@ -20,8 +20,8 @@ class RecordBuffer:
     self.size = size + 1
 
   def __call__(self):
-    from . import ffi
-    return ffi.buffer(ffi.new('char[]', self.size))
+    from .. import cffi_obj
+    return cffi_obj.buffer(cffi_obj.new('char[]', self.size))
 
 # Provide same information as the ctypes backend provides
 class dictinfo:
@@ -43,13 +43,13 @@ class keypart:
     self.type  = kpart.kp_type
 
   def __str__(self):
-    return '({0.start}, {0.leng}, {0.type})'.format(self)
+    return f'({self.start}, {self.leng}, {self.type})'
 
 class keydesc:
   'Class that provides the keydesc as expected by the rest of the package'
   def __init__(self, kinfo=None):
-    from . import ffi
-    self._kinfo = ffi.new('struct keydesc *') if kinfo is None else kinfo
+    from .. import cffi_obj
+    self._kinfo = cffi_obj.new('struct keydesc *') if kinfo is None else kinfo
     self._kpart = [None] * self._kinfo.k_nparts
 
   @property
@@ -170,10 +170,9 @@ class keydesc:
     'Generate a string representation of the underlying keydesc structure'
     prt = []
     for cpart in range(self._kinfo.k_nparts):
-      prt.append('({{0.k_part[{0}].kp_start}}, {{0.k_part[{0}].kp_leng}}, {{0.k_part[{0}].kp_type}})'.format(cpart))
-    res = '({{0.k_nparts}}, [{0}], 0x{{0.k_flags:02x}})'.format(', '.join(prt))
-    return res.format(self._kinfo)
-
+      prt.append(f'({cpart.kp_start}, {cpart.kp_leng}, {cpart.kp_type})')
+    prt = ', '.join(prt)
+    return '({self.k_nparts}, [{prt}], 0x{self.k_flags:02x})'
   __str__ = _dump 
 
 class ISAMcommonMixin:
@@ -186,17 +185,33 @@ class ISAMcommonMixin:
   def_lockmode = LockMode.ISMANULOCK
   _vld_errno = (100, 172)
 
+  _const_ = (
+    'iserrno', 'iserrio', 'isrecnum', 'isreclen'
+  )
+
+  def __getattr__(self, name):
+    if not isinstance(name, str):
+      raise AttributeError(name)
+    if name in self._const_:
+      val = getattr(self._lib_, name)
+      if callable(val):
+        val = val()
+      return val
+    raise AttributeError(name)
+
   def _chkerror(self, result, func, args=None):
     '''Perform checks on the running of the underlying ISAM function by
        checking the iserrno provided by the ISAM library, if ARGS is
        given return that on sucessfull completion of this method'''
     if result < 0:
-      errno = self.iserrno()
+      errno = self.iserrno
       if errno == 101:
         raise IsamNotOpen
+      elif errno == 110:
+        raise IsamEndFile
       elif errno == 111:
         raise IsamNoRecord
-      elif errno != 0:
+      elif errno:
         raise IsamFunctionFailed(func, errno, self.strerror(errno))
     return result
 

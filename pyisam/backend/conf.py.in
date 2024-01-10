@@ -7,4 +7,8 @@ This module provides the ability of configuring the backend support
 #   'ctypes'  - CTYPE backend
 #   'cython'  - CYTHON backend
 backend = '@PYISAM_BACKEND@'
+# Define the variant of ISAM library to use
+#   'ifisam'  - C-ISAM (IBM/Informix)
+#   'vbisam'  - VBISAM (Open Source)
+#   'disam'   - D-ISAM (Byte Design)
 isamlib = '@PYISAM_ISAMLIB@'

@@ -9,6 +9,7 @@ def test(opts):
   isfd.isopen('data/decomp')
   try:
     isfd.iskeyinfo(4)
-  except IsamFunctionFailed:
+  except IsamFunctionFailed as exc:
     print('ISKEYINFO triggered error')
+    print(exc)
   isfd.isclose()

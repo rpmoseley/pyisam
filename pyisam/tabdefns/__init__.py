@@ -7,13 +7,12 @@ complexity of the table module.
 
 import dataclasses
 
-__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 
-           'FloatColumn', 'DoubleColumn', 'DuplicateIndex', 'UniqueIndex',
-           'PrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
+__all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn',
+           'FloatColumn', 'DoubleColumn', 'DateColumn', 'SerialColumn',
+           'DuplicateIndex', 'UniqueIndex', 'PrimaryIndex',
+           'AscDuplicateIndex', 'AscUniqueIndex',
            'AscPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
-           'DescPrimaryIndex')
-
-# from .tabmeta import TableDefnMeta
+           'DescPrimaryIndex', 'RecordOrderIndex')
 
 class TableDefnColumn:
   'Base class for all the column based classes used in definitions'
@@ -29,15 +28,24 @@ class TextColumn(TableDefnColumn):
     super().__init__(name, *args, **kwd)
 
 class ShortColumn(TableDefnColumn):
-  pass
+ pass
 
 class LongColumn(TableDefnColumn):
   pass
+
+class DateColumn(LongColumn):
+  pass
+
+class SerialColumn(LongColumn):
+  pass 
 
 class FloatColumn(TableDefnColumn):
   pass
 
 class DoubleColumn(TableDefnColumn):
+  pass
+
+class MoneyColumn(DoubleColumn):
   pass
 
 @dataclasses.dataclass
@@ -111,6 +119,15 @@ class TableDefnIndex:
         out.append('{}'.format(cinfo))
     out.append('dups={0.dups}, desc={0.desc})'.format(self))
     return ', '.join(out)
+
+# Provide a unique index that enables access by way of the record number
+class RecordOrderIndex(TableDefnIndex):
+  __slots__ = ()
+  def __init__(self, name):
+    self.name = name
+    self.dups = False
+    self.desc = False
+    self.colinfo = list()
 
 # Provide an easier to read way of identifying the various key types
 class DuplicateIndex(TableDefnIndex):

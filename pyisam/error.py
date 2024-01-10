@@ -34,6 +34,9 @@ class IsamFunctionFailed(IsamException):
 class IsamNoRecord(IsamException):
   'Exception raised when no record was found'
 
+class IsamEndFile(IsamException):
+  'End of file reached'
+
 class IsamNoIndex(IsamException):
   'Exception raised when an index is missing from a table instance'
   def __init__(self, tabname, idxname):

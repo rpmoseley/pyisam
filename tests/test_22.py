@@ -8,5 +8,5 @@ from pyisam.tabdefns.stxtables import DECOMPdefn
 def test(opts):
   DECOMP = ISAMtable(DECOMPdefn, tabpath='data')
   DECrec = DECOMP._default_record()
-  tabidx = DECOMP._idxinfo_._idxmap['comp'].as_keydesc(DECOMP._isobj_, DECrec)
+  tabidx = DECOMP._idxinfo_._idxmap['comp'].as_keydesc(DECrec)
   print(tabidx)

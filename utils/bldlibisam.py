@@ -9,7 +9,6 @@ import pathlib
 import shutil
 import sysconfig
 import subprocess
-import os
 
 # Define the working directory
 WORKDIR=pathlib.Path('/tmp/pyisam')
@@ -58,6 +57,8 @@ class Builder:
 
   def _copy_on_change(self, srcfile, dstfile):
     'Internal helper method'
+    if not srcfile.exists():
+      raise BuildException('No source file to copy')
     newhash = hashlib.sha256(srcfile.open('rb').read())
     if dstfile.exists():
       oldhash = hashlib.sha256(dstfile.open('rb').read())
@@ -354,8 +355,13 @@ extern int             iswrite(int, signed char *);
     blddir = self._blddir / 'libvbisam'
     if not libdir.exists():
       raise BuilderNoLibraryFound('vbisam')
+    if not blddir.exists():
+      if not (libdir / self._vbisam_so).exists():
+        raise BuilderError('No libvbisam.so library found')
+      print('Default build directory back to libvbisam')
+      blddir = libdir
     self.source_on_change(libdir, 'vbisam.h', 'vbdecimal.h')
-    self.source_on_change(blddir / self._vbisam_so)
+    self.source_on_change(blddir, self._vbisam_so)
 
   def compile(self, modname):
     self._ffi.set_source(
@@ -478,37 +484,41 @@ extern int           iswrite(int, char *);
 
   def install(self, addmissing=False):
     if addmissing:
-      self.patchlibrary(self._ifisam_so, b'$ORIGIN')
-      self.patchlibrary(self._ifisamx_so)
+      self.patchlibrary(self._disam_so)
     self.install_on_change(self._mod_so, 'cffi')
-    self.install_on_change(self._ifisam_so, 'lib')
-    self.install_on_change(self._ifisamx_so, 'lib')
+    self.install_on_change(self._disam_so, 'lib')
 
 if __name__ == '__main__':
-  WORKDIR.mkdir(exist_ok=True)
-  try:
-    print('Compiling CFFI for IFISAM variant ...')
-    ifisam_bld = CFFI_IFISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
-    ifisam_bld.prepare()
-    ifisam_bld.compile('_ifisam_cffi')
-    ifisam_bld.install()
-  except BuilderNoLibraryFound:
-    print('LIBIFISAM runtime libraries not present')
-  try:
-    print('Compiling CFFI for VBISAM variant ...')
-    vbisam_bld = CFFI_VBISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR, 'mbuild')
-    vbisam_bld.prepare()
-    vbisam_bld.compile('_vbisam_cffi')
-    vbisam_bld.install()
-  except BuilderNoLibraryFound:
-    print('LIBVBISAM runtime libraries not present')
-  """ NOT USED:
-  try:
-    print('Compiling CFFI for DISAM support ...')
-    disam_bld = CFFI_DISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
-    disam_bld.prepare()
-    disam_bld.compile('_disam_cffi')
-    disam_bld.install()
-  except BuilderNoLibraryFound:
-    print('DISAM runtime libraries not present')
-  END NOT USED """
+  bld_ifisam = bld_vbisam = True
+  bld_disam = False
+
+  if bld_ifisam or bld_vbisam or bld_disam:
+    WORKDIR.mkdir(exist_ok=True)
+  if bld_ifisam:
+    try:
+      print('Compiling CFFI for IFISAM variant ...')
+      ifisam_bld = CFFI_IFISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
+      ifisam_bld.prepare()
+      ifisam_bld.compile('_ifisam_cffi')
+      ifisam_bld.install()
+    except BuilderNoLibraryFound:
+      print('LIBIFISAM runtime libraries not present')
+  if bld_vbisam:
+    try:
+      print('Compiling CFFI for VBISAM variant ...')
+      vbisam_bld = CFFI_VBISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR, 'mbuild')
+      vbisam_bld.prepare()
+      vbisam_bld.compile('_vbisam_cffi')
+      vbisam_bld.install()
+    except BuilderNoLibraryFound:
+      print('LIBVBISAM runtime libraries not present')
+
+  if bld_disam:
+    try:
+      print('Compiling CFFI for DISAM support ...')
+      disam_bld = CFFI_DISAM_Builder(WORKDIR, SOURCEDIR, INSTDIR)
+      disam_bld.prepare()
+      disam_bld.compile('_disam_cffi')
+      disam_bld.install()
+    except BuilderNoLibraryFound:
+      print('DISAM runtime libraries not present')

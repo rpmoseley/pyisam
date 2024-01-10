@@ -1,18 +1,18 @@
 '''
 This is the CFFI specific implementation of the pyisam package
 
-This module provides a cffi based interface to the underlying IBM C-ISAM
+This module provides a cffi based interface to the underlying DISAM
 library.
 '''
 
-from ._ifisam_cffi import ffi, lib
+from ._disam_cffi import ffi, lib
 from .common import ISAMcommonMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMifisamMixin', 'ISAMindexMixin', 'RecordBuffer', 'dictinfo', 'keydesc', 'ffi'
+__all__ = 'ISAMdisamMixin', 'ISAMindexMixin', 'RecordBuffer', 'dictinfo', 'keydesc', 'ffi'
 
-class ISAMifisamMixin(ISAMcommonMixin):
+class ISAMdisamMixin(ISAMcommonMixin):
   ''' This provides the common CFFI interface which provides the IFISAM specific
       library with all functions and variables availabe.
   '''
@@ -20,7 +20,6 @@ class ISAMifisamMixin(ISAMcommonMixin):
   _ffi_ = ffi
   _lib_ = lib
 
-  """ NOT USED:
   @property
   def iserrno(self):
     return self._lib_.iserrno
@@ -36,7 +35,6 @@ class ISAMifisamMixin(ISAMcommonMixin):
   @property
   def isreclen(self):
     return self._lib_.isreclen
-  END NOT USED"""
 
   @property
   def isversnumber(self):
@@ -59,20 +57,30 @@ class ISAMifisamMixin(ISAMcommonMixin):
     return self._lib_.is_nerr
 
   def strerror(self, errno=None):
-    'Return the error description for the given ERRNO or current one if None'
     if errno is None:
       errno = self.iserrno()
     if self._vld_errno[0] <= errno < self._vld_errno[1]:
-      return ISAM_str(self._ffi_.string(self._lib_.is_errlist[errno - self._vld_errno[0]]))
+      return ISAM_str(self._ffi_.string(self._lib_.is_errlist[errno - 100]))
     else:
       return os.strerror(errno)
-      
+
+  def is_errlist(self):
+    return self._lib_.is_errlist
+
+  def _dictinfo_(self):
+    dinfo = ffi.new('struct dictinfo *')
+    self._chkerror(self._lib_.isuserinfo(self._isfd_, dinfo), 'isdictinfo')
+    return dictinfo(dinfo)
+
+  def _keyinfo_(self, keynum):
+    kinfo = ffi.new('struct keydesc *')
+    self._chkerror(self._lib_.isindexinfo(self._isfd_, kinfo, keynum+1), 'isindexinfo')
+    return keydesc(kinfo)
+
   def isdictinfo(self):
     'New method introduced in CISAM 7.26, returning dictinfo'
     if self._isfd_ is None: raise IsamNotOpen
-    dinfo = ffi.new('struct dictinfo *')
-    self._chkerror(self._lib_.isdictinfo(self._isfd_, dinfo), 'isdictinfo')
-    return dictinfo(dinfo)
+    return self._dictinfo_()
 
   def isglsversion(self, tabname):
     'Return whether GLS is in use with tabname'
@@ -82,38 +90,34 @@ class ISAMifisamMixin(ISAMcommonMixin):
     'Original method combining both isdictinfo and iskeyinfo'
     if self._isfd_ is None: raise IsamNotOpen
     if keynum is None:
-      dinfo = ffi.new('struct dictinfo *');
-      self._chkerror(self._lib_.isdictinfo(self._isfd_, dinfo), 'isindexinfo')
-      return dictinfo(dinfo)
-    elif keynum < 0:
+      return self._dictinfo_()   
+    if keynum < 0:
       raise ValueError('Index must be a positive number or None for dictinfo')
-    else:
-      kinfo = ffi.new('struct keydesc *')
-      self._chkerror(self._lib_.iskeyinfo(self._isfd_, kinfo, keynum+1), 'isindexinfo')
-      return keydesc(kinfo)
+    return self._keyinfo_(keynum+1)
     
   def iskeyinfo(self, keynum):
     'New method introduced in CISAM 7.26, returning key description'
     if self._isfd_ is None: raise IsamNotOpen
     if keynum < 0:
       raise ValueError('Index must be a positive number starting from 0')
-    else:
-      kinfo = ffi.new('struct keydesc *')
-      self._chkerror(self._lib_.iskeyinfo(self._isfd_, kinfo, keynum+1), 'iskeyinfo')
-    return self.isindexinfo(keynum)
+    return self._keyinfo_(keynum)
 
   def islangchk(self):
     'Switch on language checks'
-    self._chkerror(self._lib_.islangchk(), 'islangchk')
+    # TODO: self._chkerror(self._lib_.islangchk(), 'islangchk')
+    return False
 
   def islanginfo(self, tabname):
     'Return the collation sequence if any in use'
-    return ISAM_str(self._lib_.islanginfo(ISAM_bytes(tabname)), 'islanginfo')
+    # TODO: return ISAM_str(self._lib_.islanginfo(ISAM_bytes(tabname)), 'islanginfo')
+    return
 
   def isnlsversion(self, tabname):
     # TODO: Add documentation for function
-    self._chkerror(self._lib_.isnlsversion(ISAM_bytes(tabname)), 'isnlsversion')
+    # TODO: self._chkerror(self._lib_.isnlsversion(ISAM_bytes(tabname)), 'isnlsversion')
+    return b''
 
   def isnolangchk(self):
     'Switch off language checks'
-    self._chkerror(self._lib_.isnolangchk(), 'isnolangchk')
+    # TODO: self._chkerror(self._lib_.isnolangchk(), 'isnolangchk')
+    return False

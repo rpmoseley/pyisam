@@ -69,6 +69,8 @@ class TableIndex(ISAMindexMixin):
     self._kdesc = kdesc             # Stores the keydesc once prepared
     self._debug = debug             # Enable debug output
     self._colinfo = []
+    if isinstance(colinfo[0], (tuple, list)):
+      colinfo = colinfo[0]
     for col in colinfo:
       self._add_colinfo(col)
 
@@ -210,10 +212,13 @@ def create_TableIndex(keydesc, record, idxnum):
   else:
     idxclass = DuplicateIndex if keydesc.flags & IndexFlags.DUPS else UniqueIndex
   
+  # Store the number of key parts locally
+  keyparts = keydesc.nparts
+  
   # Create a list of the columns within the index using the offset, size and type
   # information available from the underlying keydesc structure.
-  idxcol = [None] * keydesc.nparts
-  for npart in range(keydesc.nparts):
+  idxcol = [None] * keyparts
+  for npart in range(keyparts):
     for fld in record._fields:
       # Check if the field is the correct type
       if keydesc[npart].type == fld.type.value:
@@ -253,7 +258,12 @@ def create_TableIndex(keydesc, record, idxnum):
     raise ValueError('Some parts of index #{} do not match columns in the definition'.format(idxnum))
 
   # If the index consists of a single column then name the index with that column
-  idxname = idxcol[0].name if keydesc.nparts == 1 else 'INDEX{}'.format(idxnum)
+  if keyparts == 0:
+    idxname = 'RECORDER'
+  elif keyparts == 1:
+    idxname = idxcol[0].name
+  else:
+    idxname = f'INDEX{idxnum}'
 
   # Create a new instance of TableIndex for the new index found
   return idxclass(idxname, idxcol, knum=idxnum, kdesc=keydesc)

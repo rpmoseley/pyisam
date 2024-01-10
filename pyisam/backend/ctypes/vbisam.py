@@ -21,6 +21,13 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   '''
   __slots__ = ()
   
+  # The _const_ list contains all the variables available within the underlying
+  # library that are treated as property functions.
+  _const_ = {
+    'iserrno' : c_int, 'iserrio' : c_int, 'isrecnum' : c_int32,
+    'isreclen' : c_int
+  }
+
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
   _lib_ = CDLL('libpyvbisam', handle=_dlopen(os.path.normpath(os.path.join(os.path.dirname(__file__), 'libpyvbisam.so'))))
@@ -30,12 +37,11 @@ class ISAMvbisamMixin(ISAMcommonMixin):
        or define and return the numeric equivalent'''
     if not isinstance(name, str):
       raise AttributeError(name)
-    elif name.startswith('_is'):
-      return getattr(self._lib_, name[1:])
-    elif name == 'is_errlist':
-      return getattr(self._lib_, 'is_errlist')
-    raise AttributeError(name)
+    if name in self._const_:
+      return getattr(self._lib_, name)
+    return super().__getattr__(name)
 
+  """ NOT USED :
   @property
   @ISAMfunc(restype=c_int)
   def iserrno(self):
@@ -55,6 +61,7 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   @ISAMfunc(restype=c_int)
   def isreclen(self):
     return self._lib_.isreclen()
+  END NOT USED """
 
   @ISAMfunc(c_int, restype=c_char_p)
   def is_strerror(self, errcode):

@@ -5,11 +5,11 @@ objects for the package to use.
 '''
 
 import functools
-from ctypes import create_string_buffer, Structure, POINTER
+from ctypes import create_string_buffer, Structure, POINTER, _SimpleCData
 from ctypes import c_char, c_short, c_int, c_int32, c_char_p
 from ..common import _checkpart, MaxKeyParts, MaxKeyLength
 from ...constants import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
-from ...error import IsamNotOpen, IsamOpen, IsamFunctionFailed
+from ...error import IsamNotOpen, IsamOpen, IsamFunctionFailed, IsamEndFile
 from ...utils import ISAM_bytes, ISAM_str
 
 _all__ = ('RecordBuffer', 'decimal', 'keypart', 'keydesc' ,'dictinfo',
@@ -147,7 +147,7 @@ class ISAMcommonMixin:
        given return that on successful completion of this method'''
     if isinstance(result, (str, bytes)):
       return result
-    if not isinstance(result, int):
+    elif not isinstance(result, int):
       raise ValueError(f'Unexpected result: {result}')
     elif result < 0:
       # Make the error code relative to range for variant
@@ -155,13 +155,37 @@ class ISAMcommonMixin:
       errnum = errcode - self._vld_errno[0]
       if errnum == 1:
         raise IsamNotOpen
-      if errnum == 11:
+      elif errnum == 10:
+        raise IsamEndFile
+      elif errnum == 11:
         raise IsamNoRecord
-      if self._vld_errno[0] <= errcode < self._vld_errno[1]:
+      elif self._vld_errno[0] <= errcode < self._vld_errno[1]:
         raise IsamFunctionFailed(func.__name__, errcode, ISAM_str(self.is_errlist[errnum]))
-      if errnum:
+      elif errnum:
         raise IsamFunctionFailed(func.__name__, errcode, 'Unkown')
     return result
+
+  def __getattr__(self, name):
+    'Provide the command __getattr__ functionality'
+    if name.startswith('_is'):
+      return getattr(self._lib_, name[1:])
+    elif name.startswith('_'):
+      raise AttributeError(name)
+    elif hasattr(self, '_const_') and name in self._const_:
+      val = self._const_[name]
+      if name == 'is_errlist':
+        if val is None:
+          val = c_char_p * (self._vld_errno[1] - self._vld_errno[0])
+          val = self._const_[name] = val.in_dll(self._lib_, name)
+        return val
+      if not isinstance(val, _SimpleCData) and hasattr(val, 'in_dll'):
+        val = self._const_[name] = val.in_dll(self._lib_, name)
+      if hasattr(val, 'value'):
+        val = val.value
+      if not isinstance(val, int):
+        val = ISAM_str(val)
+      return val
+    return AttributeError(name)
 
   @ISAMfunc(c_int, POINTER(keydesc))
   def isaddindex(self, kdesc):

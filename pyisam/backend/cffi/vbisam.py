@@ -6,11 +6,11 @@ and is designed to be a direct replacement for the ctypes based module.
 '''
 
 from ._vbisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc, RecordBuffer
+from .common import ISAMcommonMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMcommonMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'ffi', 'lib', 'RecordBuffer'
+__all__ = 'ISAMcommonMixin', 'ISAMindexMixin', 'RecordBuffer', 'dictinfo', 'keydesc', 'ffi'
 
 class ISAMvbisamMixin(ISAMcommonMixin):
   ''' This provides the interface to underlying ISAM libraries adding the context
@@ -20,17 +20,23 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   _ffi_ = ffi
   _lib_ = lib
 
+  """ NOT USED:
+  @property
   def iserrno(self):
     return self._lib_.iserrno()
 
+  @property
   def iserrio(self):
     return self._lib_.iserrio()
 
+  @property
   def isrecnum(self):
     return self._lib_.isrecnum()
 
+  @property
   def isreclen(self):
     return self._lib_.isreclen()
+  END NOT USED """
 
   @property
   def isversnumber(self):
@@ -63,7 +69,7 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   def isdictinfo(self):
     'Return the dictinfo for the table'
     if self._isfd_ is None: raise IsamNotOpen
-    dinfo = ffi.new('struct dictinfo *')
+    dinfo = self._ffi_.new('struct dictinfo *')
     self._chkerror(self._lib_.isdictinfo(self._isfd_, dinfo), 'isdictinfo')
     return dictinfo(dinfo)
 
@@ -76,20 +82,20 @@ class ISAMvbisamMixin(ISAMcommonMixin):
     'Backwards compatible method for version of ISAM < 7.26'
     if self._isfd_ is None: raise IsamNotOpen
     if keynum is None:
-      dinfo = ffi.new('struct dictinfo *')
+      dinfo = self._ffi_.new('struct dictinfo *')
       self._chkerror(self._lib_.isdictinfo(self._isfd_, dinfo, 0), 'isindexinfo')
       return dictinfo(dinfo)
     elif keynum < 0:
       raise ValueError('Index must be a positive number or None for dictinfo')
     else:
-      kinfo = ffi.new('struct keydesc *')
+      kinfo = self._ffi_.new('struct keydesc *')
       self._chkerror(self._lib_.iskeyinfo(self,_isfd_, kinfo, keynum+1), 'isindexinfo')
       return self.iskeyinfo(keynum-1)
 
   def iskeyinfo(self, keynum):
     'Return the keydesc for the specified key'
     if self._isfd_ is None: raise IsamNotOpen
-    keyinfo = ffi.new('struct keydesc *')
+    keyinfo = self._ffi_.new('struct keydesc *')
     self._chkerror(self._lib_.iskeyinfo(self._isfd_, keyinfo, keynum+1), 'iskeyinfo')
     return keydesc(keyinfo)
 

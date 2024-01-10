@@ -7,7 +7,6 @@ __pycache__/
 *.db
 *.la
 *.lo
-_isam_cffi.?
 /bin
 /src
 /lib

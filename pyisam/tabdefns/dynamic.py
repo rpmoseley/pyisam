@@ -7,8 +7,8 @@ object and then manually add the required fields and indexes before then
 calling the table.ISAMtable object passing the dynamic table definition.
 '''
 
-from . import TableDefnColumn, TableDefnIndex, TableDefnIndexCol
 from collections import OrderedDict
+from . import TableDefnColumn, TableDefnIndex, TableDefnIndexCol
 from ..error import TableDefnError
 
 __all__ = ('DynamicTableDefn',)
@@ -24,12 +24,12 @@ class DynamicTableDefn:
       self.extend(fields)
     if isinstance(indexes, (list, tuple)):
       for idx in indexes:
-        self.add(idx, error=error)
+        self.add_index(idx, error=error)
     elif isinstance(indexes, TableDefnIndex):
-      self.add(idx, error=error)
+      self.add_index(idx, error=error)
     elif isinstance(indexes, dict):
       for idx in indexes:
-        self.add(indexes[idx], error=error)
+        self.add_index(indexes[idx], error=error)
     elif indexes is not None:
       raise TableDefnError('Indexes must be derived from TableDefnIndex')
 
@@ -37,16 +37,14 @@ class DynamicTableDefn:
     '''Check whether to an error should raise an Exception, if so then
        raised the EXCLASS, otherwise add to BAD'''
     # TODO: Need to remove ourselves from the traceback on exception raising
-    if self._error if error is None else (error or self._error):
+    if error or self._error:
       raise excptclass
     else:
       bad.append(field)
 
   def check(self):
     'Check if the table definition has any problems'
-    if self.bad[0] or self.bad[1]:
-      return True
-    return False
+    return self.bad[0] or self.bad[1]
 
   def append(self, field, error=None):
     'Add a field to the table definition which should be an instance of TableDefnColumn'

@@ -33,7 +33,7 @@ if use_vbisam
   pyisam_conf.set('PYISAM_ISAMLIB', 'vbisam', description: 'Default backend to be used')
   conf.set10('HAVE_LFS64', true, description: 'Set if the system supports 64-bit I/O')
   conf.set10('VDEBUG', false, description: 'Enable internal debug of vbisam')
-  conf.set10('NEED_IFISAM_COMPAT', true, description: 'Enable extra functions not directly implemented')
+  cflags += ['-DNEED_COUNT_ROWS=1', '-DNEED_ISAM_COMPAT=1']
   std_hdrs = ['fcntl.h', 'unistd.h']
   req_func = []
 else

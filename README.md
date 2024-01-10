@@ -16,18 +16,6 @@ Also as part of the repository is a slightly modified version of VBISAM (v2.1.1)
 at the time, which can be built using the meson build system, a copy of the library
 is included built as a 64-bit library.
 
-Required packages
------------------
-It is best to run the pyisam module from within a virtual environment, and ensure
-that at least the packages in 'requirements.txt' are installed. To compile new
-modules ensure that the packages in 'requirements-dev.txt' are also installed.
-
-The script 'mkvenv' in the root directory will create a virtualenv using the system
-python version and ensure that the pip and setuptools packages are upto date and
-then install the packages listed in requirements.txt, and finally will perform a
-manual copy of the pyisam package into the virtualenv. To use a specific version
-of python pass its full path as an argument to the script.
-
 Generate support extension modules
 ----------------------------------
 In order to generate the necessary lowlevel interface extensions, use the following
@@ -62,10 +50,6 @@ To get help on the tests, run the following command:
 
 $ python -m tests -h
 
-To displaying the backend and ISAM variant being used, issue the following command:
-
-$ python -m tests -V
-
 Defining the row layout
 -----------------------
 As C-ISAM and VBISAM do not natively store the layout of a record, there is a need to
@@ -73,14 +57,7 @@ provide the definition manually using a similar way that the sample tables are d
 in the 'pyisam/tabdefns' subdirectory. As an alternative, the record can be constructed
 at runtime using the DynamicTableDefn defined in 'pyisam/tabdefns/dynamic.py'.
 
-Utilities
----------
-A number of utility scripts can be found in the 'utils', including the 'bldlibisam.py'
-program which compiles the extension modules.
-
 Distribution
 ------------
 Currently there is no installation method to install the package into place, as this still
 a work in progress.
-
-
