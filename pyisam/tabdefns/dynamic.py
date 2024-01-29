@@ -18,6 +18,7 @@ class DynamicTableDefn:
     self._tabname_ = tabname
     self._columns_ = OrderedDict()
     self._indexes_ = dict()
+    self._prefix_ = None
     self._error = error    # Store fact that errors raise an exception
     self.bad = ([], [])    # Bad elements: [0] = field, [1] = indexes
     if isinstance(fields, (list, tuple)):

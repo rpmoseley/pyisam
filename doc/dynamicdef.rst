@@ -18,7 +18,8 @@ definition object.
 
 Fields are added by calling the 'append' method of the dynamic table definition object and should be
 instances of 'tabdefns.CharColumn', 'tabdefns.TextColumn', 'tabdefns.ShortColumn', 'tabdefns.LongColumn',
-'tabdefns.FloatColumn', 'tabdefns.DoubleColumn', or derived classes.
+'tabdefns.FloatColumn', 'tabdefns.DoubleColumn', 'tabdefns.DateColumn', 'tabdefns.MoneyColumn',
+'tabdefns.SerialColumn' or derived classes.
 
 To add a series of fields call the 'extend' method instead of 'append' passing a sequence of the same
 instances as the 'append' method.

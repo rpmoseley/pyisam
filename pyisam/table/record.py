@@ -277,6 +277,15 @@ class ISAMrecordBase:
     'Return the current values of all fields in the record'
     return [getattr(self, fld.name) for fld in self._namedtuple._fields]
 
+  def _set_value(self, *args, **kwd):
+    'Set the record area to the given KWD or ARGS'
+    if kwd:
+      for fld in self._namedtuple._fields:
+        setattr(self, fld.name, kwd[fld.name])
+    else:
+      for num, fld in enumerate(self._namedtuple._fields):
+        setattr(self, fld.name, args[num])
+
   def __str__(self):
     'Return the current values as a string'
     fldval = []

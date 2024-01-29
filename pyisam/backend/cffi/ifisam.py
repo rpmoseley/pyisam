@@ -5,6 +5,7 @@ This module provides a cffi based interface to the underlying IBM C-ISAM
 library.
 '''
 
+import os
 from ._ifisam_cffi import ffi, lib
 from .common import ISAMcommonMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
 from ...error import IsamNotOpen

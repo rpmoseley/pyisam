@@ -11,9 +11,9 @@ import pathlib
 import struct
 from . import CharColumn, TextColumn, ShortColumn, LongColumn, DateColumn
 from . import SerialColumn, FloatColumn, DoubleColumn
-from . import RecordOrderIndex, UniqueIndex, DuplicateIndex
 from .dynamic import DynamicTableDefn
 """ NOT USED :
+from . import RecordOrderIndex, UniqueIndex, DuplicateIndex
 from .. import ISAMobject
 from ..constants import IndexFlags
 from ..table.record import recordclass
@@ -69,13 +69,12 @@ def ParseFldInfo(tabname, tabprefix=None, fldnames=None, padding=3, tabpath=None
       fldtyp = _fldent.unpack(fldfd.read(_fldent.size))[0]
       fldsiz = _fldent.unpack(fldfd.read(_fldent.size))[0]
       fldnam = template.format(fldnum=fldnum if fldnames else fldnum+1)
-      klass = _fldtyp_map.get(fldtyp, None)
-      if klass is None:
-        raise ValueError(f'Unknown field type: {fldtyp}, {fldsiz}')
-      elif issubclass(klass, TextColumn):
+      klass = _fldtyp_map[fldtyp]
+      if issubclass(klass, TextColumn):
         defn.append(klass(fldnam, fldsiz))
       else:
         defn.append(klass(fldnam))
+
   # Return the definition object with columns added, index information will be
   # filled in when the ISAMtable object is created.
   return defn

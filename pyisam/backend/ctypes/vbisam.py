@@ -25,7 +25,7 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   # library that are treated as property functions.
   _const_ = {
     'iserrno' : c_int, 'iserrio' : c_int, 'isrecnum' : c_int32,
-    'isreclen' : c_int
+    #'isreclen' : c_int
   }
 
   # Load the ISAM library once and share it in other instances
@@ -38,7 +38,7 @@ class ISAMvbisamMixin(ISAMcommonMixin):
     if not isinstance(name, str):
       raise AttributeError(name)
     if name in self._const_:
-      return getattr(self._lib_, name)
+      return getattr(self._lib_, name)()
     return super().__getattr__(name)
 
   """ NOT USED :
@@ -56,12 +56,12 @@ class ISAMvbisamMixin(ISAMcommonMixin):
   @ISAMfunc(restype=c_int32)
   def isrecnum(self):
     return self._lib_.isrecnum()
+  END NOT USED """
   
   @property
   @ISAMfunc(restype=c_int)
   def isreclen(self):
     return self._lib_.isreclen()
-  END NOT USED """
 
   @ISAMfunc(c_int, restype=c_char_p)
   def is_strerror(self, errcode):

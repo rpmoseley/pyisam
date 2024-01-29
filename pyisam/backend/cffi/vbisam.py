@@ -5,6 +5,7 @@ This module provides a cffi based interface to the underlying VBISAM library
 and is designed to be a direct replacement for the ctypes based module.
 '''
 
+import os
 from ._vbisam_cffi import ffi, lib
 from .common import ISAMcommonMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
 from ...error import IsamNotOpen

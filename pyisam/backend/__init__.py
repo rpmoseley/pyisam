@@ -36,8 +36,8 @@ fullconf = f'{use_conf}.{use_variant}'
 # switching the default variant if an error occurs
 try:
   mod_obj = importlib.import_module(f'.{fullconf}', 'pyisam.backend')
-except:
-  print(f'Switching to {_dflt_variant} variant')
+except ImportError as exc:
+  print(f'Switching to {_dflt_variant} variant, due to "{exc}"')
   use_variant = _dflt_variant
   fullconf = f'{use_conf}.{_dflt_variant}'
   mod_obj = importlib.import_module(f'.{fullconf}', 'pyisam.backend')

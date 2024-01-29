@@ -10,7 +10,7 @@ __all__ = ('TableIndex', 'PrimaryIndex', 'DuplicateIndex', 'UniqueIndex',
            'create_TableIndex')
 
 from .. import MaxKeyParts
-from ..isam import ISAMindexMixin, ISAMkeydesc
+from ..isam import ISAMindexMixin
 from ..constants import IndexFlags
 from ..tabdefns import TableDefnIndexCol
 from .record import ColumnInfo
@@ -72,7 +72,10 @@ class TableIndex(ISAMindexMixin):
     if isinstance(colinfo[0], (tuple, list)):
       colinfo = colinfo[0]
     for col in colinfo:
-      self._add_colinfo(col)
+      if isinstance(col, _TableIndexCol):
+        self._colinfo.append(col)
+      else:
+        self._add_colinfo(col)
 
   def _add_colinfo(self, col):
     '''Add a new column to the index definition'''
@@ -207,10 +210,15 @@ def create_TableIndex(keydesc, record, idxnum):
   '''Function to create an instance of TableIndex given a KEYDESC in relation to
      the record object RECORD.'''
   # Determine whether the index is ascending or descending, then unique or not
-  if keydesc.flags & IndexFlags.DESCEND:
-    idxclass = DescDuplicateIndex if keydesc.flags & IndexFlags.DUPS else DescUniqueIndex
+  isdesc = keydesc.flags & IndexFlags.DESCEND.value
+  isdups = keydesc.flags & IndexFlags.DUPS.value
+  if idxnum:
+    if isdesc:
+      idxclass = DescDuplicateIndex if isdups else DescUniqueIndex
+    else:
+      idxclass = DuplicateIndex if isdups else UniqueIndex
   else:
-    idxclass = DuplicateIndex if keydesc.flags & IndexFlags.DUPS else UniqueIndex
+    idxclass = DescPrimaryIndex if isdesc else PrimaryIndex
   
   # Store the number of key parts locally
   keyparts = keydesc.nparts
@@ -222,14 +230,15 @@ def create_TableIndex(keydesc, record, idxnum):
     for fld in record._fields:
       # Check if the field is the correct type
       if keydesc[npart].type == fld.type.value:
+        kpart = keydesc[npart]
         # Check if part of the column
-        if fld.offset <= keydesc[npart].start < (fld.offset + fld.size):
+        if fld.offset <= kpart.start < (fld.offset + fld.size):
           # Check if the key oversteps the end of the column
-          if keydesc[npart].leng <= fld.size:
+          if kpart.leng <= fld.size:
             # Create the index column in relation to the column itself rather than
             # the whole record as keydesc stores it.
-            if fld.offset == keydesc[npart].start:
-              if fld.size == keydesc[npart].leng:
+            if fld.offset == kpart.start:
+              if fld.size == kpart.leng:
                 # Offset and length matches a column exactly -
                 #   create an index column by name only
                 idxcol[npart] = _TableIndexCol(fld.name)
@@ -237,17 +246,17 @@ def create_TableIndex(keydesc, record, idxnum):
                 # Offset matches a column offset exactly - 
                 #   create an index column by name and length
                 idxcol[npart] = _TableIndexCol(name=fld.name,
-                                               length=keydesc[npart].leng)
+                                               length=kpart.leng)
             elif fld.size == keydesc[npart].leng:
               # Length matches a column exactly -
               #    create an index column by name and offset             
               idxcol[npart] = _TableIndexCol(name=fld.name,
-                                             offset=keydesc[npart].start - fld.offset)
+                                             offset=kpart.start - fld.offset)
             else:
               # Create an index column by name, offset and length
               idxcol[npart] = _TableIndexCol(name=fld.name,
-                                             offset=keydesc[npart].start - fld.offset,
-                                             length=keydesc[npart].leng)
+                                             offset=kpart.start - fld.offset,
+                                             length=kpart.leng)
             break
 
   # Check if any of the index parts are still not resolved
@@ -255,7 +264,7 @@ def create_TableIndex(keydesc, record, idxnum):
   if len(idxmiss) != len(idxcol):
     # Attempt to deduce the missing fields preferring those that have the same
     # offset as a column even though the size maybe different
-    raise ValueError('Some parts of index #{} do not match columns in the definition'.format(idxnum))
+    raise ValueError(f'Some parts of index #{idxnum} do not match columns in the definition')
 
   # If the index consists of a single column then name the index with that column
   if keyparts == 0:

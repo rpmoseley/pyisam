@@ -119,15 +119,14 @@ def ISAMfunc(*orig_args, **orig_kwd):
             lib_func.argtypes = orig_kwd['argtypes']
           else:
             lib_func.argtypes = orig_args if orig_args else None
-          lib_func.errcheck = self._chkerror
         elif 'argtypes' in orig_kwd:
           lib_func.argtypes = orig_kwd['argtypes']
-          lib_func.errcheck = self._chkerror
         elif orig_args:
           lib_func.argtypes = orig_args if orig_args[0] else None
-          lib_func.errcheck = self._chkerror
         else:
           lib_func.restype = lib_func.argtypes = None
+        if lib_func.restype is not None:
+          lib_func.errcheck = self._chkerror
       return func(self, *args, **kwd)
     return functools.wraps(func)(wrapper)
   return call_wrapper
@@ -162,7 +161,7 @@ class ISAMcommonMixin:
       elif self._vld_errno[0] <= errcode < self._vld_errno[1]:
         raise IsamFunctionFailed(func.__name__, errcode, ISAM_str(self.is_errlist[errnum]))
       elif errnum:
-        raise IsamFunctionFailed(func.__name__, errcode, 'Unkown')
+        raise IsamFunctionFailed(func.__name__, errcode, 'Unknown')
     return result
 
   def __getattr__(self, name):
@@ -224,15 +223,17 @@ class ISAMcommonMixin:
     self._isbegin()
 
   @ISAMfunc(c_char_p, c_int, POINTER(keydesc), c_int)
-  def isbuild(self, tabname, reclen, kdesc, varlen=None):
+  def isbuild(self, tabpath, reclen, kdesc, varlen=None):
     '''Build a new table in exclusive mode'''
-    if self._isfd_ is not None:
-      raise IsamOpen('Attempt to build with open table')
+    if self._isfd_ is not None: raise IsamOpen()
     if not isinstance(kdesc, keydesc):
       raise ValueError('Must provide instance of keydesc for the primary index')
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
-    self._isfd_ = self._isbuild(ISAM_bytes(tabname), reclen, kdesc, self._fdmode_.value|self._fdlock_.value)
+    fdmode = OpenMode.ISINOUT.value | LockMode.ISEXCLLOCK.value
+    if varlen:
+      self._isobj_.isreclen = varlen
+    self._isfd_ = self._isbuild(ISAM_bytes(tabpath), reclen, kdesc, fdmode)
 
   @ISAMfunc(None)
   def iscleanup(self):
@@ -362,13 +363,21 @@ class ISAMcommonMixin:
   @ISAMfunc(c_char_p, c_int)
   def isopen(self, tabname, mode=None, lock=None):
     'Open an ISAM table'
-    if mode is None:
-      mode = self.def_openmode
-    if lock is None:
-      lock = self.def_lockmode
+    if mode is None: mode = self.def_openmode
+    if lock is None: lock = self.def_lockmode
     if not isinstance(mode, OpenMode) or not isinstance(lock, LockMode):
       raise ValueError('Must provide an OpenMode and/or LockMode values')    
-    self._isfd_ = self._isopen(ISAM_bytes(tabname), mode.value|lock.value)
+    opnmde = mode.value | lock.value
+    try:
+      # Try a fixed length table first
+      self._isfd_ = self._isopen(ISAM_bytes(tabname), opnmde)
+    except IsamFunctionFailed as exc:
+      if exc.errno != 102:
+        raise
+      # Try a variable length table second
+      opnmde += OpenMode.ISVARLEN.value
+      mode |= OpenMode.ISVARLEN
+      self._isfd_ = self._isopen(ISAM_bytes(tabname), opnmde)
     self._fdmode_ = mode
     self._fdlock_ = lock
 

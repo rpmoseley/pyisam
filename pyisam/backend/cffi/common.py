@@ -7,6 +7,7 @@ the ctypes based module in that it aims to provide the same classes for
 situations when performance is required.
 '''
 
+from ..common import MaxKeyParts
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamEndFile
 from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes, ISAM_str
@@ -49,8 +50,12 @@ class keydesc:
   'Class that provides the keydesc as expected by the rest of the package'
   def __init__(self, kinfo=None):
     from .. import cffi_obj
-    self._kinfo = cffi_obj.new('struct keydesc *') if kinfo is None else kinfo
-    self._kpart = [None] * self._kinfo.k_nparts
+    if kinfo is None:
+      self._kinfo = cffi_obj.new('struct keydesc *')
+      self._kpart = [None] * MayKeyParts
+    else:
+      self._kinfo = kinfo
+      self._kpart = [None] * kinfo.k_nparts
 
   @property
   def nparts(self):
@@ -166,14 +171,14 @@ class keydesc:
   def value(self):
     return self._kinfo
 
-  def _dump(self):
+  def __str__(self):
     'Generate a string representation of the underlying keydesc structure'
     prt = []
     for cpart in range(self._kinfo.k_nparts):
-      prt.append(f'({cpart.kp_start}, {cpart.kp_leng}, {cpart.kp_type})')
+      kpart = self._kinfo.k_part[cpart]
+      prt.append(f'({kpart.kp_start}, {kpart.kp_leng}, {kpart.kp_type})')
     prt = ', '.join(prt)
-    return '({self.k_nparts}, [{prt}], 0x{self.k_flags:02x})'
-  __str__ = _dump 
+    return f'({self._kinfo.k_nparts}, [{prt}], 0x{self._kinfo.k_flags:02x})'
 
 class ISAMcommonMixin:
   ''' This provides the interface to underlying ISAM libraries adding the context of the
@@ -199,10 +204,9 @@ class ISAMcommonMixin:
       return val
     raise AttributeError(name)
 
-  def _chkerror(self, result, func, args=None):
+  def _chkerror(self, result, func):
     '''Perform checks on the running of the underlying ISAM function by
-       checking the iserrno provided by the ISAM library, if ARGS is
-       given return that on sucessfull completion of this method'''
+       checking the iserrno provided by the ISAM library.'''
     if result < 0:
       errno = self.iserrno
       if errno == 101:
@@ -260,15 +264,17 @@ class ISAMcommonMixin:
     if self._isfd_ is None: raise IsamNotOpen
     self._chkerror(self._lib_.isbegin(self._isfd_), 'isbegin')
 
-  def isbuild(self, tabname, reclen, kdesc, varlen=None):
+  def isbuild(self, tabpath, reclen, kdesc, varlen=None):
     'Build a new table in exclusive mode'
-    if self._isfd_ is not None: raise IsamException('Attempt to build with open table')
+    if self._isfd_ is not None: raise IsamOpen()
     if not isinstance(kdesc, keydesc):
       raise ValueError('Must provide instance of keydesc for primary index')
     self._fdmode_ = OpenMode.ISINOUT
     self._fdlock_ = LockMode.ISEXCLLOCK
-    fdmode = OpenMode.ISINOUT.value + LockMode.ISEXCLLOCK.value
-    self._isfd_ = self._chkerror(self._lib_.isbuild(ISAM_bytes(tabname), reclen, kdesc._kinfo, fdmode), 'isbuild')
+    fdmode = OpenMode.ISINOUT.value | LockMode.ISEXCLLOCK.value
+    if varlen:
+      self._isobj_.isreclen = varlen
+    self._isfd_ = self._chkerror(self._lib_.isbuild(ISAM_bytes(tabpath), reclen, kdesc._kinfo, fdmode), 'isbuild')
 
   def iscleanup(self):
     'Cleanup the ISAM library'
@@ -335,7 +341,17 @@ class ISAMcommonMixin:
     if lock is None: lock = self.def_lockmode
     if not isinstance(mode, OpenMode) or not isinstance(lock, LockMode):
       raise ValueError('Must provide an OpenMode and/or LockMode values')
-    self._isfd_ = self._chkerror(self._lib_.isopen(ISAM_bytes(tabname), mode.value | lock.value), 'isopen')
+    opnmde = mode.value | lock.value
+    try:
+      # Try a fixed length table first
+      self._isfd_ = self._chkerror(self._lib_.isopen(ISAM_bytes(tabname), opnmde), 'isopen')
+    except IsamFunctionFailed as exc:
+      if exc.errno != 102:
+        raise
+      # Try a variable length table second
+      opnmde |= OpenMode.ISVARLEN.value
+      mode |= OpenMode.ISVARLEN
+      self._isfd_ = self._chkerror(self._lib_.isopen(ISAM_bytes(tabname), opnmde), 'isopen')
     self._fdmode_ = mode
     self._fdlock_ = lock
 
