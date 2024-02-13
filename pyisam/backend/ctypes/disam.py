@@ -8,15 +8,17 @@ can be verified.
 '''
 
 import os
-from ctypes import c_char_p, c_int, c_int32
-from ctypes import _SimpleCData, CDLL, _dlopen, POINTER
-from .common import ISAMcommonMixin, ISAMindexMixin, ISAMfunc, dictinfo, keydesc, RecordBuffer
+from ctypes import c_char_p, c_int, c_int32, _SimpleCData
+from ctypes import CDLL, _dlopen
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMfunc
 from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed
 from ...utils import ISAM_str
 
 __all__ = 'ISAMdisamMixin'
-
-_lib_so = os.path.join(os.path.dirname(__file__), 'libpydisam.so')
+  
+# The name of the library used to load the underlying ISAM
+_lib_nm = 'libpydisam'
+_lib_so = os.path.join(os.path.dirname(__file__), _lib_nm + '.so')
 
 class ISAMdisamMixin(ISAMcommonMixin):
   '''This provides the interface to the underlying ISAM libraries.
@@ -25,10 +27,13 @@ class ISAMdisamMixin(ISAMcommonMixin):
   '''
   __slots__ = ()
   _vld_errno = (500, 560)
-  
-  # The _const_ dictionary initially consists of the ctypes type
+
+  # Open the underlying library once
+  _lib = CDLL(_lib_nm, handle=_dlopen(_lib_so))
+
+  # The _const dictionary initially consists of the ctypes type
   # which will be mapped to the correct variable when accessed.
-  _const_ = {
+  _const = {
     'iserrno'      : c_int,    'iserrio'      : c_int,
     'isrecnum'     : c_int32,  'isreclen'     : c_int,
     'isversnumber' : c_char_p, 'iscopyright'  : c_char_p,
@@ -38,7 +43,7 @@ class ISAMdisamMixin(ISAMcommonMixin):
   
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyifisam.so accordingly
-  _lib_ = CDLL('libpydisam', handle=_dlopen(_lib_so))
+  _lib = CDLL('libpydisam', handle=_dlopen(_lib_so))
 
   def __getattr__(self, name):
     '''Lookup the ISAM function and return the entry point into the library
@@ -51,17 +56,17 @@ class ISAMdisamMixin(ISAMcommonMixin):
   @ISAMfunc(c_int, POINTER(dictinfo))
   def isisaminfo(self):
     '''Return the dictionary information for table'''
-    if self._isfd_ is None: raise IsamNotOpen
+    if self._fd is None: raise IsamNotOpen
     ptr = dictinfo()
-    self._isisaminfo(self._isfd_, ptr)
+    self._isisaminfo(self._fd, ptr)
     return ptr
 
   @ISAMfunc(c_int, POINTER(keydesc), c_int)
   def isindexinfo(self, keynum):
-    if self._isfd_ is None: raise IsamNotOpen
+    if self._fd is None: raise IsamNotOpen
     if keynum < 0: raise ValueError('Index must be a positive number')
     ptr = keydesc()
-    self._isindexinfo(self._isfd_, ptr, keynum+1)
+    self._isindexinfo(self._fd, ptr, keynum+1)
     return ptr
     
   def isdictinfo(self):

@@ -7,36 +7,35 @@ and is designed to be a direct replacement for the ctypes based module.
 
 import os
 from ._vbisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMcommonMixin', 'ISAMindexMixin', 'RecordBuffer', 'dictinfo', 'keydesc', 'ffi'
+__all__ = 'ISAMcommonMixin', 'ISAMindexMixin'
 
 class ISAMvbisamMixin(ISAMcommonMixin):
   ''' This provides the interface to underlying ISAM libraries adding the context
       of the current file to avoid having to remember it separately.
   '''
   __slots__ = ('_numerr', )
-  _ffi_ = ffi
-  _lib_ = lib
+  _lib = lib
 
   """ NOT USED:
   @property
   def iserrno(self):
-    return self._lib_.iserrno()
+    return self._lib.iserrno()
 
   @property
   def iserrio(self):
-    return self._lib_.iserrio()
+    return self._lib.iserrio()
 
   @property
   def isrecnum(self):
-    return self._lib_.isrecnum()
+    return self._lib.isrecnum()
 
   @property
   def isreclen(self):
-    return self._lib_.isreclen()
+    return self._lib.isreclen()
   END NOT USED """
 
   @property
@@ -63,15 +62,15 @@ class ISAMvbisamMixin(ISAMcommonMixin):
     if errno is None:
       errno = self.iserrno()
     if self._vld_errno[0] <= errno < self._vld_errno[1]:
-      return ISAM_str(self._ffi_.string(self._lib_.is_strerror(errno)))
+      return ISAM_str(ffi.string(self._lib.is_strerror(errno)))
     else:
       return os.strerror(errno)
 
   def isdictinfo(self):
     'Return the dictinfo for the table'
-    if self._isfd_ is None: raise IsamNotOpen
-    dinfo = self._ffi_.new('struct dictinfo *')
-    self._chkerror(self._lib_.isdictinfo(self._isfd_, dinfo), 'isdictinfo')
+    if self._fd is None: raise IsamNotOpen
+    dinfo = ffi.new('struct dictinfo *')
+    self._chkerror(self._lib_.isdictinfo(self._fd, dinfo), 'isdictinfo')
     return dictinfo(dinfo)
 
   def isglsversion(self, tabname):
@@ -81,23 +80,23 @@ class ISAMvbisamMixin(ISAMcommonMixin):
 
   def isindexinfo(self, keynum):
     'Backwards compatible method for version of ISAM < 7.26'
-    if self._isfd_ is None: raise IsamNotOpen
+    if self._fd is None: raise IsamNotOpen
     if keynum is None:
-      dinfo = self._ffi_.new('struct dictinfo *')
-      self._chkerror(self._lib_.isdictinfo(self._isfd_, dinfo, 0), 'isindexinfo')
+      dinfo = ffi.new('struct dictinfo *')
+      self._chkerror(self._lib_.isdictinfo(self._fd, dinfo, 0), 'isindexinfo')
       return dictinfo(dinfo)
     elif keynum < 0:
       raise ValueError('Index must be a positive number or None for dictinfo')
     else:
-      kinfo = self._ffi_.new('struct keydesc *')
-      self._chkerror(self._lib_.iskeyinfo(self,_isfd_, kinfo, keynum+1), 'isindexinfo')
+      kinfo = ffi.new('struct keydesc *')
+      self._chkerror(self._lib_.iskeyinfo(self,_fd, kinfo, keynum+1), 'isindexinfo')
       return self.iskeyinfo(keynum-1)
 
   def iskeyinfo(self, keynum):
     'Return the keydesc for the specified key'
-    if self._isfd_ is None: raise IsamNotOpen
-    keyinfo = self._ffi_.new('struct keydesc *')
-    self._chkerror(self._lib_.iskeyinfo(self._isfd_, keyinfo, keynum+1), 'iskeyinfo')
+    if self._fd is None: raise IsamNotOpen
+    keyinfo = ffi.new('struct keydesc *')
+    self._chkerror(self._lib.iskeyinfo(self._fd, keyinfo, keynum+1), 'iskeyinfo')
     return keydesc(keyinfo)
 
   def islangchk(self):

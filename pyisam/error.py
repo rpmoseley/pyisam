@@ -6,6 +6,9 @@ created between the vaious sub-modules.
 class IsamException(Exception):
   'General exception raised by ISAM'
 
+class IsamError(IsamException):
+  'General error from package'
+
 class IsamIterError(IsamException):
   'Iterator based error'
   
@@ -29,13 +32,26 @@ class IsamFunctionFailed(IsamException):
     self.errstr = errstr
 
   def __str__(self):
-    return '{0.tabname}: {0.errno}' if self.errstr is None else '{0.tabname}: {0.errstr} ({0.errno})'.format(self)
+    if self.errstr is None:
+      return f'{self.tabname}: {self.errno}'
+    return f'{self.tabname}: {self.errstr} ({self.errno})'
+
+class IsamVariableLength(IsamException):
+  'Exception raised when opening a variable length file if not enabled'
 
 class IsamNoRecord(IsamException):
   'Exception raised when no record was found'
 
 class IsamEndFile(IsamException):
   'End of file reached'
+
+class IsamNoPrimaryIndex(IsamException):
+  'Exception raised when no primary index has been defined on table'
+  def __init__(self, tabname):
+    self.tabname = tabname._name_ if hasattr(tabname, '_name_') else tabname
+
+  def __str__(self):
+    return f"Table '{self.tabname}' does not have a primary index defined"
 
 class IsamNoIndex(IsamException):
   'Exception raised when an index is missing from a table instance'
@@ -44,7 +60,7 @@ class IsamNoIndex(IsamException):
     self.idxname = idxname._name_ if hasattr(idxname, '_name_') else idxname
 
   def __str__(self):
-    return "Index '{0.idxname}' is not available on table '{0.tabname}'".format(self)
+    return f"Index '{self.idxname}' is not available on table '{self.tabname}'"
 
 class TableDefnError(IsamException):
   'General exception raised during table definition'

@@ -6,18 +6,17 @@ library.
 '''
 
 from ._disam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin, RecordBuffer, dictinfo, keydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMdisamMixin', 'ISAMindexMixin', 'RecordBuffer', 'dictinfo', 'keydesc', 'ffi'
+__all__ = 'ISAMdisamMixin', 'ISAMindexMixin'
 
 class ISAMdisamMixin(ISAMcommonMixin):
   ''' This provides the common CFFI interface which provides the IFISAM specific
       library with all functions and variables availabe.
   '''
   __slots__ = ()
-  _ffi_ = ffi
   _lib_ = lib
 
   @property
@@ -60,7 +59,7 @@ class ISAMdisamMixin(ISAMcommonMixin):
     if errno is None:
       errno = self.iserrno()
     if self._vld_errno[0] <= errno < self._vld_errno[1]:
-      return ISAM_str(self._ffi_.string(self._lib_.is_errlist[errno - 100]))
+      return ISAM_str(ffi.string(self._lib_.is_errlist[errno - 100]))
     else:
       return os.strerror(errno)
 
@@ -69,35 +68,35 @@ class ISAMdisamMixin(ISAMcommonMixin):
 
   def _dictinfo_(self):
     dinfo = ffi.new('struct dictinfo *')
-    self._chkerror(self._lib_.isuserinfo(self._isfd_, dinfo), 'isdictinfo')
+    self._chkerror(self._lib_.isisaminfo(self._fd, dinfo), 'isdictinfo')
     return dictinfo(dinfo)
 
   def _keyinfo_(self, keynum):
     kinfo = ffi.new('struct keydesc *')
-    self._chkerror(self._lib_.isindexinfo(self._isfd_, kinfo, keynum+1), 'isindexinfo')
+    self._chkerror(self._lib_.isindexinfo(self._fd, kinfo, keynum+1), 'isindexinfo')
     return keydesc(kinfo)
 
   def isdictinfo(self):
     'New method introduced in CISAM 7.26, returning dictinfo'
-    if self._isfd_ is None: raise IsamNotOpen
+    if self._fd is None: raise IsamNotOpen
     return self._dictinfo_()
 
   def isglsversion(self, tabname):
     'Return whether GLS is in use with tabname'
-    return bool(self._lib_.isglsversion(ISAM_bytes(tabname)), 'isglsversion')
+    return False
 
   def isindexinfo(self, keynum):
     'Original method combining both isdictinfo and iskeyinfo'
-    if self._isfd_ is None: raise IsamNotOpen
+    if self._fd is None: raise IsamNotOpen
     if keynum is None:
       return self._dictinfo_()   
     if keynum < 0:
       raise ValueError('Index must be a positive number or None for dictinfo')
-    return self._keyinfo_(keynum+1)
+    return self._keyinfo_(keynum)
     
   def iskeyinfo(self, keynum):
     'New method introduced in CISAM 7.26, returning key description'
-    if self._isfd_ is None: raise IsamNotOpen
+    if self._fd is None: raise IsamNotOpen
     if keynum < 0:
       raise ValueError('Index must be a positive number starting from 0')
     return self._keyinfo_(keynum)

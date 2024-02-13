@@ -3,7 +3,6 @@ Build the CFFI and CTYPES backend using the appropriate library for the specifie
 platform and bit-size (either 32- or 64-bit). By default build for the current
 platform and bit-size of architecture the script is being run on.
 '''
-from cffi import FFI
 import hashlib
 import pathlib
 import shutil
@@ -31,7 +30,7 @@ _soext = sysconfig.get_config_var('SHLIB_SUFFIX')
 
 class Builder:
   'Base class providing shared CFFI and CTYPES support'
-  def __init__(self, workdir, srcdir, instdir, lngsz, bits):
+  def __init__(self, workdir, srcdir, instdir, bits, lngsz=None):
     self._workdir = pathlib.Path(workdir)
     self._srcdir = pathlib.Path(srcdir)
     self._instdir = pathlib.Path(instdir)
@@ -73,8 +72,8 @@ class Builder:
       shutil.copymode(srcfile, dstfile)
 
   def source_on_change(self, srcdir, *filename):
-    '''Copy a new version of the given FILENAME into the working direcroy if
-    has changed or not present'''
+    # Copy a new version of the given FILENAMEs into the working
+    # directory if they have changed or are not present.
     if srcdir is None:
       srcdir = self._srcdir
     if isinstance(filename[0], list):
@@ -102,7 +101,7 @@ class Builder:
     self._copy_on_change(self._workdir / sname, iname)
 
 class CTYPES_Builder(Builder):
-  'Class providing the shared methds for the CTYPES builders'
+  'Class providing the shared methods for the CTYPES builders'
   backend = 'ctypes'
 
   def prepare(self):
@@ -116,7 +115,6 @@ class CTYPES_Builder(Builder):
     'Call the linker to create the interface library'
     # Make the names relative to the work directory
     wrk_outname = (self._workdir / self._mod_so.soext).as_posix()
-    ofmt = ['--oformat', 'elf32-i386'] if self.bits == 32 else []
     cmd = [
       'gold',                         # Use gold linker
       '-shared',                      # Create shared library
@@ -124,10 +122,11 @@ class CTYPES_Builder(Builder):
       '-soname', self._mod_so.soext,  # Set the SONAME in library
       '--output', wrk_outname,        # Name the library 
       '-L', str(self._workdir)        # Location of dependant libraris
-    ] + ofmt
+    ]
+    if self.bits == 32:
+      cmd += ['--oformat', 'elf32-i386']
     if isinstance(self._libs, list):
-      for lname in self._libs:
-        cmd.append(lname.link)
+      cmd += [lname.link for lname in self._libs]
     else:
       cmd.append(self._libs.link)
      
@@ -143,10 +142,10 @@ class CFFI_Builder(Builder):
   max_key_parts = 8
   backend = 'cffi'
 
-  def __init__(self, workdir, srcdir, instdir, lngsz=None, bits=64):
-    Builder.__init__(self, workdir, srcdir, instdir, lngsz, bits)
-    self._ffi = FFI()
-    self._mod_so = None
+  def __init__(self, workdir, srcdir, instdir, bits, lngsz=None):
+    import cffi
+    Builder.__init__(self, workdir, srcdir, instdir, bits, lngsz)
+    self._ffi = cffi.FFI()
 
   def prepare(self):
     libdir = self._srcdir / self._libdir
@@ -207,7 +206,7 @@ class CTYPES_IFISAM_Builder(CTYPES_Builder, IFISAM_Mixin):
   _mod_so = _Library('pyifisam')
 
   def __init__(self, workdir, srcdir, instdir, bits=64):
-    CTYPES_Builder.__init__(self, workdir, srcdir, instdir, 'int32_t', bits)
+    CTYPES_Builder.__init__(self, workdir, srcdir, instdir, bits, 'int32_t')
     IFISAM_Mixin.__init__(self, bits)
     
 class CFFI_IFISAM_Builder(CFFI_Builder, IFISAM_Mixin):
@@ -245,10 +244,10 @@ struct keypart {{
     short kp_type;
 }};
 struct keydesc {{
-    short k_flags;
-    short k_nparts;
+    short          k_flags;
+    short          k_nparts;
     struct keypart k_part[{self.max_key_parts}];
-    short k_len;
+    short          k_len;
     ...;
 }};
 struct dictinfo {{
@@ -309,7 +308,7 @@ extern int           iswrcurr(int, char *);
 extern int           iswrite(int, char *);
 '''
   def __init__(self, workdir, srcdir, instdir, bits=64):
-    CFFI_Builder.__init__(self, workdir, srcdir, instdir, 'int32_t', bits)
+    CFFI_Builder.__init__(self, workdir, srcdir, instdir, bits, 'int32_t')
     IFISAM_Mixin.__init__(self, bits)
 
   def compile(self):
@@ -322,16 +321,6 @@ extern int           iswrite(int, char *);
       include_dirs=[self._workdir],
     )
     super().compile()
-
-  """ NOT USED:
-  def install(self, addmissing=True):
-    if addmissing:
-      self.patchlibrary(self._ifisam_so, b'$ORIGIN')
-      self.patchlibrary(self._ifisamx_so)
-    self.install_on_change(self._mod_so, 'cffi')
-    self.install_on_change(self._ifisam_so, 'lib')
-    self.install_on_change(self._ifisamx_so, 'lib')
-  END NOT USED """
 
 class VBISAM_Mixin:
   _vbisam_so = _Library('vbisam')
@@ -349,7 +338,7 @@ class CTYPES_VBISAM_Builder(CTYPES_Builder, VBISAM_Mixin):
   _mod_so = _Library('pyvbisam')
 
   def __init__(self, workdir, srcdir, instdir, bits=64):
-    CTYPES_Builder.__init__(self, workdir, srcdir, instdir, None, bits)
+    CTYPES_Builder.__init__(self, workdir, srcdir, instdir, bits)
 
 class CFFI_VBISAM_Builder(CFFI_Builder, VBISAM_Mixin):
   'Class encapsulating the information to compile the VBISAM CFFI module'
@@ -386,68 +375,67 @@ struct keypart {{
     short kp_type;
 }};
 struct keydesc {{
-    short k_flags;
-    short k_nparts;
+    short          k_flags;
+    short          k_nparts;
     struct keypart k_part[{self.max_key_parts}];
-    short k_len;
+    short          k_len;
     ...;
 }};
 struct dictinfo {{
-    short   di_nkeys;
-    short   di_recsize;
-    short   di_idxsize;
+    short        di_nkeys;
+    short        di_recsize;
+    short        di_idxsize;
     {self.lngsz} di_nrecords;
 }};
-extern int             is_nerr(void);
-extern int             iserrno(void);
-extern int             iserrio(void);
-extern {self.lngsz}   isrecnum(void);
-extern int             isreclen(void);
-extern const char     *is_strerror(int);
-extern int             isaddindex(int, struct keydesc *);
-extern int             isaudit(int, signed char *, int);
-extern int             isbegin(void);
-extern int             isbuild(signed char *, int, struct keydesc *, int);
-extern int             iscleanup(void);
-extern int             isclose(int);
-extern int             iscluster(int, struct keydesc *);
-extern int             iscommit(void);
-extern int             isdelcurr(int);
-extern int             isdelete(int, signed char *);
-extern int             isdelindex(int, struct keydesc *);
-extern int             isdelrec(int, {self.lngsz});
-extern int             isdictinfo(int, struct dictinfo *);
-extern int             iserase(signed char *);
-extern int             isflush(int);
-extern int             isindexinfo(int, void *, int);
-extern int             iskeyinfo(int, struct keydesc *, int);
-/*extern void            islangchk(void);   -- Not implemented */
-/*extern char           *islanginfo(char *);   -- Not implemented */
-extern int             islock(int);
-extern int             islogclose(void);
-extern int             islogopen(signed char *);
-/*extern int             isnlsversion(char *);   -- Not implemented */
-/*extern int             isglsversion(char *);   -- Not implemented */
-/*extern void            isnolangchk(void);   -- Not implemented */
-extern int             isopen(signed char *, int);
-extern int             isread(int, signed char *, int);
-extern int             isrecover(void);
-extern int             isrelease(int);
-extern int             isrename(signed char *, signed char *);
-extern int             isrewcurr(int, signed char *);
-extern int             isrewrec(int, {self.lngsz}, signed char *);
-extern int             isrewrite(int, signed char *);
-extern int             isrollback(void);
-extern int             issetunique(int, {self.lngsz});
-extern int             isstart(int, struct keydesc *, int, signed char *, int);
-extern int             isuniqueid(int, {self.lngsz} *);
-extern int             isunlock(int);
-extern int             iswrcurr(int, signed char *);
-extern int             iswrite(int, signed char *);
+extern int           is_nerr(void);
+extern int           iserrno(void);
+extern int           iserrio(void);
+extern {self.lngsz}  isrecnum(void);
+extern int           isreclen(void);
+extern const char   *is_strerror(int);
+extern int           isaddindex(int, struct keydesc *);
+extern int           isaudit(int, signed char *, int);
+extern int           isbegin(void);
+extern int           isbuild(signed char *, int, struct keydesc *, int);
+extern int           iscleanup(void);
+extern int           isclose(int);
+extern int           iscluster(int, struct keydesc *);
+extern int           iscommit(void);
+extern int           isdelcurr(int);
+extern int           isdelete(int, signed char *);
+extern int           isdelindex(int, struct keydesc *);
+extern int           isdelrec(int, {self.lngsz});
+extern int           isdictinfo(int, struct dictinfo *);
+extern int           iserase(signed char *);
+extern int           isflush(int);
+extern int           isindexinfo(int, void *, int);
+extern int           iskeyinfo(int, struct keydesc *, int);
+/*extern void          islangchk(void);   -- Not implemented */
+/*extern char         *islanginfo(char *);   -- Not implemented */
+extern int           islock(int);
+extern int           islogclose(void);
+extern int           islogopen(signed char *);
+/*extern int           isnlsversion(char *);   -- Not implemented */
+/*extern int           isglsversion(char *);   -- Not implemented */
+/*extern void          isnolangchk(void);   -- Not implemented */
+extern int           isopen(signed char *, int);
+extern int           isread(int, signed char *, int);
+extern int           isrecover(void);
+extern int           isrelease(int);
+extern int           isrename(signed char *, signed char *);
+extern int           isrewcurr(int, signed char *);
+extern int           isrewrec(int, {self.lngsz}, signed char *);
+extern int           isrewrite(int, signed char *);
+extern int           isrollback(void);
+extern int           issetunique(int, {self.lngsz});
+extern int           isstart(int, struct keydesc *, int, signed char *, int);
+extern int           isuniqueid(int, {self.lngsz} *);
+extern int           isunlock(int);
+extern int           iswrcurr(int, signed char *);
+extern int           iswrite(int, signed char *);
 '''
-  def __init__(self, workdir, srcdir, instdir, blddir, bits=64):
-    super().__init__(workdir, srcdir, instdir, 'long long int')
-    self._blddir = pathlib.Path(blddir)
+  def __init__(self, workdir, srcdir, instdir, bits=64):
+    CFFI_Builder.__init__(self, workdir, srcdir, instdir, bits, 'long long int')
 
   def compile(self):
     self._ffi.set_source(
@@ -461,33 +449,21 @@ extern int             iswrite(int, signed char *);
     )
     super().compile()
 
-  """ NOT USED:
-  def install(self):
-    self.install_on_change(self._mod_so, 'cffi')
-    self.install_on_change(self._vbisam_so, 'lib')
-  END NOT USED"""
-
 class DISAM_Mixin:
   _disam_so = _Library('disam72')
   _hdrs = ['disam.h', 'isconfig.h', 'isintstd.h', 'iswrap.h']
   _libs = _disam_so
-  _libdir = pathlib.Path('libd_isam')
+  _libdir = pathlib.Path('libdisam')
   variant = 'disam'
 
 class CTYPES_DISAM_Builder(CTYPES_Builder, DISAM_Mixin):
   'Class encapsulating the information to compile the DISAM CTYPES module'
   _mod_so = _Library('pydisam')
 
-  def __init__(self, workdir, srcdir, instdir, bits=64):
-    CTYPES_Builder.__init__(self, workdir, srcdir, instdir, None, bits)
-
 class CFFI_DISAM_Builder(CFFI_Builder, DISAM_Mixin):
   'Class encapsulating the information to compile the DISAM CFFI module'
   # This can support more key parts
   max_key_parts = 20
-
-  # Define items found in ddecimal.h
-  decimal_h_code = None
 
   # Define items found in disam.h
   isam_h_code = '''
@@ -497,10 +473,10 @@ struct keypart {{
     short kp_type;
 }};
 struct keydesc {{
-    short k_flags;
-    short k_nparts;
+    short          k_flags;
+    short          k_nparts;
     struct keypart k_part[{self.max_key_parts}];
-    short k_len;
+    short          k_len;
     ...;
 }};
 struct dictinfo {{
@@ -573,21 +549,62 @@ extern int           iswrite(int, char *);
     )
     super().compile()
 
-  """ NOT USED:
-  def install(self, addmissing=False):
-    if addmissing:
-      self.patchlibrary(self._disam_so)
-    self.install_on_change(self._mod_so, 'cffi')
-    self.install_on_change(self._disam_so, 'lib')
-  END NOT USED"""
+class ModuleGenerator:
+  'Class encapsulating the module generation logic'
+  def __init__(self, workdir,           # work directory
+                     sourcedir,         # source directory
+                     installdir,        # install directory
+                     bld_cffi = True,   # enable CFFI modules
+                     bld_ctypes = True, # enable CTYPES modules
+                     bld_ifisam = True, # enable IFISAM variant
+                     bld_vbisam = True, # enable VBISAM variant
+                     bld_disam = False, # enable DISAM variant
+              ):
+    klasslist = list()
+    if bld_cffi:
+      try:
+        import cffi
+      except ImportError:
+        bld_cffi = False
+
+    def cond_append(flag, cffi, ctypes):
+      if flag:
+        if bld_cffi and cffi is not None:
+          klasslst.append(cffi)
+        if bld_ctypes and ctypes is not None:
+          klasslst.append(ctypes)
+
+    cond_append(bld_ifisam, CFFI_IFISAM_Builder, CTYPES_IFISAM_Builder)
+    cond_append(bld_vbisam, CFFI_VBISAM_Builder, CTYPES_VBISAM_Builder)
+    cond_append(bld_disam, CFFI_DISAM_Builder, CTYPES_DISAM_Builder)
+    if klasslist:
+      workdir.mkdir(exist_ok=True)
+    
+  def prepare(self):
+    for mod in self._modules:
+      mod.prepare()
+
+  def compile(self):
+    for mod in self._modules:
+      mod.compile()
+
+  def install(self):
+    for mod in self._modules:
+      mod.install()
+
+if __name__ == '__main2__':
+  mods = ModuleGenerator(workdir, sourcedir, installdir)
+  mods.prepare()
+  mods.compile()
+  mods.install()
 
 if __name__ == '__main__':
   bld_cffi = True      # Enable building of CFFI modules
-  bld_ctypes = True    # Enable building of CTYPES modules
-  bld_ifisam = True    # Enable building of IFISAM variant
+  bld_ctypes = False    # Enable building of CTYPES modules
+  bld_ifisam = False    # Enable building of IFISAM variant
   bld_vbisam = True    # Enable building of VBISAM variant
   bld_disam = False    # Enable building of DISAM variant
-  do_install = True    # Enable installation of libraries
+  do_install = False    # Enable installation of libraries
 
   # Store the backend/variants actually created to process later
   all_modules = []
