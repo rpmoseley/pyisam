@@ -19,7 +19,7 @@
 
 #define NEED_VBINLINE_INT_LOAD 1
 #define NEED_VBINLINE_QUAD_LOAD 1
-#include	"isinternal.h"
+#include "isinternal.h"
 
 /* Local functions */
 
@@ -61,6 +61,7 @@ tcountrows (const int ihandle)
 
     tnodenumber = inl_ldquad ((VB_CHAR *)vb_rtd->psvbfile[ihandle]->sdictnode.cdatafree);
     tdatacount = inl_ldquad ((VB_CHAR *)vb_rtd->psvbfile[ihandle]->sdictnode.cdatacount);
+    printf("COUNT: INIT: %zd\n", tdatacount);
     while (tnodenumber) {
         if (ivbblockread (ihandle, 1, tnodenumber, cvbnodetmp)) {
             return -1;
@@ -69,7 +70,9 @@ tcountrows (const int ihandle)
         inodeused -= INTSIZE + QUADSIZE;
         tdatacount -= (inodeused / QUADSIZE);
         tnodenumber = inl_ldquad (cvbnodetmp + INTSIZE);
+        printf("COUNT: CALC: %zd\n", tdatacount);
     }
+    printf("COUNT: FINI: %zd\n", tdatacount);
     return tdatacount;
 }
 #endif
@@ -77,11 +80,11 @@ tcountrows (const int ihandle)
 /* Global functions */
 
 /* Comments:
-*	The isclose () function does not *COMPLETELY* close a table *IF* the
-*	call to isclose () occurred during a transaction.  This is to make sure
-*	that rowlocks held during a transaction are retained.  This function is
-*	the 'middle half' that performs the (possibly delayed) physical close.
-*	The 'lower half' (ivbclose3) frees up the cached stuff.
+*  The isclose () function does not *COMPLETELY* close a table *IF* the
+*  call to isclose () occurred during a transaction.  This is to make sure
+*  that rowlocks held during a transaction are retained.  This function is
+*  the 'middle half' that performs the (possibly delayed) physical close.
+*  The 'lower half' (ivbclose3) frees up the cached stuff.
 */
 int
 ivbclose2 (const int ihandle)
@@ -320,10 +323,10 @@ isopen (const VB_CHAR *pcfilename, int imode)
                 if (psfile->iisopen == 2) {
                     sprintf ((char*)tmpfname, "%s.idx", pcfilename);
                     psfile->iindexhandle =
-                    ivbopen (tmpfname, O_RDWR | O_BINARY, 0);
+                        ivbopen (tmpfname, O_RDWR | O_BINARY, 0);
                     sprintf ((char*)tmpfname, "%s.dat", pcfilename);
                     psfile->idatahandle =
-                    ivbopen (tmpfname, O_RDWR | O_BINARY, 0);
+                        ivbopen (tmpfname, O_RDWR | O_BINARY, 0);
                     if (imode & ISEXCLLOCK) {
                         iresult = ivbfileopenlock (ihandle, 2);
                     } else {
@@ -341,6 +344,9 @@ isopen (const VB_CHAR *pcfilename, int imode)
                     }
                 }
                 psfile->iopenmode = imode;
+#ifdef ISOPEN_SET_ISRECLEN
+                vb_rtd->isreclen = psfile->iminrowlength;
+#endif
                 return ihandle;
             }
         }
@@ -403,17 +409,17 @@ isopen (const VB_CHAR *pcfilename, int imode)
         goto open_err;
     }
     errno = EBADFILE;
-#if	ISAMMODE == 1
+#if  ISAMMODE == 1
     if (psfile->sdictnode.cvalidation[0] != 0x56
         || psfile->sdictnode.cvalidation[1] != 0x42) {
         goto open_err;
     }
-#else	/* ISAMMODE == 1 */
+#else  /* ISAMMODE == 1 */
     if (psfile->sdictnode.cvalidation[0] != -2
         || psfile->sdictnode.cvalidation[1] != 0x53) {
         goto open_err;
     }
-#endif	/* ISAMMODE == 1 */
+#endif  /* ISAMMODE == 1 */
     psfile->inodesize = inl_ldint (psfile->sdictnode.cnodesize) + 1;
     psfile->inkeys = inl_ldint (psfile->sdictnode.cindexcount);
     psfile->iminrowlength = inl_ldint (psfile->sdictnode.cminrowlength);
@@ -431,7 +437,7 @@ isopen (const VB_CHAR *pcfilename, int imode)
         } else {
             psfile->imaxrowlength = psfile->iminrowlength;
         }
-    
+
         errno = EROWSIZE;
         if (psfile->imaxrowlength && psfile->imaxrowlength != psfile->iminrowlength) {
             if (!(imode & ISVARLEN)) {
@@ -445,6 +451,11 @@ isopen (const VB_CHAR *pcfilename, int imode)
     }
     psfile->iopenmode = imode;
     tnodenumber = inl_ldquad (psfile->sdictnode.cnodekeydesc);
+
+#ifdef ISOPEN_SET_ISRECLEN
+    /* Set the record length as expected by CISAM applications */
+    vb_rtd->isreclen = psfile->iminrowlength;
+#endif
 
     /* Fill in the keydesc stuff */
     while (tnodenumber) {
@@ -503,14 +514,14 @@ isopen (const VB_CHAR *pcfilename, int imode)
                 pctemp++;
                 ikeydesclength -= ((INTSIZE * 2) + 1);
                 errno = EBADFILE;
-		if (ikeydesclength < 0 && !(pkptr->k_flags & NULLKEY)) {
-			goto open_err;
-		}
-		if((pkptr->k_flags & NULLKEY)) {
-			pkptr->k_part[iindexpart].kp_type |= (*pctemp << BYTESHFT);
-			ikeydesclength--;
-			pctemp++;
-		}
+                if (ikeydesclength < 0 && !(pkptr->k_flags & NULLKEY)) {
+                    goto open_err;
+                }
+                if((pkptr->k_flags & NULLKEY)) {
+                    pkptr->k_part[iindexpart].kp_type |= (*pctemp << BYTESHFT);
+                    ikeydesclength--;
+                    pctemp++;
+                }
                 iindexpart++;
             }
             iindexnumber++;
@@ -542,7 +553,7 @@ isopen (const VB_CHAR *pcfilename, int imode)
         psfile->itransyet = 1;
     }
     return ihandle;
-    open_err:
+open_err:
     ivbexit (ihandle);
     psfile = vb_rtd->psvbfile[ihandle];
     if (psfile != NULL) {

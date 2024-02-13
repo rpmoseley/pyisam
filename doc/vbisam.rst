@@ -25,3 +25,9 @@ is negative if the table uses variable length records, and the range of the reco
 is a combination of the *isreclen* global variable, which gives the fixed size, and the
 dictinfo.recsize field, which gives the maximum length. In VBISAM, both the *isreclen*
 and dictinfo.recsize give the fixed length, there is no indication of the maximum length.
+
+Unlike the libifisam library the vbisam library *DOES NOT* update the global variable
+isreclen when a table is opened, it is only updated when the application makes a call
+to the isindexinfo() function. This has been fixed in the version of the library that
+is distributed with the pyisam package when the macro ISOPEN_SET_ISRECLEN is set during
+compilation.
