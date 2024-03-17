@@ -27,11 +27,11 @@ import dataclasses
 import datetime
 import struct
 from keyword import iskeyword
-from ..backend import RecordBuffer
+from ..backend import _backend
 from ..constants import ColumnType
 
 __all__ = ('CharColumn', 'TextColumn', 'ShortColumn', 'LongColumn', 'FloatColumn',
-           'DoubleColumn', 'DateColumn', 'SerialColumn', 'ColumnInfo', 'recordclass')
+           'DoubleColumn', 'DateColumn', 'SerialColumn', 'ColumnInfo')
 
 # Create a special tuple for storing the column information avoiding the
 # descriptor lookup that would otherwise occur
@@ -216,31 +216,34 @@ class ISAMrecordBase:
   '''Base class providing access to the current record providing access to the
      columns as attributes where each column is implemented by a descriptor
      object which makes the conversion to/from the underlying raw buffer directly.'''
-  def __init__(self, recname, recsize=None, **kwds):
+  # Provide information for static type analysis
+  _fields: list[ColumnInfo]
+  _flddict: dict[str, ColumnInfo]
+  _recsize: int
+  
+  def __init__(self, recname, fields=None):
     # NOTE:
     # The passing of a 'fields' keyword permits the tuple that represents a record to an
     # application to have fewer fields, or have the fields in a different order, than the
     # actual underlying record in the ISAM table, but does not prevent the actual access
     # to all the fields available.
-    if 'fields' in kwds and kwds['fields'] is not None:
-      kwd_fields = kwds['fields']
-      if isinstance(kwd_fields, str):
-        kwd_fields = kwd_fields.replace(',', ' ').split()
-      else:
+    if fields is not None:
+      if isinstance(fields, str):
+        fields = fields.replace(',', ' ').split()
+      elif not isinstance(fields, (list, tuple)):
         raise ValueError('Unhandled type of fields to be presented')
-      tupfields = [fld for fld in kwd_fields if fld in self._fields]
+      tupfields = [fld for fld in fields if fld in self._fields]
       if not tupfields:
         raise ValueError('Provided fields produces no suitable columns to use')
     else:
-      tupfields = [fld.name for fld in self._fields]
+      tupfields = [fld for fld in self._flddict]
     self._namedtuple = collections.namedtuple(recname, tupfields)
+    self._buffer = _backend.create_record(self._recsize)
 
-    # Create a record buffer which will produce suitable instances for this table when
-    # called, this provides a means of modifying the buffer implementation without
-    # affecting the actual package usage.
-    self._record = RecordBuffer(self._recsize if recsize is None else recsize)
-    self._buffer = self._record()
-    
+  @property
+  def raw(self):
+    return self._record.raw
+  
   def __getitem__(self, fld):
     'Return the current value of the given item'
     if isinstance(fld, int):
@@ -275,35 +278,34 @@ class ISAMrecordBase:
   @property
   def _cur_value(self):
     'Return the current values of all fields in the record'
-    return [getattr(self, fld.name) for fld in self._namedtuple._fields]
+    return [getattr(self, fld) for fld in self._namedtuple._fields]
 
   def _set_value(self, *args, **kwd):
     'Set the record area to the given KWD or ARGS'
     if kwd:
       for fld in self._namedtuple._fields:
-        setattr(self, fld.name, kwd[fld.name])
+        setattr(self, fld, kwd[fld])
     else:
       for num, fld in enumerate(self._namedtuple._fields):
-        setattr(self, fld.name, args[num])
+        setattr(self, fld, args[num])
 
   def __str__(self):
     'Return the current values as a string'
     fldval = []
     for fld in self._namedtuple._fields:
-      finfo = self._flddict[fld]
-      if finfo.type == ColumnType.CHAR:
+      if self._flddict[fld].type == ColumnType.CHAR:
         fldval.append(f"{fld}='{getattr(self, fld)}'")
       else:
         fldval.append(f'{fld}={getattr(self, fld)}')
-    return ''.join(('{}({})'.format(self.__class__.__name__, ', '.join(fldval))))
+    return '{}({})'.format(self.__class__.__name__, ', '.join(fldval))
 
 # Define the templates used to generate the record definition class at runtime
-_record_class_template = """\
+_record_class = """\
 class {rec_name}(ISAMrecordBase):
-  __slots__ = ('_record',)
+  __slots__ = ()
 {fld_defn}
 """
-_record_field_template = """\
+_record_field = """\
   {name} = {klassname}({defn})
 """
 
@@ -321,13 +323,29 @@ _record_namespace = {
     'ISAMrecordBase'  : ISAMrecordBase,
 }
 
-def recordclass(tabdefn, recname=None, keepsrc=True, *args, **kwd):
+_rec_cache = dict()
+def create_record_class(tabdefn, recname=None, keepsrc=True, **kwd):
+  'Wrapper around internal function that caches known record definitions'
+  global _rec_cache
+  if recname is None:
+    fqname = [getattr(tabdefn, '_database', None),
+              getattr(tabdefn, '_prefix', None),
+              kwd.get('idname', getattr(tabdefn, '_tabname', None))]
+    recname = '_'.join([str(x) for x in fqname if x is not None])
+  if not recname.isalnum() and recname.find('_') < 0:
+    raise NameError(f"Record '{recname} is not a valid identifier")
+  recinfo = _rec_cache.get(recname)
+  if recinfo is None:
+    recinfo = _rec_cache[recname] = _recordclass(tabdefn, recname, keepsrc)
+  return recinfo
+
+def _recordclass(tabdefn, recname, keepsrc, **kwd):
   'Create a new class for the given table definition'
   seen, fdefn = set(), []
-  if isinstance(tabdefn._columns_, (collections.OrderedDict, dict)):
-    flds = list(tabdefn._columns_.values())
-  elif isinstance(tabdefn._columns_, (list, tuple)):
-    flds = tabdefn._columns_
+  if isinstance(tabdefn._columns, (collections.OrderedDict, dict)):
+    flds = list(tabdefn._columns.values())
+  elif isinstance(tabdefn._columns, (list, tuple)):
+    flds = tabdefn._columns
   else:
     raise ValueError('Unhandled column information encountered')
   for fld in flds:
@@ -345,31 +363,22 @@ def recordclass(tabdefn, recname=None, keepsrc=True, *args, **kwd):
     fld_template = _record_namespace[klassname]._template.format(fld)
 
     # Create the field template (the offset is calculated by the metaclass)
-    fdefn.append(_record_field_template.format(name=fldname,
-                                               klassname=klassname,
-                                               defn=fld_template))
+    fdefn.append(_record_field.format(name=fldname,
+                                      klassname=klassname,
+                                      defn=fld_template))
 
   # Provide the record template
-  if recname is None:
-    fqname = [getattr(tabdefn, '_database_', None),
-              getattr(tabdefn, '_prefix_', None),
-              kwd.get('idname', getattr(tabdefn, '_tabname_', None))]
-    recname = '_'.join([str(x) for x in fqname if x is not None])
-  if recname.isalnum() or recname.find('_') >= 0:
-    record_name = f'Rec_{recname}'
-  else:
-    raise NameError(f"Record '{recname} is not a valid identifier")
-  record_definition = _record_class_template.format(rec_name=record_name,
-                                                    fld_defn=''.join(fdefn))
+  record_definition = _record_class.format(rec_name=recname,
+                                           fld_defn=''.join(fdefn))
 
   # Execute in a temporary namespace that also includes the ISAMrecordBase object, 
   # and column objects used in the new object with additional tracing utilities
   namespace = {
-    '__name__'       : record_name,
+    '__name__'       : recname,
   } 
   namespace.update(_record_namespace)
   exec(record_definition, namespace)
-  result = namespace[record_name]
+  result = namespace[recname]
   if keepsrc:
     result._source = record_definition
   return result

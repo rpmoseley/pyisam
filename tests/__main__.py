@@ -71,7 +71,9 @@ class AvailableTest:
         return None
       if opts.debug:
         print(f'Test {testnum}:')
-      tstdata = os.path.join(self._dir, 'tstdata', str(testnum))
+      tstdata = os.path.join(self._dir, 'tstdata', f'{testnum:02}')
+      if opts.debug:
+        print('Checking for test data:', tstdata)
       if os.path.exists(tstdata):
         opts.tstdata = tstdata
       tfunc = getattr(mod, 'test', None)
@@ -133,11 +135,13 @@ def run_test(testdir, testnum, opts, avail_tests=avail_tests):
     return getattr(mod, 'test')(opts)
   except AttributeError:
     return None
+  except:
+    raise
   
 def give_version():
   from pyisam import __version__
-  from pyisam.backend import use_conf, use_isamlib
-  print(f'pyisam version {__version__}, backend {use_conf} and {use_isamlib} library')
+  from pyisam.backend import use_conf, use_isam
+  print(f'pyisam version {__version__}, backend {use_conf} and {use_isam} library')
 
 # Give the version if requested and finish without further processing
 if opts.version or opts.debug:

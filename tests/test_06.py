@@ -1,5 +1,23 @@
 '''
-Test 06: Test how the date field is retrieved and stored.
+Test 06: Low-level access to data without using a Table instance
 '''
 
-from pyisam.tabdefns import dynamic
+import os
+import struct
+from pyisam.constants import ReadMode, OpenMode
+from pyisam.isam import ISAMobject, create_record
+
+defile_defn = struct.Struct('>9sh9s9schchhc10sc')
+
+def dump_defile(recbuff):
+  fld = defile_defn.unpack_from(recbuff, 0)
+  return fld
+
+def test(opts):
+  tabpath = os.path.join(opts.tstdata, 'defile')
+  isobj = ISAMobject()
+  isobj.isopen(tabpath, mode=OpenMode.ISINPUT)
+  buff = create_record(isobj._recsize)
+  struct.pack_into('>9sh', buff, 0, b'defile', 0)
+  isobj.isread(buff, ReadMode.ISGTEQ)
+  print(dump_defile(buff))

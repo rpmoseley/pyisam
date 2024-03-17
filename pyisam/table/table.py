@@ -5,10 +5,11 @@ permit the table layout to be defined and referenced later.
 
 import os
 from .index import TableIndex, create_TableIndex
-from .record import recordclass, ISAMrecordBase
+from .record import create_record_class, ISAMrecordBase
+from ..backend import _backend
 from ..constants import ReadMode, StartMode, dflt_openmode, dflt_lockmode
 from ..error import IsamIterError, IsamNotOpen, IsamError, IsamNoPrimaryIndex
-from ..isam import ISAMobject, ISAMkeydesc
+from ..isam import ISAMobject
 from ..tabdefns import TableDefnIndex
 
 # Define the objects that are available using 'from .table import *'
@@ -29,7 +30,7 @@ class TableIndexMapElem:
       raise TypeError("Must provide an instance of 'TableIndex' for 'tabind'")
 
     # Set the underlying index information
-    if keydesc is None or isinstance(keydesc, ISAMkeydesc):
+    if keydesc is None or isinstance(keydesc, _backend.ISAMkeydesc):
       self._keydesc = keydesc
     else:
       raise TypeError("Must provide an instance of 'ISAMkeydesc' for 'keydesc'")
@@ -156,7 +157,7 @@ class TableIndexMapping:
     if tabind is not None and not isinstance(tabind, TableIndex):
       raise ValueError('Must pass an instance of TableIndex or None')
     # Check if a CISAM keydesc has been provided
-    if idxdesc is not None and not isinstance(idxdesc, ISAMkeydesc):
+    if idxdesc is not None and not isinstance(idxdesc, _backend.ISAMkeydesc):
       raise ValueError('Must pass an instance of keydesc or None')
     # Create a new item element to share instances
     newinfo = TableIndexMapElem(tabind, idxdesc, idxnum, idxname)
@@ -168,7 +169,7 @@ class TableIndexMapping:
     # Update the mapping using the index number
     try:
       self._idxmap[idxnum].update(newinfo)
-    except:
+    except KeyError:
       self._idxmap[idxnum] = newinfo
 
   def remove(self, name_or_idxnum):
@@ -226,27 +227,29 @@ class ISAMtable:
      and index information and also provides the get/set functionality
      with dictionary like access. It will match up the index information
      with the information stored within the table file itself.'''
-  # _slots_ = '_isobj_', '_name_', '_path_', '_mode_', '_lock_', '_database_',
-  #           '_prefix_', '_curidx_', '_record_', '_recsize_', '_row_'
+  # _slots_ = '_isobj', '_name', '_path', '_mode', '_lock', '_database',
+  #           '_prefix', '_curidx', '_record', '_recsize', '_row'
   def __init__(self, tabdefn, tabname=None, tabpath=None, isobj=None, **kwds):
-    self._defn_ = tabdefn
-    self._name_ = tabdefn._tabname_ if tabname is None else tabname
-    self._path_ = tabpath if tabpath else '.'
-    self._mode_ = kwds.get('mode', dflt_openmode)
-    self._lock_ = kwds.get('lock', dflt_lockmode)
-    self._isobj_ = isobj if isinstance(isobj, ISAMobject) else ISAMobject(**kwds)
-    self._database_ = getattr(tabdefn, '_database_', None)
-    self._prefix_ = getattr(tabdefn, '_prefix_', None)
-    self._record_ = kwds.get('recordclass', getattr(tabdefn, '_recinfo_', None))
-    if self._record_ is None:
-      self._record_ = recordclass(tabdefn)
-    self._idxinfo_ = TableIndexMapping(self)  # Mapping of indexes on this table's object
-    self._primary_ = None             # Set to the primary index or first otherwise
-    self._curindex_ = None            # Current index being used in isread/isstart
-    self._row_ = None                 # Cannot allocate record until table is opened
-    self._recsize_ = None             # Length of record is given after table is opened
+    self._defn = tabdefn
+    self._name = tabdefn._tabname if tabname is None else tabname
+    self._path = tabpath if tabpath else '.'
+    self._mode = kwds.get('mode', dflt_openmode)
+    self._lock = kwds.get('lock', dflt_lockmode)
+    self._isobj = isobj if isinstance(isobj, ISAMobject) else ISAMobject(**kwds)
+    self._database = getattr(tabdefn, '_database', None)
+    self._prefix = getattr(tabdefn, '_prefix', None)
+    self._record = kwds.get('recordclass', getattr(tabdefn, '_recinfo', None))
+    if self._record is None:
+      # NOTE: The following allocates a low-level buffer for the record, but
+      # NOTE: then another instance is allocated for this object itself.
+      self._record = create_record_class(tabdefn)
+    self._idxinfo = TableIndexMapping(self)  # Mapping of indexes on this table's object
+    self._primary = None             # Set to the primary index or first otherwise
+    self._curindex = None            # Current index being used in isread/isstart
+    self._row = None                 # Cannot allocate record until table is opened
+    self._recsize = None             # Length of record is given after table is opened
     self._debug = bool(kwds.get('debug', False))
-    self._varlen_ = kwds.get('varlen', None)
+    self._varlen = kwds.get('varlen', None)
       
     # Define the indexes found in the definition object
     self._add_defn_indexes()
@@ -256,11 +259,12 @@ class ISAMtable:
     def _addidxdefn(index, _debug=False):
       if not isinstance(index, TableDefnIndex):
         raise NotImplementedError('Unhandled index definition object')
-      if _debug: print('CONV: Convert TableDefnIndex to TableIndex:', index.name)
+      if _debug:
+        print('CONV: Convert TableDefnIndex to TableIndex:', index.name)
       colinfo = index.colinfo if isinstance(index.colinfo, (tuple, list)) else [index.colinfo]
       self._add_idxinfo(TableIndex(index.name, *colinfo, dups=index.dups, desc=index.desc))
 
-    idxdefn = self._defn_._indexes_
+    idxdefn = self._defn._indexes
     if isinstance(idxdefn, dict):
       for index in idxdefn.values():
         _addidxdefn(index)
@@ -276,42 +280,38 @@ class ISAMtable:
       raise ValueError('Expecting an instance of TableIndex')
     if idxname is None:
       idxname = idxinfo.name
-    if idxname in self._idxinfo_:
+    if idxname in self._idxinfo:
       raise ValueError('Existing index of same name already present')
-    self._idxinfo_.add(idxname, tabind=idxinfo)
-    if self._primary_ is None:
-      self._primary_ = idxinfo
+    self._idxinfo.add(idxname, tabind=idxinfo)
+    if self._primary is None:
+      self._primary = idxinfo
 
   def __str__(self):
-    return 'No data available' if self._row_ is None else str(self._row_)
+    return 'No data available' if self._row is None else str(self._row)
 
   # TODO: This will be enabled when context manager features are implemented:
   # def __enter__(self):
   #   # Open the table using default mode, lock and paths
-  #   self._isobj_.isopen(self._name_, None, None)
+  #   self._isobj.isopen(self._name, None, None)
   #   return self
   # def __exit__(self, type_, value, traceback):
   #   # Close the table
-  #   self._isobj_.isclose()
-
-  def _createrecord(self, fields=None):
-    'Return a new instance of the record classs for this table'
-    return self._record_(self._name_, fields=fields)
+  #   self._isobj.isclose()
 
   def _default_record(self):
-    'Return the default record or initialise it not already present'
-    if self._row_ is None:
-      self._row_ = self._createrecord()
-    return self._row_
-
+    'Return the default record or initialise it if not already present'
+    if self._row is None:
+      self._row = self._record(self._name)
+    return self._row  
+    
   def _colinfo(self, colname):
     'Return the column information by name'
-    return self._defn_._columns_.get(colname)
+    return self._defn._columns.get(colname)
   
   @property
   def isclosed(self, error=False):
     'Check whether the underlying ISAM table has been opened'
-    ret = self._isobj_ is None or self._isobj_._isfd_ is None
+    ret = self._isobj is None or self._isobj._isfd is None
     if error and ret:
       raise IsamNotOpen()
     return ret
@@ -338,31 +338,33 @@ class ISAMtable:
   def build(self, tabpath=None, varlen=None, **kwd):
     'Build a new ISAM table using the definition provided in the optional TABPATH'
     # Locate the primary index in the definition
-    if not hasattr(self, '_primary_') or self._primary_ is None:
+    if not hasattr(self, '_primary') or self._primary is None:
       raise IsamError('Must provide a primary index when building table')
     index = self._LookupPrimaryIndex()
-    path = os.path.join(self._path_ if tabpath is None else tabpath, self._name_)
-    reclen = self._record_._recsize
-    self._isobj_.isbuild(path, reclen, index.as_keydesc(self._isobj_, self._record_))
+    path = os.path.join(self._path if tabpath is None else tabpath, self._name)
+    reclen = self._record._recsize
+    self._isobj_.isbuild(path, reclen, index.as_keydesc(self._isobj, self._record))
 
   def open(self, tabpath=None, mode=None, lock=None, **kwd):
     'Open an existing ISAM table with the specified mode, lock and TABPATH'
-    if mode is None: mode = self._mode_
-    if lock is None: lock = self._lock_
-    path = os.path.join(self._path_ if tabpath is None else tabpath, self._name_)
-    self._isobj_.isopen(path, mode, lock)
-    self._recsize_ = self._isobj_.isreclen  # Provided by the ISAM library
+    if mode is None:
+      mode = self._mode
+    if lock is None:
+      lock = self._lock
+    path = os.path.join(self._path if tabpath is None else tabpath, self._name)
+    self._isobj.isopen(path, mode, lock)
+    self._recsize = self._isobj._recsize  # Provided by the ISAM library
     # self._update_indexes() # NOTE: Defer this to when required
 
   def cluster(self, index):
     'Re-organize the ISAM table using the specified INDEX'
     if not isinstance(index, TableIndex):
       raise ValueError('Must provide an instance of ISAMindex for the index')
-    self._isobj_.iscluster(index.as_keydesc(self))
+    self._isobj.iscluster(index.as_keydesc(self))
 
   def close(self):
     'Close the underlying ISAM table'
-    self._isobj_.isclose()
+    self._isobj.isclose()
 
   def read(self, index=None, mode=None, recnum=None, *args, **kwd):
     'Return the appropriate record into RECBUFF according to the MODE specified'
@@ -374,55 +376,56 @@ class ISAMtable:
     
     # If a specified record number was given then switch the index
     if isinstance(index, int):
-      kdesc = ISAMkeydesc()
+      kdesc = _backend.ISAMkeydesc()
       kdesc.k_nparts = 0
       
-    if index is None and self._curindex_ is not None:
+    if index is None and self._curindex is not None:
       # Use the current index for the request
-      index = self._curindex_
+      index = self._curindex
     if mode is None:
       # Assume that the next record is required
       mode = getattr(self, '_lastread', ReadMode.ISNEXT)
     record = kwd.pop('recbuff', None)
-    if record is None:
+    if not isinstance(record, ISAMrecordBase):
       # Use default record buffer for request
       record = self._default_record()
     
     # Get the information about the index
     index = self._LookupPrimaryIndex()
-    if index == self._curindex_:
+    if index == self._curindex:
       # Using the same index so avoid changing the current index in use
       if mode not in (ReadMode.ISNEXT, ReadMode.ISCURR, ReadMode.ISPREV):
         # Fill the columns that are part of the index 
         index.fill_fields(record, *args, **kwd)
-      self._isobj_.isread(record._buffer, mode)
-      self._recnum_ = self._isobj_.isrecnum
+      self._isobj.isread(record._buffer, mode)
+      self._recnum = self._isobj.isrecnum
       return record()
 
     # Convert the required mode into a restart mode
-    if mode in StartMode:
+    try:
       smode = StartMode(mode)
-    elif mode == ReadMode.ISNEXT:
-      smode = StartMode.ISFIRST
-      mode = ReadMode.ISNEXT
-    elif mode == ReadMode.ISPREV:
-      smode = StartMode.ISLAST
-      mode = ReadMode.ISPREV
-    elif mode == ReadMode.ISCURR:
-      smode = StartMode.ISFIRST
-
-    # Fill the columns that are part of the index
+    except ValueError:
+      if mode == ReadMode.ISNEXT:
+        smode = StartMode.ISFIRST
+        mode = ReadMode.ISNEXT
+      elif mode == ReadMode.ISPREV:
+        smode = StartMode.ISLAST
+        mode = ReadMode.ISPREV
+      elif mode == ReadMode.ISCURR:
+        smode = StartMode.ISFIRST
+    
+    # Fill the index information into the record buffer
     index.fill_fields(record, *args, **kwd)
     
     # Issue the restart followed by the read of the record itself
-    self._isobj_.isstart(index.as_keydesc(self._isobj_, record), smode, record._buffer)
-    self._isobj_.isread(record._buffer, ReadMode.ISCURR)
+    self._isobj.isstart(index.as_keydesc(self._isobj, record), smode, record._buffer)
+    self._isobj.isread(record._buffer, ReadMode.ISCURR)
 
     # Make this the current index for the next invocation of the method
-    self._curindex_ = getattr(index, '_tabind', index)
+    self._curindex = getattr(index, '_tabind', index)
 
     # Save the record number for use if required
-    self._recnum_ = self._isobj_.isrecnum
+    self._recnum = self._isobj.isrecnum
     
     # Save the mode used for next time if None given
     self._lastread = mode
@@ -433,38 +436,37 @@ class ISAMtable:
   def insert(self, recbuff=None, setcurr=False, *args, **kwd):
     'Insert a record'
     if recbuff is None:
-      recbuff = self._row_
-    else:
-      recbuff._set_value(*args, **kwd)
-    return self._isobj_.iswrcurr(recbuff) if setcurr else self._isobj_.iswrite(recbuff)
+      recbuff = self._default_record()
+    recbuff._set_value(*args, **kwd)
+    return self._isobj.iswrcurr(recbuff) if setcurr else self._isobj.iswrite(recbuff)
     
   def delete(self, keybuff=None, recbuff=None, *args, **kwd):
     'Delete a record from the underlying ISAM table'
     if keybuff is None:
-      return self._isobj_.isdelcurr()
+      return self._isobj.isdelcurr()
     elif isinstance(keybuff, int):
-      return self._isobj_.isdelrec(keybuff)
+      return self._isobj.isdelrec(keybuff)
     elif isinstance(keybuff, TableIndex):
       if recbuff is None:
-        recbuff = self._row_
+        recbuff = self._row
       else:
         recbuff._set_value(*args, **kwd)
-      return self._isobj_.isdelete(recbuff)
+      return self._isobj.isdelete(recbuff)
     else:
       raise NotImplementedError
 
   def update(self, keybuff=None, recbuff=None, *args, **kwd):
     'Update an existing record ...'
     if recbuff is None:
-      recbuff = self._row_
+      recbuff = self._row
     else:
       recbuff._set_value(*args, **kwd)
     if keybuff is None:
-      return self._isobj_.isrewcurr(recbuff)
+      return self._isobj.isrewcurr(recbuff)
     elif isinstance(keybuff, int):
-      return self._isobj_.isrewrec(keybuff, recbuff)
+      return self._isobj.isrewrec(keybuff, recbuff)
     elif isinstance(keybuff, TableIndex):
-      return self._isobj_.isrewrite(recbuff)
+      return self._isobj.isrewrite(recbuff)
     else:
       raise NotImplementedError
 
@@ -482,12 +484,12 @@ class ISAMtable:
 
   def dictinfo(self):
     'Return an instance of dictinfo for the underlying ISAM table'
-    return self._isobj_.isdictinfo()
+    return self._isobj.isdictinfo()
 
   def keyinfo(self, idxnum):
     'Return an instance of ISAMindexInfo for the given IDXNUM on the underlying ISAM table'
-    kd = self._isobj_.iskeyinfo(idxnum)
-    return create_TableIndex(kd, self._record_, idxnum)
+    kd = self._isobj.iskeyinfo(idxnum)
+    return create_TableIndex(kd, self._record, idxnum)
 
   @property
   def uniqueid(self):
@@ -501,11 +503,11 @@ class ISAMtable:
 
   def _LookupPrimaryIndex(self):
     'Lookup up the primary index'
-    if not hasattr(self, '_primary_') or self._primary_ is None:
+    if not hasattr(self, '_primary') or self._primary is None:
       self._autoload_indexes()
-    if self._primary_ is None:
+    if self._primary is None:
       raise IsamNoPrimaryIndex(self)
-    return self._primary_
+    return self._primary
 
   def _LookupIndex(self, name=None, flags=None):
     """Return the information for the index NAME populating the index cache (_idxinfo_) if
@@ -513,28 +515,32 @@ class ISAMtable:
     if name is None:
       raise ValueError('Must provide an index')
     elif isinstance(name, TableIndex):
-      if self._debug: print('LOOKUP_IDX: EXIST:', name, eol='')
+      if self._debug:
+        print('LOOKUP_IDX: EXIST:', name, eol='')
       index = name
     elif isinstance(name, TableIndexMapElem):
-      if self._debug: print('LOOKUP_IDX: EXIST:', name._tabind, eol='')
+      if self._debug:
+        print('LOOKUP_IDX: EXIST:', name._tabind, eol='')
       index = name._tabind
     elif isinstance(name, str):
       try:
-        index = self._idxinfo_[name]
+        index = self._idxinfo[name]
         if index is None:
           # Attempt to match the indexes from the underlying ISAM file
           self._match_indexes()
-          index = self._idxinfo_[name]
-        if self._debug: print('LOOKUP_IDX: OLDIDX:', index)
+          index = self._idxinfo[name]
+        if self._debug:
+          print('LOOKUP_IDX: OLDIDX:', index)
       except KeyError:
         # Lookup the index using the table definition as not in the cache
-        index = self._defn_._indexes_.get(name)
+        index = self._defn._indexes.get(name)
         if index is None:
           # Attempt to generate the indexes directly from the underlying ISAM file
           self._autoload_indexes()
           self._match_indexes()         # Match indexes
-          index = self._idxinfo_[name]
-        if self._debug: print('LOOKUP_IDX: NEWIDX:', index)
+          index = self._idxinfo[name]
+        if self._debug:
+          print('LOOKUP_IDX: NEWIDX:', index)
         if index is None:
           raise NotImplementedError
     else:
@@ -550,9 +556,9 @@ class ISAMtable:
     for colinfo in index._colinfo:
       if colinfo.length is None or colinfo.offset in (None, -1):
         print('WARN: no length/offset provided:', colinfo.name)
-        if self._row_ is not None:
+        if self._row is not None:
           # There is a default record instance so use that to complete the information
-          for fldinfo in self._row_._fields:
+          for fldinfo in self._row._fields:
             if fldinfo.name == colinfo.name:
               print('   ==>', fldinfo)
               # Update the length if not known
@@ -573,8 +579,8 @@ class ISAMtable:
     # Create a record instance to provide column information if a suitable one not given
     if not isinstance(record, ISAMrecordBase):
       record = self._default_record()
-    for idxnum in range(self._isobj_.isdictinfo().nkeys):
-      keydesc = self._isobj_.iskeyinfo(idxnum)
+    for idxnum in range(self._isobj.isdictinfo().nkeys):
+      keydesc = self._isobj.iskeyinfo(idxnum)
       idxinfo = create_TableIndex(keydesc, record, idxnum)
       self._add_idxinfo(idxinfo)
 
@@ -585,12 +591,13 @@ class ISAMtable:
     #        from the table definition against that of the underlying ISAM table,
     #        any multi-field indexes not matched will be left as INDEX*.
     record = self._default_record()
-    for idxnum in range(self._isobj_.isdictinfo().nkeys):
-      keydesc = self._isobj_.iskeyinfo(idxnum)
-      keyindex = create_TableIndex(keydesc, record, idxnum) # NOTE: Check how to reverse create a TableIndex instance
-      for idxchk in self._idxinfo_:
+    for idxnum in range(self._isobj.isdictinfo().nkeys):
+      keydesc = self._isobj.iskeyinfo(idxnum)
+      #keyindex = create_TableIndex(keydesc, record, idxnum) # NOTE: Check how to reverse create a TableIndex instance
+      for idxchk in self._idxinfo:
         if idxchk[2] is None:
           chkdesc = idxchk[1].as_keydesc(record, optimize=True)
           if keydesc == chkdesc:
             idxchk[2] = idxnum
-            if self._debug: print('MATCHED:', idxchk[0], idxnum)
+            if self._debug:
+              print('MATCHED:', idxchk[0], idxnum)

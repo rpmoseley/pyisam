@@ -2,7 +2,7 @@
 Test 40: Check if the binary field parser is working correctly.
 '''
 
-from pyisam.constants import ReadMode
+from pyisam.constants import ReadMode, OpenMode
 from pyisam.tabdefns import fldfile
 from pyisam.table import ISAMtable
 
@@ -12,7 +12,8 @@ def test(opts):
     print('Test not supported without test data')
     return
   tabdefn = fldfile.ParseFldInfo('cgtotst1', tabpath=opts.tstdata)
-  tabinst = ISAMtable(tabdefn, tabpath=opts.tstdata)
+  tabinst = ISAMtable(tabdefn, tabpath=opts.tstdata, mode=OpenMode.ISINPUT)
+  tabinst.open()
   print(tabinst._idxinfo_._idxmap.items())
   print(tabinst._colinfo('fld004'))
   print(tabinst.read('key1', ReadMode.ISFIRST))

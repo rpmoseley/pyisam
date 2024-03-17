@@ -4,7 +4,8 @@ commercial product Strategix/OneOffice sold by KCS Commercial Systems (originall
 TIS Software Ltd).
 '''
 
-from . import *
+from . import CharColumn, TextColumn, ShortColumn, LongColumn
+from . import DuplicateIndex, PrimaryIndex, UniqueIndex
 
 __all__ = ('AppcodeColumn', 'AppdescColumn',
            'DECOMPdefn', 'DEITEMdefn', 'DEFILEdefn', 'DEKEYSdefn',
@@ -30,120 +31,120 @@ class AppdescColumn(CharColumn):
 
 # Examples of the usage of ISAMtable and ISAMtableDefn
 class DECOMPdefn:
-  _tabname_ = 'decomp'
-  _columns_ = (TextColumn('comp',9),
-               CharColumn('comptyp'),
-               TextColumn('sys',9),
-               TextColumn('prefix',5),
-               TextColumn('user',4),
-               TextColumn('database',6),
-               TextColumn('release',5),
-               LongColumn('timeup'),
-               LongColumn('specup'))
-  _indexes_ = (PrimaryIndex('comp'),
-               DuplicateIndex('prefix'),
-               UniqueIndex('typkey','comptyp','comp'),
-               UniqueIndex('syskey','sys','comptyp','comp'))
-  _prefix_ = 'dec'
-  _database_ = 'utool'
+  _tabname = 'decomp'
+  _columns = (TextColumn('comp',9),
+              CharColumn('comptyp'),
+              TextColumn('sys',9),
+              TextColumn('prefix',5),
+              TextColumn('user',4),
+              TextColumn('database',6),
+              TextColumn('release',5),
+              LongColumn('timeup'),
+              LongColumn('specup'))
+  _indexes = (PrimaryIndex('comp'),
+              DuplicateIndex('prefix'),
+              UniqueIndex('typkey','comptyp','comp'),
+              UniqueIndex('syskey','sys','comptyp','comp'))
+  _prefix = 'dec'
+  _database = 'utool'
 
 class DEITEMdefn:
-  _tabname_ = 'deitem'
-  _columns_ = (TextColumn('item',9),
-               ShortColumn('seq'),
-               CharColumn('comptyp'),
-               TextColumn('comp',9),
-               CharColumn('spec'))
-  _indexes_ = (PrimaryIndex('key','item','seq','comptyp','comp'),
-               UniqueIndex('usekey','comp','item'),
-               UniqueIndex('compkey','item','comptyp','comp','seq'))
-  _prefix_ = 'deit'
-  _database_ = 'utool'
+  _tabname = 'deitem'
+  _columns = (TextColumn('item',9),
+              ShortColumn('seq'),
+              CharColumn('comptyp'),
+              TextColumn('comp',9),
+              CharColumn('spec'))
+  _indexes = (PrimaryIndex('key','item','seq','comptyp','comp'),
+              UniqueIndex('usekey','comp','item'),
+              UniqueIndex('compkey','item','comptyp','comp','seq'))
+  _prefix = 'deit'
+  _database = 'utool'
 
 class DEFILEdefn:
-  _tabname_ = 'defile'
-  _columns_ = (TextColumn('filename',9),
-               ShortColumn('seq'),
-               TextColumn('field',9),
-               TextColumn('refptr',9),
-               CharColumn('type'),
-               ShortColumn('size'),
-               CharColumn('keytype'),
-               ShortColumn('vseq'),
-               ShortColumn('stype'),
-               CharColumn('scode'),
-               TextColumn('fgroup',10),
-               CharColumn('idxflag'))
-  _indexes_ = (PrimaryIndex('key','filename','seq'),
-               UniqueIndex('unikey','filename','field'),
-               UniqueIndex('vkey','filename','vseq','field'))
-  _prefix_ = 'def'
-  _database_ = 'utool'
+  _tabname = 'defile'
+  _columns = (TextColumn('filename',9),
+              ShortColumn('seq'),
+              TextColumn('field',9),
+              TextColumn('refptr',9),
+              CharColumn('type'),
+              ShortColumn('size'),
+              CharColumn('keytype'),
+              ShortColumn('vseq'),
+              ShortColumn('stype'),
+              CharColumn('scode'),
+              TextColumn('fgroup',10),
+              CharColumn('idxflag'))
+  _indexes = (PrimaryIndex('key','filename','seq'),
+              UniqueIndex('unikey','filename','field'),
+              UniqueIndex('vkey','filename','vseq','field'))
+  _prefix = 'def'
+  _database = 'utool'
 
 class DEKEYSdefn:
-  _tabname_ = 'dekeys'
-  _columns_ = (TextColumn('filename',9),
-               TextColumn('keyfield',9),
-               TextColumn('key1',9),
-               TextColumn('key2',9),
-               TextColumn('key3',9),
-               TextColumn('key4',9),
-               TextColumn('key5',9),
-               TextColumn('key6',9),
-               TextColumn('key7',9),
-               TextColumn('key8',9))
-  _indexes_ = PrimaryIndex('key','filename','keyfield')
-  _prefix_ = 'dek'
-  _database_ = 'utool'
+  _tabname = 'dekeys'
+  _columns = (TextColumn('filename',9),
+              TextColumn('keyfield',9),
+              TextColumn('key1',9),
+              TextColumn('key2',9),
+              TextColumn('key3',9),
+              TextColumn('key4',9),
+              TextColumn('key5',9),
+              TextColumn('key6',9),
+              TextColumn('key7',9),
+              TextColumn('key8',9))
+  _indexes = PrimaryIndex('key','filename','keyfield')
+  _prefix = 'dek'
+  _database = 'utool'
 
 class DEBFILEdefn:
-  _tabname_ = 'debfile'
-  _columns_ = (CharColumn('source'),
-               LongColumn('license'),
-               TextColumn('filename',9),
-               TextColumn('dataset',4),
-               TextColumn('field',9),
-               CharColumn('action'),
-               ShortColumn('stype'),
-               ShortColumn('size'),
-               CharColumn('scode'),
-               CharColumn('keytype'),
-               ShortColumn('vseq'),
-               ShortColumn('seq'),
-               TextColumn('group',10),
-               TextColumn('refptr',9))
-  _indexes_ = (PrimaryIndex('key','source','license','filename','dataset','field'),
-               DuplicateIndex('fkey','filename','dataset','field'))
-  _prefix_ = 'debf'
-  _database_ = 'utool'
+  _tabname = 'debfile'
+  _columns = (CharColumn('source'),
+              LongColumn('license'),
+              TextColumn('filename',9),
+              TextColumn('dataset',4),
+              TextColumn('field',9),
+              CharColumn('action'),
+              ShortColumn('stype'),
+              ShortColumn('size'),
+              CharColumn('scode'),
+              CharColumn('keytype'),
+              ShortColumn('vseq'),
+              ShortColumn('seq'),
+              TextColumn('group',10),
+              TextColumn('refptr',9))
+  _indexes = (PrimaryIndex('key','source','license','filename','dataset','field'),
+              DuplicateIndex('fkey','filename','dataset','field'))
+  _prefix = 'debf'
+  _database = 'utool'
 
 class DEBKEYSdefn:
-  _tabname_ = 'debkeys'
-  _columns_ = (CharColumn('source'),
-               LongColumn('license'),
-               TextColumn('dataset',4),
-               TextColumn('filename',9),
-               TextColumn('keyfield',9),
-               TextColumn('key1',9),
-               TextColumn('key2',9),
-               TextColumn('key3',9),
-               TextColumn('key4',9),
-               TextColumn('key5',9),
-               TextColumn('key6',9),
-               TextColumn('key7',9),
-               TextColumn('key8',9))
-  _indexes_ = PrimaryIndex('key','source','license','dataset','filename','keyfield')
-  _prefix_ = 'debk'
-  _database_ = 'utool'
+  _tabname = 'debkeys'
+  _columns = (CharColumn('source'),
+              LongColumn('license'),
+              TextColumn('dataset',4),
+              TextColumn('filename',9),
+              TextColumn('keyfield',9),
+              TextColumn('key1',9),
+              TextColumn('key2',9),
+              TextColumn('key3',9),
+              TextColumn('key4',9),
+              TextColumn('key5',9),
+              TextColumn('key6',9),
+              TextColumn('key7',9),
+              TextColumn('key8',9))
+  _indexes = PrimaryIndex('key','source','license','dataset','filename','keyfield')
+  _prefix = 'debk'
+  _database = 'utool'
 
 class DEBCOMPdefn:
-  _tabname_ = 'debcomp'
-  _columns_ = (TextColumn('filename',9),
-               CharColumn('stxbuild'),
-               TextColumn('mask',5),
-               TextColumn('dataset',5),
-               TextColumn('location',128))
-  _indexes_ = (PrimaryIndex('filename'),
-               DuplicateIndex('mask'))
-  _prefix_ = 'debc'
-  _database_ = 'utool'
+  _tabname = 'debcomp'
+  _columns = (TextColumn('filename',9),
+              CharColumn('stxbuild'),
+              TextColumn('mask',5),
+              TextColumn('dataset',5),
+              TextColumn('location',128))
+  _indexes = (PrimaryIndex('filename'),
+              DuplicateIndex('mask'))
+  _prefix = 'debc'
+  _database = 'utool'

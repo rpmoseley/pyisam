@@ -8,6 +8,7 @@ from pyisam.tabdefns import TextColumn, CharColumn, LongColumn, ShortColumn
 from pyisam.tabdefns import PrimaryIndex
 
 def test(opts):
+  tstpath = getattr(opts, 'tstdata', 'data')
   NEWTABdefn = DynamicTableDefn('newtab', error=opts.error_raise)
   NEWTABdefn.append(TextColumn('file', 9))
   NEWTABdefn.append(LongColumn('seq'))
@@ -16,4 +17,4 @@ def test(opts):
   NEWTABdefn.append(LongColumn('fldsize'))
   NEWTABdefn.add_index(PrimaryIndex('key', 'file', 'seq'))
   NEWTAB = ISAMtable(NEWTABdefn)
-  NEWTAB.build(tabpath='data')
+  NEWTAB.build(tabpath=tstpath)

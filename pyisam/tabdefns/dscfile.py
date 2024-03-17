@@ -6,9 +6,12 @@ a DynamicTableDefn based definition suitable for use within the package.
 import pathlib
 from . import CharColumn, TextColumn, ShortColumn, LongColumn, FloatColumn
 from . import DoubleColumn, SerialColumn, DateColumn, MoneyColumn
-from . import CurrencyColumn, AppcodeColumn, AppdescColumn, TimeColumn
+from . import CurrencyColumn, AppcodeColumn, TimeColumn
 from . import PrimaryIndex, UniqueIndex, DuplicateIndex
 from .dynamic import DynamicTableDefn
+"""NOT USED:
+from . import AppdescColumn
+"""
 
 # Define the mapping of field types to definition types, these correspond to
 # stxtype field on the defile table which provides a wider range of types than
@@ -68,10 +71,11 @@ def ParseDSCFile(tabname, tabpath=None):
       lfld = dscfd.readline().rstrip().split(None)
       nfld = len(lfld)
       if nfld < 5:
-        otyp, ocod = _convtype(lfld[3]), None
+        #UNUSED:otyp, ocod = _convtype(lfld[3]), None
+        otyp = _convtype(lfld[3])
       else:
         otyp = int(lfld[4])
-        ocod = lfld[5] if nfld > 5 and otyp == 96 else None
+        #UNUSED:ocod = lfld[5] if nfld > 5 and otyp == 96 else None
 
       # Default the table's prefix
       if defn._prefix_ is None:

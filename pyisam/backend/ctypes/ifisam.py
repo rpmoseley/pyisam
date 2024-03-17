@@ -8,27 +8,27 @@ can be verified.
 '''
 
 import os
-from ctypes import c_char_p, c_int, c_int32
-from ctypes import _SimpleCData, CDLL, _dlopen
-from .common import ISAMcommonMixin, ISAMindexMixin, dictinfo, keydesc, RecordBuffer
-from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed
+from ctypes import c_char_p, c_int, c_int32, CDLL, _dlopen
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMkeydesc, ISAMdictinfo, create_record
 from ...utils import ISAM_str
 
-__all__ = 'ISAMifisamMixin', 'ISAMindexMixin', 'dictinfo', 'keydesc', 'RecordBuffer'
+# The name of the library used to load the underlying ISAM
+_lib_nm = 'libpyifisam'
+_lib_so = os.path.join(os.path.dirname(__file__), _lib_nm + '.so')
 
-#_lib_so = os.path.normpath(os.path.join(os.path.dirname(__file__), 'libpyvbisam.so'))
-_lib_so = os.path.join(os.path.dirname(__file__), 'libpyifisam.so')
-
-class ISAMifisamMixin(ISAMcommonMixin):
+class ISAMobjectMixin(ISAMcommonMixin):
   '''This provides the interface to the underlying ISAM libraries.
      The underlying ISAM routines are loaded on demand with a
      prefix of an underscore, so isopen becomes _isopen.
   '''
   __slots__ = ()
-  
-  # The _const_ dictionary initially consists of the ctypes type
+
+  # Open the underlying library once
+  _lib = CDLL(_lib_nm, handle=_dlopen(_lib_so))
+
+  # The _const dictionary initially consists of the ctypes type
   # which will be mapped to the correct variable when accessed.
-  _const_ = {
+  _const = {
     'iserrno'      : c_int,    'iserrio'      : c_int,
     'isrecnum'     : c_int32,  'isreclen'     : c_int,
     'isversnumber' : c_char_p, 'iscopyright'  : c_char_p,
@@ -36,10 +36,6 @@ class ISAMifisamMixin(ISAMcommonMixin):
     'is_nerr'      : c_int,    'is_errlist'   : None
   }
   
-  # Load the ISAM library once and share it in other instances
-  # To make use of vbisam instead link the libpyifisam.so accordingly
-  _lib_ = CDLL('libpyifisam', handle=_dlopen(_lib_so))
-
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library
        or define and return the numeric equivalent'''

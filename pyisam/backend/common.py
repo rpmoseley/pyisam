@@ -4,7 +4,7 @@ MaxKeyParts = 8               # Maximum number of parts per index
 MaxKeyLength = 120            # Maximum number of bytes per index
 
 # Provide common implementation of the keypart validation
-def _checkpart(cls, part):
+def check_keypart(cls, part):
   if not isinstance(part, int):
     raise ValueError('Expecting an integer index part number')
   elif part >= MaxKeyLength:

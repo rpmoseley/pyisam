@@ -23,6 +23,7 @@ def test(opts):
                                         TextColumn ('fgroup',   10),
                                         CharColumn ('idxflag'     )],
                                 error=opts.error_raise)
+  print('COL:', DEFILEdefn._columns_[0])   ##DEBUG
   DEFILE = ISAMtable(DEFILEdefn, tabpath='data')
   # Force the building of the indexes by using the ISAM table indirectly
   dump_record_imp(DEFILE, filename__eq='defile', seq__lte=100)

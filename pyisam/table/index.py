@@ -10,7 +10,7 @@ __all__ = ('TableIndex', 'PrimaryIndex', 'DuplicateIndex', 'UniqueIndex',
            'create_TableIndex')
 
 from .. import MaxKeyParts
-from ..isam import ISAMindexMixin
+from ..backend import _backend
 from ..constants import IndexFlags
 from ..tabdefns import TableDefnIndexCol
 from .record import ColumnInfo
@@ -58,7 +58,7 @@ class _TableIndexCol:
     out.append(')')
     return ''.join(out).format(self)
 
-class TableIndex(ISAMindexMixin):
+class TableIndex(_backend.ISAMindexMixin):
   '''Class used to store index information in an instance of ISAMtable'''
   __slots__ = 'name', 'dups', 'desc', 'keynum', '_kdesc', '_colinfo'
   def __init__(self, name, *colinfo, debug=False, dups=True, desc=False, knum=-1, kdesc=None):
@@ -227,10 +227,10 @@ def create_TableIndex(keydesc, record, idxnum):
   # information available from the underlying keydesc structure.
   idxcol = [None] * keyparts
   for npart in range(keyparts):
+    kpart = keydesc[npart]
     for fld in record._fields:
       # Check if the field is the correct type
-      if keydesc[npart].type == fld.type.value:
-        kpart = keydesc[npart]
+      if kpart.type == fld.type.value:
         # Check if part of the column
         if fld.offset <= kpart.start < (fld.offset + fld.size):
           # Check if the key oversteps the end of the column

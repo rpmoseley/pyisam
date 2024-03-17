@@ -6,8 +6,8 @@ This module provides the ability of configuring the backend support
 #   'cffi'    - CFFI backend
 #   'ctypes'  - CTYPE backend
 #   'cython'  - CYTHON backend
-# To select between the C-ISAM and VBISAM variant suffix the value
-# with either:
+# To select between the various ISAM variants suffix the value
+# with one of:
 #   '.ifisam' - C-ISAM variant (IBM/Informix)
 #   '.vbisam' - VBISAM variant (Open Source)
 #   '.disam'  - D-ISAM variant (Byte Design)

@@ -9,10 +9,10 @@ file associated with the table.
 
 import pathlib
 import struct
-from . import CharColumn, TextColumn, ShortColumn, LongColumn, DateColumn
-from . import SerialColumn, FloatColumn, DoubleColumn
+from . import TextColumn, ShortColumn, DateColumn, DoubleColumn
 from .dynamic import DynamicTableDefn
 """ NOT USED :
+from . import CharColumn, SerialColumn, FloatColumn, LongColumn
 from . import RecordOrderIndex, UniqueIndex, DuplicateIndex
 from .. import ISAMobject
 from ..constants import IndexFlags

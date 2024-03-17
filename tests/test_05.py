@@ -1,14 +1,16 @@
 '''
 Test 05: Check if the error is working correctly
 '''
+import os
 from pyisam import ISAMobject
 from pyisam.error import IsamFunctionFailed
 
 def test(opts):
   isfd = ISAMobject()
-  isfd.isopen('data/decomp')
+  isfd.isopen(os.path.join(opts.tstdata, 'decomp'))
+  print('DI:', isfd.isdictinfo())
   try:
-    isfd.iskeyinfo(4)
+    print('KI:', isfd.iskeyinfo(3))
   except IsamFunctionFailed as exc:
     print('ISKEYINFO triggered error')
     print(exc)
