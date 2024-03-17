@@ -8,9 +8,16 @@ can be verified.
 '''
 
 import os
+<<<<<<< HEAD
 from ctypes import c_char_p, c_int, c_int32, CDLL, POINTER, _dlopen
 from .common import ISAMcommonMixin, ISAMindexMixin, ISAMfunc, ISAMdictinfo, ISAMkeydesc, create_record
 from ...error import IsamNotOpen
+=======
+from ctypes import c_char_p, c_int, c_int32, _SimpleCData
+from ctypes import CDLL, _dlopen
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMfunc
+from ...error import IsamNotOpen, IsamNoRecord, IsamFunctionFailed
+>>>>>>> 0e0ce1de0e43ea5ea064f83e49dfa01459030c0a
 from ...utils import ISAM_str
 
 __all__ = 'ISAMdisamMixin'
@@ -19,7 +26,11 @@ __all__ = 'ISAMdisamMixin'
 _lib_nm = 'libpydisam'
 _lib_so = os.path.join(os.path.dirname(__file__), _lib_nm + '.so')
 
+<<<<<<< HEAD
 class ISAMobjectMixin(ISAMcommonMixin):
+=======
+class ISAMdisamMixin(ISAMcommonMixin):
+>>>>>>> 0e0ce1de0e43ea5ea064f83e49dfa01459030c0a
   '''This provides the interface to the underlying ISAM libraries.
      The underlying ISAM routines are loaded on demand with a
      prefix of an underscore, so isopen becomes _isopen.
@@ -55,19 +66,30 @@ class ISAMobjectMixin(ISAMcommonMixin):
   @ISAMfunc(c_int, POINTER(ISAMdictinfo))
   def isisaminfo(self):
     '''Return the dictionary information for table'''
+<<<<<<< HEAD
     if self._fd is None:
       raise IsamNotOpen
     ptr = ISAMdictinfo()
+=======
+    if self._fd is None: raise IsamNotOpen
+    ptr = dictinfo()
+>>>>>>> 0e0ce1de0e43ea5ea064f83e49dfa01459030c0a
     self._isisaminfo(self._fd, ptr)
     return ptr
 
   @ISAMfunc(c_int, POINTER(ISAMkeydesc), c_int)
   def isindexinfo(self, keynum):
+<<<<<<< HEAD
     if self._fd is None:
       raise IsamNotOpen
     if keynum < 0:
       raise ValueError('Index must be a positive number')
     ptr = ISAMkeydesc()
+=======
+    if self._fd is None: raise IsamNotOpen
+    if keynum < 0: raise ValueError('Index must be a positive number')
+    ptr = keydesc()
+>>>>>>> 0e0ce1de0e43ea5ea064f83e49dfa01459030c0a
     self._isindexinfo(self._fd, ptr, keynum+1)
     return ptr
     

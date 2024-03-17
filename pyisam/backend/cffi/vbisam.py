@@ -76,6 +76,10 @@ class ISAMobjectMixin(ISAMcommonMixin):
     dinfo = ffi.new('struct dictinfo *')
     self._chkerror(self._lib.isdictinfo(self._fd, dinfo), 'isdictinfo')
     return ISAMdictinfo(dinfo)
+    if self._fd is None: raise IsamNotOpen
+    dinfo = ffi.new('struct dictinfo *')
+    self._chkerror(self._lib_.isdictinfo(self._fd, dinfo), 'isdictinfo')
+    return dictinfo(dinfo)
 
   def isglsversion(self, tabname):
     'Return whether GLS is in use with tabname'
