@@ -10,7 +10,7 @@ For reference with the checks below here is a copy of the ISAMfunc decorator mar
 def ISAMfunc(*orig_args, **orig_kwd):
   def call_wrapper(func):
     def wrapper(self, *args, **kwd):
-      lib_func = getattr(self._lib_, func.__name__)
+      lib_func = getattr(self._lib, func.__name__)
       if not (hasattr(lib_func, 'restype') and hasattr(lib_func, 'argtypes')):
         if 'restype' in orig_kwd:                                   # T1
           lib_func.restype = orig_kwd['restype']
@@ -30,7 +30,7 @@ def ISAMfunc(*orig_args, **orig_kwd):
 from argparse import Namespace
 from pyisam.backend import conf
 if conf.backend == 'ctypes':
-  from pyisam.backend.ctypes import ISAMfunc
+  from pyisam.backend.ctypes.common import ISAMfunc
 
   class TestFunc:
     def __init__(self, func):
@@ -41,20 +41,20 @@ if conf.backend == 'ctypes':
       self._func(*args, **kwds)
     
   class TestObject:
-    _lib_ = Namespace()           # Mock the underlying library by adding functions as they are called
+    _lib = Namespace()           # Mock the underlying library by adding functions as they are called
   
     def __init__(self):
-      self._lib_._chkerror = self._chkerror
-      self._lib_.tst01 = TestFunc(self.tst01)
-      self._lib_.tst02 = TestFunc(self.tst02)
-      self._lib_.tst03 = TestFunc(self.tst03)
-      self._lib_.tst04 = TestFunc(self.tst04)
-      self._lib_.tst05 = TestFunc(self.tst05)
-      self._lib_.tst06 = TestFunc(self.tst06)
+      self._lib._chkerror = self._chkerror
+      self._lib.tst01 = TestFunc(self.tst01)
+      self._lib.tst02 = TestFunc(self.tst02)
+      self._lib.tst03 = TestFunc(self.tst03)
+      self._lib.tst04 = TestFunc(self.tst04)
+      self._lib.tst05 = TestFunc(self.tst05)
+      self._lib.tst06 = TestFunc(self.tst06)
         
     def __getattr__(self, name):
-      if name in self._lib_:
-        return self._lib_[name]
+      if name in self._lib:
+        return self._lib[name]
       return object.__getattribute__(self, name)
   
     def _chkerror(self):
@@ -97,7 +97,7 @@ if conf.backend == 'ctypes':
     TO.tst05()                      # ISAMfunc(None)                             : tst05(None) => <class 'int'>
     TO.tst06()                      # ISAMfunc('world')                          : tst06(('world',)) => <class 'int'>
     for tst in 'tst01 tst02 tst03 tst04 tst05 tst06'.split(None):
-      tfunc = getattr(TO._lib_, tst)
+      tfunc = getattr(TO._lib, tst)
       if not hasattr(tfunc, 'restype'):
         print(tst.upper(), 'NO RESTYPE')
       elif not hasattr(tfunc, 'argtypes'):
