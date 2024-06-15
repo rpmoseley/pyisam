@@ -24,7 +24,6 @@ class ISAMobjectMixin(ISAMcommonMixin):
   _ffi = ffi
 
   def __init__(self):
-    print('VB_GET_RTD')
     self._lib.vb_get_rtd()  # Initialise the VBISAM library correctly
 
   """ NOT USED:
