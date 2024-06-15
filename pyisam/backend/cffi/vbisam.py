@@ -23,6 +23,9 @@ class ISAMobjectMixin(ISAMcommonMixin):
   _lib = lib
   _ffi = ffi
 
+  def __init__(self):
+    self._lib.vb_get_rtd()  # Initialise the VBISAM library correctly
+
   """ NOT USED:
   @property
   def iserrno(self):

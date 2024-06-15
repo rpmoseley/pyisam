@@ -29,10 +29,10 @@ pyisam_conf = configuration_data()
 use_vbisam = get_option('vbisam')
 if use_vbisam
   add_project_arguments(['-imacros', meson.project_build_root() / 'config.h'], language: 'c')
-  #conf.set10('ISAMMODE', true, description: 'Set if compiling vbisam in CISAM compatible mode')
   pyisam_conf.set('PYISAM_ISAMLIB', 'vbisam', description: 'Default backend to be used')
+  conf.set10('ISAMMODE', get_option('extended'), description: 'Set to 1 if compiling in extended mode')
   conf.set10('HAVE_LFS64', true, description: 'Set if the system supports 64-bit I/O')
-  conf.set10('VDEBUG', false, description: 'Enable internal debug of vbisam')
+  conf.set10('VBDEBUG', false, description: 'Enable internal debug of vbisam')
   cflags += ['-DNEED_COUNT_ROWS=1', '-DNEED_IFISAM_COMPAT=1', '-DISOPEN_SET_ISRECLEN=1']
   std_hdrs = ['fcntl.h', 'unistd.h']
   req_func = []

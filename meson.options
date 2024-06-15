@@ -1,3 +1,3 @@
 option('vbisam', type: 'boolean', value: true, description: 'Build using the vbisam library')
-option('cisam', type: 'boolean', value: false, description: 'Build vbisam in CISAM compatible mode')
+option('extended', type: 'boolean', value: false, description: 'Build vbisam in extended mode')
 option('32bit', type: 'boolean', value: false, description: 'Build the 32-bit version instead of 64-bit')
