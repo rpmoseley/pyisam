@@ -13,6 +13,8 @@ class ISAMobject(_backend.ISAMobjectMixin):
   def __init__(self, *args, **kwds):
     self._fd = self._fdmode = self._fdlock = None
     self._recsize = 0
+    if hasattr(_backend.ISAMobjectMixin, '__init__'):
+      _backend.ISAMobjectMixin.__init__(self)
 
 # Stub for the actual ISAMindex which maintains existing usage
 class ISAMindex(_backend.ISAMindexMixin):
