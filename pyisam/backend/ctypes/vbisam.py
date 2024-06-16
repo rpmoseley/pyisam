@@ -33,7 +33,7 @@ class ISAMobjectMixin(ISAMcommonMixin):
   # Load the ISAM library once and share it in other instances
   # To make use of vbisam instead link the libpyisam.so accordingly
   _lib = CDLL(_lib_nm, handle=_dlopen(_lib_so))
-  _lib.vb_get_rtd()    # Ensure that VBISAM is initialised correctly
+  _lib.vb_init_rtd()    # Ensure that VBISAM is initialised correctly
 
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library

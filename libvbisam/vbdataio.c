@@ -625,12 +625,12 @@ ivbdataread (const int ihandle, VB_CHAR *pcbuffer, int *pideletedrow, off_t trow
             tvbptr->ivarlenslot = inl_ldint (cfooter + 1 + INTSIZE) >> 6;
             *(cfooter + 1 + INTSIZE + 1) &= 0x3f;
 #if     MAX_NODE_LENGTH != 4096
-            BAD NODE LENGTH
+#error "MAX_NODE_LENGTH != 4096"
 #endif  /* MAX_NODE_LENGTH */
 #else   /* ISAMMODE == 1 */
             tvbptr->ivarlenslot = *(cfooter + 1 + INTSIZE);
 #if     MAX_NODE_LENGTH != 1024
-            BAD NODE LENGTH
+#error "MAX_NODE_LENGTH != 1024"
 #endif  /* MAX_NODE_LENGTH */
 #endif  /* ISAMMODE == 1 */
             * (cfooter + 1 + INTSIZE) = 0;

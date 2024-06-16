@@ -21,10 +21,8 @@ class ISAMobjectMixin(ISAMcommonMixin):
   '''
   __slots__ = ('_numerr', )
   _lib = lib
+  _lib.vb_init_rtd()
   _ffi = ffi
-
-  def __init__(self):
-    self._lib.vb_get_rtd()  # Initialise the VBISAM library correctly
 
   """ NOT USED:
   @property
