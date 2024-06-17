@@ -21,7 +21,7 @@ class ISAMobjectMixin(ISAMcommonMixin):
   '''
   __slots__ = ('_numerr', )
   _lib = lib
-  _lib.vb_init_rtd()
+  _lib.vb_get_rtd()
   _ffi = ffi
 
   """ NOT USED:

@@ -387,7 +387,7 @@ struct dictinfo {{
     short        di_idxsize;
     {self.lngsz} di_nrecords;
 }};
-extern void          vb_init_rtd(void);     /* Used to initialise library correctly */
+extern void         *vb_get_rtd(void);     /* Used to initialise library correctly */
 extern int           is_nerr(void);
 extern int           iserrno(void);
 extern int           iserrio(void);
