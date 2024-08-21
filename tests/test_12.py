@@ -9,6 +9,5 @@ def test(opts):
   DEFILE = ISAMtable(DEFILEdefn, tabpath=opts.tstdata, mode=OpenMode.ISINPUT)
   def_rec = DEFILE.read('key', ReadMode.ISGREAT, 'defile')
   while def_rec.filename == 'defile':
-    print('R:', def_rec)
+    print(def_rec)
     def_rec = DEFILE.read()
-  print('A:', def_rec)
