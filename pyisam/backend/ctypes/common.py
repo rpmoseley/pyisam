@@ -8,7 +8,7 @@ import functools
 from ctypes import create_string_buffer, Structure, POINTER, _SimpleCData
 from ctypes import c_char, c_short, c_int, c_int32, c_char_p
 from ..common import MaxKeyParts, MaxKeyLength, check_keypart
-from ...constants import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
+from ...constants import IndexFlags, LockMode, OpenMode, ReadMode
 from ...error import IsamNotOpen, IsamOpen, IsamFunctionFailed, IsamEndFile, IsamReadOnly, IsamNoRecord
 from ...utils import ISAM_bytes, ISAM_str
 
@@ -463,8 +463,10 @@ class ISAMcommonMixin:
     'Start using a different index'
     if self._fd is None:
       raise IsamNotOpen
-    if not isinstance(mode, StartMode):
-      raise ValueError('Must provide a StartMode value')
+    if not isinstance(mode, ReadMode):
+      raise ValueError('Must provide a ReadMode value')
+    elif mode in (ReadMode.ISNEXT, ReadMode.ISPREV, ReadMode.ISCURR):
+      raise ValueError('Cannot request a directional start')
     self._isstart(self._fd, kdesc, keylen, recbuff.raw, mode.value)
 
   @ISAMfunc(c_int, restype=int)
