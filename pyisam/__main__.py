@@ -1,6 +1,4 @@
-#! /usr/bin/env python3
 import argparse
-import os
 import sys
 
 if sys.version_info.major < 3 or sys.version_info.minor < 6:

@@ -342,3 +342,11 @@ is_strerror(int errcode)
     }
     return _is_errlist[errcode - corr];
 }
+
+#ifdef NEED_LIB_INITIALISE
+void __attribute__((constructor)) vb_init_lib(void)
+{
+  /* Ensure that the vbisam library is initialised correctly */
+  vb_get_rtd();
+}
+#endif

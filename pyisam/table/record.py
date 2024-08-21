@@ -300,14 +300,8 @@ class ISAMrecordBase:
     return '{}({})'.format(self.__class__.__name__, ', '.join(fldval))
 
 # Define the templates used to generate the record definition class at runtime
-_record_class = """\
-class {rec_name}(ISAMrecordBase):
-  __slots__ = ()
-{fld_defn}
-"""
-_record_field = """\
-  {name} = {klassname}({defn})
-"""
+_record_class = 'class {rec_name}(ISAMrecordBase):\n  __slots__ = ()\n{fld_defn}'
+_record_field = '  {name} = {klassname}({defn})'
 
 # Define the default namespace that is always used for new record instances
 _record_namespace = {
@@ -332,7 +326,7 @@ def create_record_class(tabdefn, recname=None, keepsrc=True, **kwd):
               getattr(tabdefn, '_prefix', None),
               kwd.get('idname', getattr(tabdefn, '_tabname', None))]
     recname = '_'.join([str(x) for x in fqname if x is not None])
-  if not recname.isalnum() and recname.find('_') < 0:
+  if not recname.isidentifier() and '_' not in recname:
     raise NameError(f"Record '{recname} is not a valid identifier")
   recinfo = _rec_cache.get(recname)
   if recinfo is None:
@@ -369,7 +363,7 @@ def _recordclass(tabdefn, recname, keepsrc, **kwd):
 
   # Provide the record template
   record_definition = _record_class.format(rec_name=recname,
-                                           fld_defn=''.join(fdefn))
+                                           fld_defn='\n'.join(fdefn))
 
   # Execute in a temporary namespace that also includes the ISAMrecordBase object, 
   # and column objects used in the new object with additional tracing utilities

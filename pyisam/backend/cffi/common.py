@@ -7,8 +7,8 @@ the ctypes based module in that it aims to provide the same classes for
 situations when performance is required.
 '''
 
+from ...constants import OpenMode, LockMode, ReadMode, IndexFlags
 from ...error import IsamOpen, IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamEndFile, IsamReadOnly
-from ...constants import OpenMode, LockMode, ReadMode, StartMode, IndexFlags
 from ...utils import ISAM_bytes
 
 # Provide same information as the ctypes backend provides
@@ -414,8 +414,10 @@ class ISAMcommonMixin:
     'Start using a different index'
     if self._fd is None:
       raise IsamNotOpen
-    if not isinstance(mode, StartMode):
-      raise ValueError('Must provide a StartMode value')
+    if not isinstance(mode, ReadMode):
+      raise ValueError('Must provide a ReadMode value')
+    elif mode in (ReadMode.ISNEXT, ReadMode.ISPREV, ReadMode.ISCURR):
+      raise ValueError('Cannot request a directional start')
     self._chkerror(self._lib.isstart(self._fd, kdesc, keylen, self._raw(recbuff), mode.value), 'isstart')
 
   def isuniqueid(self):

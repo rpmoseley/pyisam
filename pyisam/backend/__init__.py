@@ -1,22 +1,17 @@
 '''
 This module provides backend configuration for the pyisam package.
 
-If the configured variant and backend fails to load, due to a missing
-required library, then the following rules are followed:
-
-   'cffi.*' -> 'ctypes.*' -> FAIL
-   '*.disam' -> '*.ifisam' -> *.vbisam' -> FAIL
+If the prefered backend fails to load, then the first variant of
+the prefered backend is tried, if this also fails to load then the
+package will fail with the ModuleImport exception.
 '''
 
 import importlib
-from .common import MaxKeyParts, MaxKeyLength
-
-__all__ = ('MaxKeyParts', 'MaxKeyLength')
 
 _all_conf = ('ctypes', 'cffi')   # TODO: , 'cython')
 _all_isam = ('vbisam', 'ifisam', 'disam')
 
-# Pickup the interface to use, defaulting to CFFI
+# Pickup the interface to use
 try:
   confmod = importlib.import_module('.conf', 'pyisam.backend')
   rawconf = getattr(confmod, 'backend', '')
@@ -30,7 +25,7 @@ if use_conf in _all_conf:
 elif use_conf in _all_isam:
   use_isam, use_conf = use_conf, _all_conf[0]
 else:
-  use_conf, use_isam = _all_conf[0], _all_isam[0]
+  use_isam, use_conf = _all_isam[0], _all_conf[0]
 
 # Load the specific module to retrieve those objects specified in the __all__ variable,
 # switching to the default variant if an error occurs

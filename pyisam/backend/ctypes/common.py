@@ -402,7 +402,7 @@ class ISAMcommonMixin:
     'Read a record from an open ISAM table'
     if self._fd is None:
       raise IsamNotOpen
-    self._isread(self._fd, recbuff.raw, mode.value)
+    self._isread(self._fd, recbuff, mode.value)
 
   @ISAMfunc(None)
   def isrecover(self):
