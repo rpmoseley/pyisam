@@ -7,15 +7,11 @@ library.
 
 import os
 from ._ifisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin
-from .common import ISAMdictinfo, ISAMkeydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMdictinfo, ISAMkeydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
 __all__ = 'ISAMobjectMixin', 'ISAMindexMixin'
-
-def create_record(recsz):
-  return ffi.buffer(ffi.new('char[]', recsz+1))
 
 class ISAMobjectMixin(ISAMcommonMixin):
   ''' This provides the common CFFI interface which provides the IFISAM specific
@@ -62,6 +58,12 @@ class ISAMobjectMixin(ISAMcommonMixin):
   @property
   def is_nerr(self):
     return self._lib.is_nerr
+
+  def __setattr__(self, name, value):
+    if name == 'isrecnum':
+      setattr(self._lib, name, value)
+    else:
+      super().__setattr__(name, value)
 
   def strerror(self, errno=None):
     'Return the error description for the given ERRNO or current one if None'

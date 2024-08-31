@@ -5,11 +5,10 @@ permit the table layout to be defined and referenced later.
 
 import itertools
 import os
-from .index import TableIndex, create_TableIndex
+from .index import RecordOrderIndex, TableIndex, create_TableIndex
 from .record import create_record_class, ISAMrecordBase
 from ..backend import _backend
 from ..constants import LockMode, OpenMode, ReadMode
-from ..constants import dflt_lockmode, dflt_openmode
 from ..error import IsamIterError, IsamNotOpen, IsamError, IsamNoPrimaryIndex
 from ..isam import ISAMobject
 from ..tabdefns import TableDefnIndex
@@ -58,6 +57,10 @@ class TableIndexMapElem:
   def idxnum(self):
     return self._idxnum
   
+  @property
+  def idxname(self):
+    return self._idxname
+  
   def __getitem__(self, num_or_name):
     'Return the items as though we are a sequence'
     if isinstance(num_or_name, int):
@@ -68,6 +71,8 @@ class TableIndexMapElem:
         return self._keydesc
       elif num_or_name == 2:
         return self._idxnum
+      elif num_or_name == 3:
+        return self._idxname
     elif isinstance(num_or_name, str):
       # Return fields as though part of a namedtuple
       if num_or_name == 'tabind':
@@ -76,6 +81,8 @@ class TableIndexMapElem:
         return self._keydesc
       elif num_or_name == 'idxnum':
         return self._idxnum
+      elif num_or_name == 'idxname':
+        return self._idxname
     raise ValueError(f"Unhandled request: '{num_or_name}'")
 
   def update(self, idxname=None, idxnum=-1, tabind=None, keydesc=None, info=None):
@@ -354,21 +361,21 @@ class ISAMtable:
       raise IsamError('Must provide a primary index when building table')
     index = self._LookupPrimaryIndex()
     path = os.path.join(self._path if tabpath is None else tabpath, self._name)
+    if self._record._buffer is None:
+      self._record._buffer = self._isobj.create_record(self._record._recsize)
     reclen = self._record._recsize
     self._isobj.isbuild(path, reclen, index.as_keydesc(self._isobj, self._record))
 
   def open(self, tabpath=None, mode=None, lock=None, **kwd):
     'Open an existing ISAM table with the specified mode, lock and TABPATH'
     if mode is None:
-      mode = self._mode or dflt_openmode
-    elif mode not in OpenMode:
-      raise ValueError('Invalid open mode provided')
+      mode = self._mode
     if lock is None:
-      lock = self._lock or dflt_lockmode
-    elif lock not in LockMode:
-      raise ValueError('Invalid lock mode provided')
+      lock = self._lock
     path = os.path.join(self._path if tabpath is None else tabpath, self._name)
     self._isobj.isopen(path, mode, lock)
+    if self._row and self._row._buffer is None:
+      self._row._buffer = self._isobj.create_record()
     self._recsize = self._isobj._recsize  # Provided by the ISAM library
     # self._update_indexes() # NOTE: Defer this to when required
 
@@ -383,38 +390,72 @@ class ISAMtable:
     self._isobj.isclose()
     
   def read(self, *args, **kwd):
-    'Return the appropriate record into RECBUFF according to the MODE specified'
-    # This function combines the isread/isstart functions as appropriate with the 
-    # current index and the one that is specified by INDEX. If INDEX is an integer
-    # then perform a record order isstart() followed by a isread().
-    # If RECBUFF is None then use ARGS and KWD to fill record in self._row
-    # If RECBUFF is not None then use ARGS and KWD to fill record in RECBUFF
+    'Read the next record in the direction with optional key provided'
+
+    # The calling sequence of this function is:
+    #   read(); read(INDEX); read(MODE, KEYCOL...); read(RECBUFF);
+    #   read(INDEX, MODE, KEYCOL...); read(INDEX, RECBUFF);
+    #   read(MODE, RECBUFF, KEYCOL...);
+    #
+    # INDEX is the name of the index to be used in subsequent calls until
+    #   changed, it begins as the primary index.
+    #
+    # MODE is the required access mode defined in the ReadMode enum.
+    #
+    # RECBUFF is the record buffer to be used for the access, if none is
+    #   specified then the default row for the table is used.
+    #
+    # KEYCOL is the optional list of index columns and their values to be
+    #   used for the subsequent reposition, unspecified columns use their
+    #   default value for the column type.  These are ignored if the mode of
+    #   access does not include a reposition.
+    #
+    # If no arguments are passed, then the next record in the appropriate
+    #   order of access, according to the last mode used on the table is used.
     
-    # Convert arguments into a list to permit popping values from it
+    # If no arguments have been given, assume the default of using the last
+    # index, the last mode and default record buffer, simply invoke the
+    # underlying isread function without excess processing. Updates the
+    # current record and last mode.
+    if len(args) < 1:
+      mode = getattr(self, '_lastread', ReadMode.ISNEXT)
+      if mode in (ReadMode.ISFIRST, ReadMode.ISEQUAL, ReadMode.ISGREAT, ReadMode.ISGTEQ):
+        mode = ReadMode.ISNEXT
+      elif mode == ReadMode.ISLAST:
+        mode = ReadMode.ISPREV
+      elif mode is None:
+        mode = ReadMode.ISNEXT
+      recbuff = self._default_record()
+      self._isobj.isread(recbuff._buffer, mode)
+      self._recnum = self._isobj.isrecnum
+      self._lastread = mode
+      return recbuff
+
+    # Convert arguments into a list to permit popping values
     args = list(args)
     
     # Determine the value of INDEX
-    if len(args) < 1 or args[0] is None or isinstance(args[0], (ReadMode, ISAMrecordBase)):
+    if isinstance(args[0], (ReadMode, ISAMrecordBase)):
       index = None
-    elif isinstance(args[0], (str, int, TableIndex, TableIndexMapElem)):
+    elif args[0] is None or isinstance(args[0], (str, int, TableIndex, TableIndexMapElem)):
       index = args.pop(0)
     else:
       raise ValueError('Invalid calling sequence')
     
     # Determine the value of MODE
-    if len(args) > 0 and isinstance(args[0], ReadMode):
+    if len(args) > 0 and (args[0] is None or isinstance(args[0], ReadMode)):
       mode = args.pop(0)
     else:
       mode = None
 
     # Determine the value of RECBUFF
-    if len(args) > 0 and isinstance(args[0], ISAMrecordBase):
+    if len(args) > 0 and (args[0] is None or isinstance(args[0], ISAMrecordBase)):
       recbuff = args.pop(0)
     else:
       recbuff = None
 
     # Allocate a record buffer for the result
-    if not isinstance(recbuff, ISAMrecordBase):
+    if recbuff is None:
       recbuff = self._default_record()
 
     # Ensue that the underlying file is open
@@ -435,18 +476,17 @@ class ISAMtable:
       
     # If a specified record number was given then switch the index
     elif isinstance(index, int):
-      kdesc = _backend.ISAMkeydesc()
-      kdesc.k_nparts = 0
+      kdesc = RecordOrderIndex()
       self._isobj.isrecnum = index
-      self._isobj.isstart(kdesc, ReadMode.ISEQUAL, recbuff._buffer)
+      self._isobj.isstart(kdesc.as_keydesc(self._isobj, recbuff), ReadMode.ISEQUAL, recbuff._buffer)
       self._isobj.isread(recbuff._buffer, ReadMode.ISCURR)
       self._recnum = self._isobj.isrecnum
       self._curindex = None
-      self._lastread = None
-      return recbuff()
+      self._lastread = None       # TODO Check if this will cause an exception
+      return recbuff
 
+    # Determine the mode of access required
     if mode is None:
-      # Assume that the next record is required
       mode = getattr(self, '_lastread', ReadMode.ISNEXT)
       if mode in (ReadMode.ISFIRST, ReadMode.ISEQUAL, ReadMode.ISGREAT, ReadMode.ISGTEQ):
         mode = ReadMode.ISNEXT
@@ -458,22 +498,23 @@ class ISAMtable:
     # Fill the index information into the record buffer
     if mode in (ReadMode.ISEQUAL, ReadMode.ISGREAT, ReadMode.ISGTEQ):
       index.fill_fields(recbuff, *args, **kwd)
-    
-    if index != self._curindex:
-      # Issue a restart on the select index using the specified mode
+
+    if index == self._curindex:
+      # Reuse the current index and retrieve the next record
+      self._isobj.isread(recbuff._buffer, mode)
+
+    else:
+      # Issue a restart on the selected index using the specified mode
       self._isobj.isstart(index.as_keydesc(self._isobj, recbuff, optimize=True), mode, recbuff._buffer)
       self._isobj.isread(recbuff._buffer, ReadMode.ISCURR)
       
       # Make this the current index
       self._curindex = index
-    else:
-      # Issue the current mode of access
-      self._isobj.isread(recbuff._buffer, mode)
 
     # Save the record number for use if required
     self._recnum = self._isobj.isrecnum
     
-    # Save the mode used for next time if None given
+    # Save the mode used for next time if None is given
     self._lastread = mode
     
     # Return the record which can then be used as required

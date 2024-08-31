@@ -270,6 +270,14 @@ isrecnum (void)
 }
 
 int
+set_isrecnum (vbisam_off_t irecnum)
+{
+    vb_rtd_t *vb_rtd = VB_GET_RTD;
+    vb_rtd->isrecnum = irecnum;
+    return 0;
+}
+
+int
 isreclen (void)
 {
     vb_rtd_t *vb_rtd = VB_GET_RTD;

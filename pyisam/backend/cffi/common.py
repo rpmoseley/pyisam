@@ -7,7 +7,9 @@ the ctypes based module in that it aims to provide the same classes for
 situations when performance is required.
 '''
 
-from ...constants import OpenMode, LockMode, ReadMode, IndexFlags
+from ..common import check_keypart
+from ...constants import IndexFlags, LockMode, OpenMode, ReadMode
+from ...constants import dflt_lockmode, dflt_openmode
 from ...error import IsamOpen, IsamNotOpen, IsamNoRecord, IsamFunctionFailed, IsamEndFile, IsamReadOnly
 from ...utils import ISAM_bytes
 
@@ -35,119 +37,35 @@ class keypart:
 
 class ISAMkeydesc:
   'Class that provides the keydesc as expected by the rest of the package'
-  def __init__(self, kinfo):
-    self.nparts = kinfo.k_nparts
-    self.flags  = kinfo.k_flags
-    self.leng   = kinfo.k_len
-    self.part   = [keypart(kinfo.k_part[n]) for n in range(kinfo.k_nparts)]
-
-  """ NOT USED:
-  @property
-  def nparts(self):
-    return self._kinfo.k_nparts
-
-  @nparts.setter
-  def nparts(self, nparts):
-    if 0 <= nparts < 9:
-      cparts = self._kinfo.k_nparts
-      self._kinfo.k_nparts = nparts
+  def __init__(self, kinfo=None):
+    if kinfo is None:
+      self.nparts = 0
+      self.flags = 0
+      self.leng = 0
+      self.part = []
     else:
-      raise ValueError('An index can only have a maximum of 8 parts')
-    if nparts > cparts:
-      self._kpart = self._kpart[:] + [None] * (nparts - cparts)
-    elif nparts < cparts:
-      self._kpart = self._kpart[:nparts]
+      self.nparts = kinfo.k_nparts
+      self.flags  = kinfo.k_flags
+      self.leng   = kinfo.k_len
+      self.part   = [keypart(kinfo.k_part[n]) for n in range(kinfo.k_nparts)]
 
-  @property
-  def flags(self):
-    return self._kinfo.k_flags
-
-  @flags.setter
-  def flags(self, flags):
-    self._kinfo.k_flags = flags
-
-  @property
-  def length(self):
-    return self._kinfo.k_len
-
-  @length.setter
-  def length(self, leng):
-    self._kinfo.k_len = leng
+  def as_keydesc(self, ffiobj):
+    'Create an instance of keydesc() for low-level library use'
+    kinfo = ffiobj.new('struct keydesc *')
+    kinfo.k_nparts = self.nparts
+    kinfo.k_flags = self.flags
+    kinfo.k_len = self.leng
+    for kp in range(self.nparts):
+      kinfo.k_part[kp].kp_start = self.part[kp].start
+      kinfo.k_part[kp].kp_leng = self.part[kp].leng
+      kinfo.k_part[kp].kp_type = self.part[kp].type
+    return kinfo
 
   def __getitem__(self, part):
-    if not isinstance(part, int):
-      raise ValueError('Expecting an integer key part number')
-    if part < 0:
-      part = self._kinfo.k_nparts + part
-      if self._kinfo.k_nparts < part:
-        raise ValueError('Cannot refer beyound first key part')
-    elif self._kinfo.k_nparts < part:
-      raise ValueError('Cannot refer beyond last key part')
-    kpart = self._kpart[part]
-    if kpart is None:
-      kpart = self._kpart[part] = keypart(self._kinfo.k_part[part])
-    return kpart
+    return self.part[check_keypart(self, part)]
 
   def __setitem__(self, part, kpart):
-    if not isinstance(part, int):
-      raise ValueError('Expecting an integer key part number')
-    elif part < -self._kinfo.k_nparts:
-      raise ValueError('Cannot refer beyond first key part')
-    elif part < 0:
-      part = self._kinfo.k_nparts + part
-    elif part >= self._kinfo.k_nparts:
-      raise ValueError('Cannot refer beyond last key part')
-    if not isinstance(kpart, keypart):
-      raise ValueError('Expecting an instance of keypart')
-    self._kinfo.k_part[part].kp_start = kpart.start
-    self._kinfo.k_part[part].kp_leng = kpart.length
-    self._kinfo.k_part[part].kp_type = kpart.type
-    self._kpart[part] = keypart(self._kinfo.k_part[part])
-
-  def __eq__(self, other):
-    'Compare the given keydesc to check if they are identical'
-    if isinstance(other, keydesc):
-      if self._kinfo.k_nparts != other._kinfo.k_nparts:
-        return False
-      if self._kinfo.k_flags != other._kinfo.k_flags:
-        return False
-      for part in range(self._kinfo.k_nparts):
-        self_part = self._kinfo.k_part[part]
-        other_part = other._kinfo.k_part[part]
-        if self_part.kp_start != other_part.kp_start:
-          return False
-        if self_part.kp_leng != other_part.kp_leng:
-          return False
-        if self_part.kp_type != other_part.kp_type:
-          return False
-      return True
-    else:
-      raise NotImplementedError('Comparison not implemented')
-
-  def __ne__(self, other):
-    'Compare the given keydesc to check if they are not identical'
-    if isinstance(other, keydesc):
-      if self._kinfo.k_nparts != other._kinfo.k_nparts:
-        return True
-      if self._kinfo.k_flags != other._kinfo.k_flags:
-        return True
-      for part in range(self._kinfo.k_nparts):
-        self_part = self._kinfo.k_part[part]
-        other_part = other._kinfo.k_part[part]
-        if self_part.kp_start != other_part.kp_start:
-          return True
-        if self_part.kp_leng != other_part.kp_leng:
-          return True
-        if self_part.kp_type != other_part.kp_type:
-          return True
-      return False
-    else:
-      raise NotImplementedError('Comparison not implemented')
-
-  @property
-  def value(self):
-    return self._kinfo
-  END NOT USED """
+    self.part[check_keypart(self, part)] = kpart
 
   def __str__(self):
     'Generate a string representation of the underlying keydesc structure'
@@ -159,11 +77,7 @@ class ISAMcommonMixin:
       current file to avoid having to remember it separately.
   '''
   __slots__ = ()
-
-  def_openmode = OpenMode.ISINOUT
-  def_lockmode = LockMode.ISMANULOCK
   _vld_errno = (100, 172)
-
   _const = (
     'iserrno', 'iserrio', 'isrecnum', 'isreclen'
   )
@@ -196,7 +110,10 @@ class ISAMcommonMixin:
   def _raw(self, buff):
     return self._ffi.from_buffer(buff)
 
-  """ NOT CODE:
+  def create_record(self, recsize=None):
+    return self._ffi.buffer(self._ffi.new('char[]', recsize or self._recsize))
+
+  """NOT USED:
   def strerror(self, errno=None):
     'Return the error message related to the error number given'
     if errno is None:
@@ -205,7 +122,7 @@ class ISAMcommonMixin:
       return ISAM_str(self._ffi.string(self.is_errlist()[errno - 100]))
     else:
       return os.strerror(errno)
-  END NOT CODE"""
+  END NOT USED"""
 
   def isaddindex(self, kdesc):
     'Add an index to an open ISAM table'
@@ -335,9 +252,9 @@ class ISAMcommonMixin:
   def isopen(self, tabname, mode=None, lock=None):
     'Open an ISAM table'
     if mode is None:
-      mode = self.def_openmode
+      mode = dflt_openmode
     if lock is None:
-      lock = self.def_lockmode
+      lock = dflt_lockmode
     if not isinstance(mode, OpenMode) or not isinstance(lock, LockMode):
       raise ValueError('Must provide an OpenMode and/or LockMode values')
     opnmde = mode.value | lock.value

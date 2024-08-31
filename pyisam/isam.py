@@ -11,6 +11,7 @@ class ISAMobject(_backend.ISAMobjectMixin):
   'Class representing the low-level ISAM object interface'
   __slots__ = ('_fd', '_fdmode', '_fdlock', '_recsize')
   def __init__(self, *args, **kwds):
+    _backend.ISAMobjectMixin.__init__(self)
     self._fd = self._fdmode = self._fdlock = None
     self._recsize = 0
 
@@ -22,4 +23,3 @@ class ISAMindex(_backend.ISAMindexMixin):
 # Provide access to the keydesc, dictinfo and record classes
 ISAMkeydesc = _backend.ISAMkeydesc
 ISAMdictinfo = _backend.ISAMdictinfo
-create_record = _backend.create_record

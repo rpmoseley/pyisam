@@ -14,9 +14,6 @@ from ...utils import ISAM_str
 
 __all__ = 'ISAMobjectMixin', 'ISAMindexMixin'
 
-def create_record(recsz):
-  return ffi.buffer(ffi.new('char[]', recsz+1))
-
 class ISAMobjectMixin(ISAMcommonMixin):
   ''' This provides the common CFFI interface which provides the IFISAM specific
       library with all functions and variables availabe.

@@ -50,10 +50,10 @@ class DynamicTableDefn:
   def append(self, field, error=None):
     'Add a field to the table definition which should be an instance of TableDefnColumn'
     if not isinstance(field, TableDefnColumn):
-      self._raise_error(error, field, self._bad[0],
+      self._raise_error(error, field, self.bad[0],
                         TableDefnError('Field must be an instance of TableDefnColumn'))
     if field.name in self._columns:
-      self._raise_error(error, field, self._bad[0],
+      self._raise_error(error, field, self.bad[0],
                         TableDefnError('Field already present in the table definition'))
     self._columns[field.name] = field
 
@@ -75,15 +75,15 @@ class DynamicTableDefn:
   def add_index(self, index, error=None):
     'Add an index to the table definition which should be an instance of TableDefnIndex'
     if not isinstance(index, TableDefnIndex):
-      self._raise_error(error, index, self._bad[1],
+      self._raise_error(error, index, self.bad[1],
            TableDefnError('Index must be an instance of TableDefnIndex'))
-    if index.name in self._indexes_:
+    if index.name in self._indexes:
       if self._raise_error(error):
         raise TableDefnError('Index already present in the table definition')
     if not isinstance(index.colinfo, (list, tuple)):
       if not isinstance(index.colinfo, TableDefnIndexCol):
         raise TableDefnError('Index column should be instance of TableDefnIndexCol')
-      if index.colinfo.name not in self._columns_:
+      if index.colinfo.name not in self._columns:
         raise TableDefnError('Index contains a column not present in the table definition')
     else:
       for col in index.colinfo:

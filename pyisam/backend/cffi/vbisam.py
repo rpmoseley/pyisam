@@ -7,13 +7,11 @@ and is designed to be a direct replacement for the ctypes based module.
 
 import os
 from ._vbisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin
-from .common import ISAMdictinfo, ISAMkeydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMdictinfo, ISAMkeydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-def create_record(recsz):
-  return ffi.buffer(ffi.new('char[]', recsz+1))
+__all__ = 'ISAMobjectMixin', 'ISAMindexMixin'
 
 class ISAMobjectMixin(ISAMcommonMixin):
   ''' This provides the interface to underlying ISAM libraries adding the context
@@ -32,11 +30,17 @@ class ISAMobjectMixin(ISAMcommonMixin):
   @property
   def iserrio(self):
     return self._lib.iserrio()
+  END NOT USED """
 
   @property
   def isrecnum(self):
     return self._lib.isrecnum()
 
+  @isrecnum.setter
+  def isrecnum(self, value):
+    self._lib.set_isrecnum(value)
+
+  """ NOT USED:
   @property
   def isreclen(self):
     return self._lib.isreclen()

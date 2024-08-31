@@ -1,13 +1,13 @@
 '''
-This module provides an object representing the ISAM record where the fields can be
-accessed as both attributes as well as by number, the underlying object is an instance
-of collections.namedtuple.
+This module provides an object representing the ISAM record where the fields can
+be accessed as both attributes as well as by number, the underlying object is an
+instance of collections.namedtuple.
 
 Typical usage of a fixed definition using the ISAMrecordBase is as follows:
 
 class DEFILErecord(ISAMrecordBase):
-  _database = 'utool'
-  _prefix = 'def'
+  _database = "utool"
+  _prefix = "def"
   filename = TextColumn(9)
   seq      = ShortColumn()
   field    = TextColumn(9)
@@ -26,6 +26,7 @@ import collections
 import dataclasses
 import datetime
 import struct
+import typing as T
 from keyword import iskeyword
 from ..backend import _backend
 from ..constants import ColumnType
@@ -47,11 +48,17 @@ class ColumnInfo:
       return False
     if self.size != other.size:
       return False
-    return  self.type == other.type
+    return self.type == other.type
 
 class _BaseColumn:
   'Base class providing the shared functionality for columns'
   __slots__ = '_struct', '_size', '_offset', '_name', '_nullval', '_type'
+  _struct: struct.Struct
+  _type: int
+  _serial: bool
+  _postprocess: T.Callable
+  _preprocess: T.Callable
+  _nullval: T.Callable
   def __init__(self, size=None, offset=-1):
     if not hasattr(self, '_struct'):
       raise ValueError('No struct object provided for column')
@@ -194,8 +201,10 @@ class DateColumn(LongColumn):
   def _preprocess(self, value):
     if value is None:
       return None
-    else:
+    elif isinstance(value, datetime.date):
       return value.toordinal() - self._since_1900
+    else:
+      raise ValueError("Provided value not a 'datetime.date' instance")
 
 class FloatColumn(_BaseColumn):
   __slots__ = ()
@@ -238,12 +247,8 @@ class ISAMrecordBase:
     else:
       tupfields = [fld for fld in self._flddict]
     self._namedtuple = collections.namedtuple(recname, tupfields)
-    self._buffer = _backend.create_record(self._recsize)
+    self._buffer = None    # WAS: _backend.create_record(self._recsize)
 
-  @property
-  def raw(self):
-    return self._record.raw
-  
   def __getitem__(self, fld):
     'Return the current value of the given item'
     if isinstance(fld, int):
@@ -253,7 +258,7 @@ class ISAMrecordBase:
     elif fld in self._namedtuple._fields:
       return getattr(self, fld)
     else:
-      raise ValueError("Unhandled field '{}'".format(fld))
+      raise ValueError(f"Unhandled field '{fld}'")
 
   def __setitem__(self, fld, value):
     'Set the current value of a field to the given value'
@@ -299,7 +304,8 @@ class ISAMrecordBase:
         fldval.append(f'{fld}={getattr(self, fld)}')
     return '{}({})'.format(self.__class__.__name__, ', '.join(fldval))
 
-# Define the templates used to generate the record definition class at runtime
+# Define the templates used to generate the record definition class at runtime,
+# these will be passed through the 'format' function.
 _record_class = 'class {rec_name}(ISAMrecordBase):\n  __slots__ = ()\n{fld_defn}'
 _record_field = '  {name} = {klassname}({defn})'
 
@@ -318,7 +324,7 @@ _record_namespace = {
 }
 
 _rec_cache = dict()
-def create_record_class(tabdefn, recname=None, keepsrc=True, **kwd):
+def create_record_class(tabdefn, recname=None, keepsrc=False, **kwd):
   'Wrapper around internal function that caches known record definitions'
   global _rec_cache
   if recname is None:
@@ -326,10 +332,11 @@ def create_record_class(tabdefn, recname=None, keepsrc=True, **kwd):
               getattr(tabdefn, '_prefix', None),
               kwd.get('idname', getattr(tabdefn, '_tabname', None))]
     recname = '_'.join([str(x) for x in fqname if x is not None])
-  if not recname.isidentifier() and '_' not in recname:
-    raise NameError(f"Record '{recname} is not a valid identifier")
-  recinfo = _rec_cache.get(recname)
-  if recinfo is None:
+  if not recname.isidentifier():
+    raise NameError(f"Record '{recname}")
+  try:
+    recinfo = _rec_cache[recname]
+  except KeyError:
     recinfo = _rec_cache[recname] = _recordclass(tabdefn, recname, keepsrc)
   return recinfo
 
@@ -347,10 +354,10 @@ def _recordclass(tabdefn, recname, keepsrc, **kwd):
     klassname = fld.__class__.__name__
 
     # Validate the field name using a similar rule to that in collections.namedtuple
-    if not fldname.isidentifier() or iskeyword(fldname) or fldname.startswith('_'):
-      raise NameError(f"Field '{fldname}' is not a valid identifier")
-    elif fldname in seen:
-      raise NameError(f"Field '{fldname}' already present in definition")
+    if fldname in seen:
+      raise NameError(f"Duplicate '{fldname}'")
+    elif not fldname.isidentifier() or iskeyword(fldname) or fldname.startswith('_'):
+      raise NameError(f"Field '{fldname}'")
     seen.add(fldname)
 
     # Generate the template for the particular type of field
@@ -368,7 +375,7 @@ def _recordclass(tabdefn, recname, keepsrc, **kwd):
   # Execute in a temporary namespace that also includes the ISAMrecordBase object, 
   # and column objects used in the new object with additional tracing utilities
   namespace = {
-    '__name__'       : recname,
+    '__name__' : recname,
   } 
   namespace.update(_record_namespace)
   exec(record_definition, namespace)

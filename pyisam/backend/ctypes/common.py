@@ -9,6 +9,7 @@ from ctypes import create_string_buffer, Structure, POINTER, _SimpleCData
 from ctypes import c_char, c_short, c_int, c_int32, c_char_p
 from ..common import MaxKeyParts, MaxKeyLength, check_keypart
 from ...constants import IndexFlags, LockMode, OpenMode, ReadMode
+from ...constants import dflt_lockmode, dflt_openmode
 from ...error import IsamNotOpen, IsamOpen, IsamFunctionFailed, IsamEndFile, IsamReadOnly, IsamNoRecord
 from ...utils import ISAM_bytes, ISAM_str
 
@@ -47,37 +48,20 @@ class ISAMkeydesc(Structure):
 
   def __setitem__(self, part, kpart):
     'Set the specified key part to the definition provided'
-    part = check_keypart(self, part)
-    self.part[part].start = kpart.start
-    self.part[part].leng = kpart.leng
-    self.part[part].type = kpart.type
+    if not isinstance(kpart, keypart):
+      raise ValueError('Must pass an instance of KEYPART')
+    self.part[check_keypart(self, part)] = kpart
 
-  def __eq__(self, other):
-    'Compare if the two keydesc structures are the same'
-    if (self.flags & IndexFlags.DUPS) ^ (other.flags & IndexFlags.DUPS):
-      return False
-    if self.nparts != other.nparts:
-      return False
-    for spart, opart in zip(self.part, other.part):
-      if spart.start != opart.start:
-        return False
-      if spart.leng != opart.leng:
-        return False
-      if spart.type != opart.type:
-        return False
-    return True
-    
-  def _dump(self):
+  def as_keydesc(self), ffiobj):
+    'Return an internal keydesc structure'
+    return self
+
+  def __str__(self):
     'Generate a string representation of the underlying keydesc structure'
     res = [f'({self.nparts}, [']
     res.append(', '.join([str(self.part[cpart]) for cpart in range(self.nparts)]))
     res.append(f'], 0x{self.flags:02x})')
     return ''.join(res)
-  __str__ = _dump
-
-  @property
-  def value(self):
-    return self        # Return ourselves as the value
 
 class ISAMdictinfo(Structure):
   _fields_ = [('nkeys', c_short),
@@ -128,8 +112,6 @@ class ISAMcommonMixin:
   '''Class providing the shared functionality between all variants of the library.
   The underlying ISAM routines are loaded on demand and added to the dictionary
   with a prefix of underscore once the arguments and return type have been set'''
-  def_openmode = OpenMode.ISINOUT
-  def_lockmode = LockMode.ISMANULOCK
   
   _vld_errno = (100, 172)
 
@@ -374,9 +356,9 @@ class ISAMcommonMixin:
   def isopen(self, tabname, mode=None, lock=None):
     'Open an ISAM table'
     if mode is None:
-      mode = self.def_openmode
+      mode = dflt_openmode
     if lock is None:
-      lock = self.def_lockmode
+      lock = dflt_lockmode
     if not isinstance(mode, OpenMode) or not isinstance(lock, LockMode):
       raise ValueError('Must provide an OpenMode and/or LockMode values')    
     opnmde = mode.value | lock.value

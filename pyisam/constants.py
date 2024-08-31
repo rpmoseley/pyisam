@@ -50,7 +50,7 @@ class ReadMode(IntFlag):
   ISLCKW     = 0x500
   ISKEEPLOCK = 0x800         # Keep record lock in auto locking mode
 
-# The ExtReadMode enum provides the extra modes that are available when
+# The ExtReadMode enum provides extra modes that are available when
 # using an instance of ISAMtable.
 class ExtReadMode(IntFlag):
   ISFIRST    = 0x000         # Position at first record

@@ -346,6 +346,7 @@ extern int          iskeyinfo (int ihandle, struct keydesc *pskeydesc, int ikeyn
 extern int          iserrno (void);
 extern int          iserrio (void);
 extern vbisam_off_t isrecnum (void);
+extern int          set_isrecnum (vbisam_off_t isrecnum);
 extern int          isreclen (void);
 extern int          set_isreclen (int ireclen);
 extern const char  *is_strerror (int errcode);

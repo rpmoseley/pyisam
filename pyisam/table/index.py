@@ -7,7 +7,7 @@ representation.
 __all__ = ('TableIndex', 'PrimaryIndex', 'DuplicateIndex', 'UniqueIndex',
            'AscPrimaryIndex', 'AscDuplicateIndex', 'AscUniqueIndex',
            'DescPrimaryIndex', 'DescDuplicateIndex', 'DescUniqueIndex',
-           'create_TableIndex')
+           'RecordOrderIndex', 'create_TableIndex')
 
 from .. import MaxKeyParts
 from ..backend import _backend
@@ -69,7 +69,7 @@ class TableIndex(_backend.ISAMindexMixin):
     self._kdesc = kdesc             # Stores the keydesc once prepared
     self._debug = debug             # Enable debug output
     self._colinfo = []
-    if isinstance(colinfo[0], (tuple, list)):
+    if colinfo and isinstance(colinfo[0], (tuple, list)):
       colinfo = colinfo[0]
     for col in colinfo:
       if isinstance(col, _TableIndexCol):
@@ -115,9 +115,9 @@ class TableIndex(_backend.ISAMindexMixin):
 
   def fill_fields(self, record, *args, **kwd):
     '''Fill the fields in the given RECORD with ARGS and KWD, if RECORD has an attribute
-       _row_ it is assumed to be a table instance and the default record is used'''
-    if hasattr(record, '_row_'):
-      record = record._row_
+       _row it is assumed to be a table instance and the default record is used'''
+    if hasattr(record, '_row'):
+      record = record._row
     if not hasattr(record, '_namedtuple'):
       raise ValueError('Expecting an instance of ISAMrecord')
     if self._debug:
@@ -206,6 +206,16 @@ class TableIndex(_backend.ISAMindexMixin):
     out.append('])')       
     return ''.join(out).format(self)
 
+class RecordOrderIndex(TableIndex):
+  def __init__(self, debug=False):
+    super().__init__('#RECNUM', debug=debug, dups=False)
+
+  def create_keydesc(self, isobj, record, optimize=False):
+    if self._kdesc is None:
+      self._kdesc = isobj._ffi.new('struct keydesc *')
+      self._kdesc.k_nparts = 0
+    return self._kdesc
+
 def create_TableIndex(keydesc, record, idxnum):
   '''Function to create an instance of TableIndex given a KEYDESC in relation to
      the record object RECORD.'''
@@ -227,7 +237,7 @@ def create_TableIndex(keydesc, record, idxnum):
   # information available from the underlying keydesc structure.
   idxcol = [None] * keyparts
   for npart in range(keyparts):
-    kpart = keydesc[npart]
+    kpart = keydesc.part[npart]
     for fld in record._fields:
       # Check if the field is the correct type
       if kpart.type == fld.type.value:
@@ -268,7 +278,7 @@ def create_TableIndex(keydesc, record, idxnum):
 
   # If the index consists of a single column then name the index with that column
   if keyparts == 0:
-    idxname = 'RECORDER'
+    idxname = '#RECNUM'
   elif keyparts == 1:
     idxname = idxcol[0].name
   else:
@@ -284,7 +294,8 @@ class UniqueIndex(TableIndex):
     super().__init__(name, *colinfo, dups=False, desc=desc, knum=knum, kdesc=kdesc)
 
 class PrimaryIndex(UniqueIndex):
-  pass
+  def __init__(self, name, *colinfo, desc=False, kdesc=None):
+    super().__init__(name, *colinfo, desc=desc, knum=0, kdesc=kdesc)
 
 class DuplicateIndex(TableIndex):
   def __init__(self, name, *colinfo, desc=False, knum=-1, kdesc=None):
