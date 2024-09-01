@@ -30,7 +30,7 @@ def ISAMfunc(*orig_args, **orig_kwd):
 from argparse import Namespace
 from pyisam.backend import conf
 if conf.backend == 'ctypes':
-  from pyisam.backend.ctypes.common import ISAMfunc
+  from pyisam.backend.ctypes import ISAMfunc
 
   class TestFunc:
     def __init__(self, func):

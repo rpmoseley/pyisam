@@ -1,3 +1,15 @@
-option('vbisam', type: 'boolean', value: true, description: 'Build using the vbisam library')
-option('extended', type: 'boolean', value: false, description: 'Build vbisam in extended mode')
-option('32bit', type: 'boolean', value: false, description: 'Build the 32-bit version instead of 64-bit')
+option('isamsupp', type: 'array',
+       choices: ['default', 'all', 'ifisam', 'vbisam', 'disam'],
+       value: ['default'],
+       description: 'Select the backend variants to be supported')
+option('vbisam_extended', type: 'boolean',
+       value: false,
+       description: 'Enable extended mode in VBISAM')
+option('default_backend', type: 'combo',
+       choices: ['ctypes', 'cffi'],
+       value: 'cffi',
+       description: 'Define the default backend to be used')
+option('default_isamlib', type: 'combo',
+       choices: ['ifisam', 'vbisam', disam'],
+       value: 'vbisam',
+       description: 'Define the default isamlib to be used')

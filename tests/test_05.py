@@ -14,4 +14,5 @@ def test(opts):
   except IsamFunctionFailed as exc:
     print('ISKEYINFO triggered error')
     print(exc)
-  isfd.isclose()
+  finally:
+    isfd.isclose()

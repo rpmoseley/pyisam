@@ -2,7 +2,7 @@
 Common functions used by various tests
 '''
 
-from pyisam.autoselect import prepare_colcheck, select_index, perform_colcheck
+from pyisam.table.autoselect import prepare_colcheck, select_index, perform_colcheck
 
 def dump_record_exp_eq(tabobj, idxkey, mode, colname, colval):
   'Dump records using explicit read MODE and check COLNAME=COLVAL'

@@ -1,0 +1,26 @@
+[project]
+name = "pyisam"
+version = "0.20.0"
+description = "Python3 interface to ISAM data"
+authors = [
+    {name = "Richard Moseley", email = "richard.moseley4@gmail.com"},
+]
+dependencies = [
+    "cffi>=1.17.0",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "meson>=1.5.1",
+    "ninja>=1.11.1.1",
+]

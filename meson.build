@@ -1,7 +1,7 @@
 # pyisam build file for meson
 project(
   'pyisam', 'c', 
-  version : '0.10',
+  version : '0.20',
 )
 
 # Get the compiler
@@ -9,7 +9,6 @@ cc = meson.get_compiler('c')
 
 # Determine the list of compiler arguments
 cflags = cc.get_supported_arguments([
-  '-O',
   '-finline-functions',
   '-fomit-frame-pointer',
   '-fsigned-char',
@@ -21,27 +20,41 @@ cflags = cc.get_supported_arguments([
 
 # Create the configuration to store settings in
 conf = configuration_data()
+add_project_arguments(['-imacros', meson.project_build_root() / 'config.h'], language: 'c')
 
 # Create the configuration for the pyisam package
 pyisam_conf = configuration_data()
 
-# Select whether to compile vbisam or ifisam support
-use_vbisam = get_option('vbisam')
+# Select which variant to build support for
+isamsupp = get_option('isamsupp')
+if 'all' in isamsupp
+  use_vbisam = true
+  use_ifisam = true
+  use_disam = true
+elif 'default' in isamsupp
+  use_vbisam = true
+  use_ifisam = true
+  use_disam = false
+else
+  use_vbisam = 'vbisam' in isamsupp
+  use_ifisam = 'ifisam' in isamsupp
+  use_disam = 'disam' in isamsupp
+endif
+
+# Add the standard header and functions for variants selected
+std_hdrs = []
+req_func = []
 if use_vbisam
-  add_project_arguments(['-imacros', meson.project_build_root() / 'config.h'], language: 'c')
-  pyisam_conf.set('PYISAM_ISAMLIB', 'vbisam', description: 'Default backend to be used')
-  conf.set10('ISAMMODE', get_option('extended'), description: 'Set to 1 if compiling in extended mode')
   conf.set10('HAVE_LFS64', true, description: 'Set if the system supports 64-bit I/O')
   conf.set10('VBDEBUG', false, description: 'Enable internal debug of vbisam')
-  cflags += ['-DNEED_COUNT_ROWS=1', '-DNEED_IFISAM_COMPAT=1', '-DISOPEN_SET_ISRECLEN=1']
-  std_hdrs = ['fcntl.h', 'unistd.h']
-  req_func = []
-else
-  pyisam_conf.set('PYISAM_ISAMLIB', 'ifisam', description: 'Default backend to be used')
-  std_hdrs = []
-  req_func = []
+  conf.set10('NEED_COUNT_ROWS', true, description: 'Enable the slower row counting routine')
+  cont.set10('ISOPEN_SET_ISRECLEN', true, description: 'Make isopen() set the isreclen variale')
+  std_hdrs += ['fcntl.h', 'unistd.h']
 endif
-pyisam_conf.set('PYISAM_BACKEND', 'cffi', description: 'Set the default backend')
+pyisam_conf.set('PYISAM_BACKEND', get_option('default_backend',
+                description: 'Set the default backend')
+pyisam_conf.set('PYISAM_ISAMLIB', get_option('default_isamlib',
+                description: 'Set the default ISAM library to use')
 
 # Check for the required headers
 foreach hdr: std_hdrs
@@ -60,17 +73,11 @@ conf.set10('HAVE_STRUCT_FLOCK64', cc.has_header_symbol('fcntl.h', 'flock64'), de
 
 # Create the config.h file for compilations
 conf_h = configure_file(configuration: conf, output: 'config.h')
-pyisam_conf = configure_file(
+conf_py = configure_file(
   configuration: pyisam_conf,
   output: 'conf.py',
-  input: meson.project_source_root() / 'pyisam' / 'backend' / 'conf.py.in'
+  input: meson.project_source_root() / 'src' / 'pyisam' / 'backend' / 'conf.py.in'
 )
 
-# Include the library source being compiled
-if use_vbisam
-  # Include the libvbisam support
-  subdir('libvbisam')
-else
-  # Include the libifisam/libifisamx support
-  subdir('libifisam')
-endif
+# Bring in the various libraries that are supported
+subdir('lib')
