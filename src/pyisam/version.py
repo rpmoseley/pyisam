@@ -1,5 +1,5 @@
 '''
-This module will provied the version by checking the following in turn,
+This module will provide the version by checking the following in turn,
 the metadata for the package when installed, the contents of the pyproject.toml
 file, a fixed version is given.
 '''
