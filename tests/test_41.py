@@ -1,5 +1,5 @@
 '''
-Test 40: Check if the binary field parser is working correctly.
+Test 41: Check if the binary field parser is working correctly.
 '''
 
 import datetime
@@ -9,6 +9,12 @@ from pyisam.tabdefns import TextColumn, ShortColumn, DateColumn
 from pyisam.tabdefns import PrimaryIndex
 from pyisam.tabdefns.dynamic import DynamicTableDefn
 from pyisam.table import ISAMtable
+
+def use_tstdata():
+  return True
+
+def use_backend(backend):
+  return True
 
 def test(opts):
   # Check if there is any test data available
@@ -26,9 +32,9 @@ def test(opts):
   # Create a table instance using the definition
   tabinst = ISAMtable(tabdefn, tabpath=opts.tstdata)
   
-  # Check that the buffer is correctly defined
-  recbuf = tabinst._record_(tabinst._name_)
-  print(recbuf)
+  #TODO # Check that the buffer is correctly defined
+  #TODO recbuf = tabinst._record(tabinst._name)
+  #TODO print(recbuf)
 
   # Build a new phyiscal table
   try:
@@ -37,6 +43,10 @@ def test(opts):
     if exc.errno != 17:
       raise 
     tabinst.open() 
+
+  # Check if the buffer has been correctly defined
+  recbuf = tabinst._record(tabinst._name)
+  print(dir(recbuf))
 
   # Create the appropriate TableIndex from the primary index
   #kd = tabinst.keyinfo(0)

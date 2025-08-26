@@ -1,0 +1,72 @@
+/*
+ * Provide the definition of the structures and functions exposed by DISAM library
+ */
+
+/* Define the structure and functions found in "disam.h" */
+struct keypart {
+    short kp_start;
+    short kp_leng;
+    short kp_type;
+};
+struct keydesc {
+    short          k_flags;
+    short          k_nparts;
+    struct keypart k_part[20];
+    short          k_len;
+    ...;
+};
+struct dictinfo {
+    short    di_nkeys;
+    short    di_recsize;
+    short    di_idxsize;
+    uint32_t di_nrecords;
+};
+extern int       iserrno;
+extern int       iserrio;
+extern long int  isrecnum;
+extern int       isreclen;
+extern char     *isversnumber;
+extern char     *iscopyright;
+/* extern char     *isserial;	 -- Not Implemented */
+/* extern int      issingleuser;  -- Not Implemented */
+extern int       is_nerr;
+extern char     *is_errlist[];
+extern int       isaddindex(int, struct keydesc *);
+extern int       isaudit(int, char *, int);
+extern int       isbegin(void);
+extern int       isbuild(char *, int, struct keydesc *, int);
+extern int       iscleanup(void);
+extern int       isclose(int);
+extern int       iscluster(int, struct keydesc *);
+extern int       iscommit(void);
+extern int       isdelcurr(int);
+extern int       isdelete(int, char *);
+extern int       isdelindex(int, struct keydesc *);
+extern int       isdelrec(int, uint32_t);
+extern int       iserase(char *);
+extern int       isflush(int);
+extern int       isindexinfo(int, struct keydesc *, int);
+extern int       isisaminfo(int, struct dictinfo *);
+/* extern void       islangchk(void);  -- Not Implemented */
+/* extern char      *islanginfo(char *); -- Not Implemented */
+extern int        islock(int);
+extern int        islogclose(void);
+extern int        islogopen(char *);
+/* extern int        isnlsversion(char *); -- Not Implemented */
+/* extern int        isglsversion(char *); -- Not Implemented */
+/* extern void       isnolangchk(void);  -- Not Implemented */
+extern int        isopen(char *, int);
+extern int        isread(int, char *, int);
+extern int        isrecover(void);
+extern int        isrelease(int);
+extern int        isrename(char *, char *);
+extern int        isrewcurr(int, char *);
+extern int        isrewrec(int, uint32_t, char *);
+extern int        isrewrite(int, char *);
+extern int        isrollback(void);
+extern int        issetunique(int, uint32_t);
+extern int        isstart(int, struct keydesc *, int, char *, int);
+extern int        isuniqueid(int, uint32_t *);
+extern int        isunlock(int);
+extern int        iswrcurr(int, char *);
+extern int        iswrite(int, char *);

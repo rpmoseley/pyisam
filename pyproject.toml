@@ -6,21 +6,20 @@ authors = [
     {name = "Richard Moseley", email = "richard.moseley4@gmail.com"},
 ]
 dependencies = [
-    "cffi>=1.17.0",
+    "cffi-buildtool",
+    "meson-python",
+    "ninja",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
 
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+build-backend = "mesonpy"
+requires = ["meson-python", "cffi-buildtool"]
 
-[tool.pdm]
-distribution = true
-
-[tool.pdm.dev-dependencies]
-dev = [
-    "meson>=1.5.1",
-    "ninja>=1.11.1.1",
+[tool.meson-python.args]
+setup = [
+  "-Dpython.install_env=venv",
+  "-Dffisupp=cffi,ctypes",
 ]

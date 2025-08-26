@@ -7,12 +7,11 @@ and is designed to be a direct replacement for the ctypes based module.
 
 import os
 from ._vbisam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin
-from .common import ISAMdictinfo, ISAMkeydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMdictinfo, ISAMkeydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_bytes, ISAM_str
 
-__all__ = 'ISAMobjectMixin', 'ISAMindexMixin'
+__all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'ISAMdictinfo', 'ISAMkeydesc'
 
 def create_record(recsz):
   return ffi.buffer(ffi.new('char[]', recsz+1))
@@ -83,7 +82,7 @@ class ISAMobjectMixin(ISAMcommonMixin):
     if self._fd is None:
       raise IsamNotOpen
     dinfo = ffi.new('struct dictinfo *')
-    self._chkerror(self._lib.isdictinfo(self._fd, dinfo), 'isdictinfo')
+    self._chkerror(self._lib.isdictinfo(self._fd, dinfo))
     return ISAMdictinfo(dinfo)
 
   def isglsversion(self, tabname):
@@ -97,13 +96,13 @@ class ISAMobjectMixin(ISAMcommonMixin):
       raise IsamNotOpen
     if keynum is None:
       dinfo = ffi.new('struct dictinfo *')
-      self._chkerror(self._lib.isdictinfo(self._fd, dinfo, 0), 'isindexinfo')
+      self._chkerror(self._lib.isdictinfo(self._fd, dinfo, 0))
       return ISAMdictinfo(dinfo)
     elif keynum < 0:
       raise ValueError('Index must be a positive number or None for dictinfo')
     else:
       kinfo = ffi.new('struct keydesc *')
-      self._chkerror(self._lib.iskeyinfo(self._fd, kinfo, keynum+1), 'isindexinfo')
+      self._chkerror(self._lib.iskeyinfo(self._fd, kinfo, keynum+1))
       return ISAMkeydesc(kinfo)
 
   def iskeyinfo(self, keynum):
@@ -111,7 +110,7 @@ class ISAMobjectMixin(ISAMcommonMixin):
     if self._fd is None:
       raise IsamNotOpen
     kinfo = ffi.new('struct keydesc *')
-    self._chkerror(self._lib.iskeyinfo(self._fd, kinfo, keynum+1), 'iskeyinfo')
+    self._chkerror(self._lib.iskeyinfo(self._fd, kinfo, keynum+1))
     return ISAMkeydesc(kinfo)
 
   def islangchk(self):
@@ -126,8 +125,8 @@ class ISAMobjectMixin(ISAMcommonMixin):
 
   def isnlsversion(self, tabname):
     # TODO: Add documentation for function
-    self._chkerror(self._lib.isnlsversion(ISAM_bytes(tabname)), 'isnlsversion')
+    self._chkerror(self._lib.isnlsversion(ISAM_bytes(tabname)))
 
   def isnolangchk(self):
     'Switch off language checks'
-    self._chkerror(self._lib.isnolangchk(), 'isnolangchk')
+    self._chkerror(self._lib.isnolangchk())

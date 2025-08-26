@@ -7,12 +7,11 @@ library.
 
 import os
 from ._disam_cffi import ffi, lib
-from .common import ISAMcommonMixin, ISAMindexMixin
-from .common import ISAMdictinfo, ISAMkeydesc
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMdictinfo, ISAMkeydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_str
 
-__all__ = 'ISAMobjectMixin', 'ISAMindexMixin'
+__all__ = 'ISAMobjectMixin', 'ISAMindexMixin', 'ISAMdictinfo', 'ISAMkeydesc'
 
 class ISAMobjectMixin(ISAMcommonMixin):
   ''' This provides the common CFFI interface which provides the IFISAM specific

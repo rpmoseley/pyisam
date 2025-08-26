@@ -6,7 +6,6 @@ be checked, that enables the correct ISAM read mode and index to be selected
 without the application having to provide that information.
 '''
 
-import sys
 from .record import ISAMrecordBase
 from ..constants import ColumnType
 
@@ -62,14 +61,14 @@ class _TextCompare(_CompareMixin):
 class _IntegerCompare(_CompareMixin):
   'Perform integer number comparisons'
   _id = 'IC'
-  def _conv(self, value):
-    return value if isinstance(value, int) else int(value)
+  def conv(self, value):
+    return int(value)
 
 class _FloatCompare(_CompareMixin):
   'Perform real number comparisons'
   _id = 'FC'
   def _conv(self, value):
-    return value if isinstance(value, float) else float(value)
+    return float(value)
 
 _conv_cmp = {
   ColumnType.CHAR   : _TextCompare,
@@ -119,9 +118,8 @@ def select_index(tabobj, colcheck, record=None):
     record = tabobj._default_record()
   # Create a dictionary for each index defined for the record
   tabobj._autoload_indexes()
-  print('RECIDX:', type(record), dir(record)) #DEBUG
-  idxinfo = tabobj._idxinfo_[0]
-  print('IDX0:', idxinfo)
+  idxinfo = tabobj._idxinfo[0]
+  print('IDX0:', idxinfo.idxname)
   
 if _shortcircuit:
   def perform_colcheck(record, colcheck):
@@ -134,7 +132,7 @@ if _shortcircuit:
       colvalue = getattr(record, col.name)
       cmpres = chkfunc(colvalue)
       print('CKRES:', cmpres)
-      if cmpres == False:
+      if not cmpres:
         return False
     return True 
 else:
@@ -148,7 +146,6 @@ else:
       # as the other (ie curvalue OP self.value)
       colvalue = getattr(record, col.name)
       cmpres = chkfunc(colvalue)
-      print('CKRES:', cmpres)
-      if cmpres == False:
+      if not cmpres:
         rslt = False
     return rslt 

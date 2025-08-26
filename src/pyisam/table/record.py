@@ -26,7 +26,8 @@ import collections
 import dataclasses
 import datetime
 import struct
-import typing as T
+import types
+from collections.abc import Callable
 from keyword import iskeyword
 from ..backend import _backend
 from ..constants import ColumnType
@@ -56,21 +57,21 @@ class _BaseColumn:
   _struct: struct.Struct
   _type: int
   _serial: bool
-  _postprocess: T.Callable
-  _preprocess: T.Callable
-  _nullval: T.Callable
+  _template: Callable|None = None
+  _postprocess: Callable|None = None
+  _preprocess: Callable|None = None
+  _nullval: Callable|None = None
 
-  def __init__(self, size=None, offset=-1):
+  def __init__(self, size=None):
     if not hasattr(self, '_struct'):
-      raise ValueError('No struct object provided for column')
+      raise TypeError('No struct object provided for column')
     if not hasattr(self, '_size'):
       if hasattr(self._struct, 'size'):
         self._size = self._struct.size
       elif isinstance(size, int):
         self._size = size
       else:
-        raise ValueError('Must provide a size for column')
-    self._offset = offset          # Offset into record buffer
+        raise TypeError('Must provide a size for column')
 
   def __set_name__(self, owner, name):
     '''3.6+ method called during class instantiation to permit decorators
@@ -78,18 +79,17 @@ class _BaseColumn:
        list of known fields to permit information about columns to be
        returned without actually invoking the fetch to/from the underlying
        record buffer.'''
-    if self._offset == -1:  
-      try:
-        self._offset = owner._recsize
-        owner._recsize += self._size
-      except AttributeError:      
-        self._offset = 0
-        owner._recsize = self._size
-    colinfo = ColumnInfo(name, self._offset, self._size, self._type)
     if not hasattr(owner, '_flddict'):
       owner._flddict = dict()
     if not hasattr(owner, '_fields'):
       owner._fields = list()
+    if hasattr(owner, '_recsize'):
+      self._offset = owner._recsize
+      owner._recsize += self._size
+    else:
+      self._offset = 0
+      owner._recsize = self._size
+    colinfo = ColumnInfo(name, self._offset, self._size, self._type)
     owner._flddict[name] = colinfo
     owner._fields.append(colinfo)
     # Mark record has having a serial field if one is present
@@ -97,24 +97,27 @@ class _BaseColumn:
       owner._serial = colinfo
 
   def __get__(self, inst, objtype):
-    if self._offset < 0:
-      raise ValueError('Column offset not known')
-    val = self._struct.unpack_from(inst._buffer, self._offset)[0]
-    if hasattr(self, '_postprocess') and callable(self._postprocess):
-      val = self._postprocess(val)
-    return val
+    'Fetch the current value from the underlying record buffer'
+    assert self._offset >= 0, 'Column offset not known'
+    value = self._struct.unpack_from(inst._buffer, self._offset)[0]
+    if callable(self._postprocess):
+      value = self._postprocess(value)
+    if callable(self._isnull) and self._isnull(value):
+      return self._nullval(value) if callable(self._nullval) else self._nullval
+    return value
 
   def __set__(self, inst, value):
-    if self._offset < 0:
-      raise ValueError('Column offset not known')
-    if hasattr(self, '_preprocess') and callable(self._preprocess):
+    'Set the underlying record buffer value'
+    assert self._offset >= 0, 'Column offset not known'
+    if callable(self._preprocess):
       value = self._preprocess(value)
-    if value is None and hasattr(self, '_nullval'):
+    if self._isnull(value):
       value = self._nullval() if callable(self._nullval) else self._nullval
     self._struct.pack_into(inst._buffer, self._offset, value)
 
-  # Template for this column
-  _template = ''
+  def _isnull(self, value):
+    'Return whether the value represents a NULL value'
+    return value is None
 
   # Rich comparision methods
   def __eq__(self, other):
@@ -133,17 +136,17 @@ class _BaseColumn:
     print(self, '>', other)
     return super().__gt__(self, other)
   
-class CharColumn(_BaseColumn):
+class CharColum(_BaseColumn):
   __slots__ = ()
   _struct = struct.Struct('c')
   _nullval = b' '
   _type = ColumnType.CHAR
 
   def _postprocess(self, value):
-    return value.decode('utf-8').replace('\x00', ' ').rstrip()
+    return value.decode('iso8859-1').replace('\x00', ' ').rstrip()
 
   def _preprocess(self, value):
-    return value.encode('utf-8').replace(b'\x00', b' ') 
+    return value.encode('iso8859-1').replace(b'\x00', b' ') 
   
 class TextColumn(_BaseColumn):
   __slots__ = ('_blankval', )
@@ -157,12 +160,12 @@ class TextColumn(_BaseColumn):
     super().__init__(offset)
 
   def _postprocess(self, value):
-    return value.decode('utf-8').replace('\x00', ' ').rstrip()
+    return value.decode('iso8859-1').replace('\x00', ' ').rstrip()
 
   def _preprocess(self, value):
     if value is None:
       return self._blankval
-    value = value.encode('utf-8')
+    value = value.encode('iso8859-1')
     if self._size < len(value):
       value = value[:self._size]
     elif len(value) < self._size:
@@ -170,7 +173,9 @@ class TextColumn(_BaseColumn):
     return value
 
   # Template for fields of this column type
-  _template = '{0.length}'
+  @property
+  def _template(self):
+    return f'{self._size}'
   
 class ShortColumn(_BaseColumn):
   __slots__ = ()
@@ -193,15 +198,18 @@ class DateColumn(LongColumn):
   _since_1900 = datetime.date(1899, 12, 31).toordinal()
   _nullval = -2147483648   # '\x80\x00\x00\x00' used for NUL dates
 
+  def _isnull(self, value):
+    return value == self._nullval
+
   def _postprocess(self, value):
-    if value == self._nullval:
+    if self._isnull(value):
       return None
     else:
       return datetime.date.fromordinal(value + self._since_1900)
 
   def _preprocess(self, value):
     if value is None:
-      return None
+      return self._nullval
     elif isinstance(value, datetime.date):
       return value.toordinal() - self._since_1900
     else:
@@ -241,10 +249,10 @@ class ISAMrecordBase:
       if isinstance(fields, str):
         fields = fields.replace(',', ' ').split()
       elif not isinstance(fields, (list, tuple)):
-        raise ValueError('Unhandled type of fields to be presented')
+        raise TypeError('Unhandled type of fields presented')
       tupfields = [fld for fld in fields if fld in self._fields]
       if not tupfields:
-        raise ValueError('Provided fields produces no suitable columns to use')
+        raise TypeError('Provided fields produces no suitable columns to use')
     else:
       tupfields = [fld for fld in self._flddict]
     self._namedtuple = collections.namedtuple(recname, tupfields)
@@ -305,11 +313,9 @@ class ISAMrecordBase:
         fldval.append(f'{fld}={getattr(self, fld)}')
     return '{}({})'.format(self.__class__.__name__, ', '.join(fldval))
 
-# Define the templates used to generate the record definition class at runtime
-_record_class = """class {rec_name}(ISAMrecordBase):
-  __slots__ = ()
-{fld_defn}
-"""
+# Define the templates used to generate the record definition class at runtime,
+# these will be passed through the 'format' function.
+_record_class = 'class {rec_name}(ISAMrecordBase):\n  __slots__ = ()\n{fld_defn}\n'
 _record_field = '  {name} = {klassname}({defn})'
 
 # Define the default namespace that is always used for new record instances
@@ -338,7 +344,7 @@ def create_record_class(tabdefn, recname=None, keepsrc=False, **kwd):
   if not recname.isidentifier():
     raise NameError(f"Record '{recname}'")
   try:
-    recinfo = _rec_cache.get(recname)
+    recinfo = _rec_cache[recname]
   except KeyError:
     recinfo = _rec_cache[recname] = _recordclass(tabdefn, recname, keepsrc)
   return recinfo
@@ -386,3 +392,23 @@ def _recordclass(tabdefn, recname, keepsrc, **kwd):
   if keepsrc:
     result._source = record_definition
   return result
+
+def _recordclass33(tabdefn, recname, keepsrc, **kwd):
+  'Create a new class for the given table definition using types.new_class'
+  seen, fdefn = set(), list()
+  if isinstance(tabdefn._columns, (collections.OrderedDict, dict)):
+    flds = list(tabdefn._columns.values())
+  elif isinstance(tabdefn._columns, (list,tuple)):
+    flds = tabdefn._columns
+  else:
+    raise ValueError('Unhandled column information encountered')
+  for fld in flds:
+    if fld.name in seen:
+      raise NameError(f"Duplicate '{fld.name}'")
+    elif not fld.name.isidentifier() or iskeyword(fld.name) or fld.name.startwith('_'):
+      raise NameError(f"Field '{fld.name}' is not a valid name")
+    seen.add(fld.name)
+  
+  def _recordclass_cb(ns):
+    'Callback function to fill in the namespace of the newly created class'
+

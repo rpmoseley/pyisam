@@ -8,7 +8,7 @@ import functools
 from ctypes import create_string_buffer, Structure, POINTER, _SimpleCData
 from ctypes import c_char, c_short, c_int, c_int32, c_char_p
 from ..common import MaxKeyParts, MaxKeyLength, check_keypart
-from ...constants import IndexFlags, LockMode, OpenMode, ReadMode, StartMode
+from ...constants import IndexFlags, LockMode, OpenMode, ReadMode
 from ...constants import dflt_lockmode, dflt_openmode
 from ...error import IsamNotOpen, IsamOpen, IsamFunctionFailed, IsamEndFile, IsamReadOnly, IsamNoRecord
 from ...utils import ISAM_bytes, ISAM_str
@@ -135,7 +135,7 @@ class ISAMcommonMixin:
       if not isinstance(val, int):
         val = ISAM_str(val)
       return val
-    return AttributeError(name)
+    raise AttributeError(name)
 
   def _chkerror(self, result=None, func=None, args=None):
     '''Perform checks on the running of the underlying ISAM function by
@@ -160,6 +160,9 @@ class ISAMcommonMixin:
       elif errnum:
         raise IsamFunctionFailed(func.__name__, errcode, 'Unknown')
     return result
+
+  def create_record(self, recsize=None):
+    return create_string_buffer((recsize or self._recsize) + 1)
 
   @ISAMfunc(c_int, POINTER(ISAMkeydesc))
   def isaddindex(self, kdesc):
@@ -384,7 +387,7 @@ class ISAMcommonMixin:
     'Read a record from an open ISAM table'
     if self._fd is None:
       raise IsamNotOpen
-    self._isread(self._fd, recbuff, mode.value)
+    self._isread(self._fd, recbuff, mode.value & 0xF07) # Omit the extra mode
 
   @ISAMfunc(None)
   def isrecover(self):
@@ -483,9 +486,12 @@ class ISAMcommonMixin:
       raise IsamNotOpen
     return self._iswrite(self._fd, recbuff)
 
+def new_keydesc(ffiobj=None):
+  return ISAMkeydesc()
+
 class ISAMindexMixin:
   'This class provides the ctypes specific methods for ISAMindex'
-  def create_keydesc(self, isobj, record, optimize=False):
+  def create_keydesc(self, ffiobj, record, optimize=False):
     'Create a new keydesc using the column information in RECORD'
     # NOTE: The information stored in an instance of _TableIndexCol
     #       is relative to the associated column within in the
@@ -526,7 +532,7 @@ class ISAMindexMixin:
         kpart.leng = idxcol.length
       kpart.type = colinfo.type.value
       return kpart
-    kdesc = ISAMkeydesc()
+    kdesc = new_keydesc()
     kdesc.flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc:
       kdesc.flags += IndexFlags.DESCEND

@@ -99,7 +99,7 @@ parser.add_argument('-V', '--version',
                     dest='version',
                     action='store_true',
                     help='Give the version of the program and library')
-parser.add_argument('-t', '--test',
+parser.add_argument('-t',
                     dest='run_mode',
                     action='store',
                     type=int,

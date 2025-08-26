@@ -1,0 +1,3 @@
+option('extended', type: 'boolean', 
+       value: false,
+       description: 'Enabled extended mode')

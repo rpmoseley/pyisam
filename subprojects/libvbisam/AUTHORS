@@ -1,0 +1,7 @@
+* Trevor van Bremen <trev_vb@users.sourceforge.net> wrote
+  VBISAM.
+
+* Roger While <simrw@users.sourceforge.net> autoconf'd/libtoolized
+  it. Also major code restructure.
+
+* Cobol-IT <support@cobol-it.com> debug indexed variable size record

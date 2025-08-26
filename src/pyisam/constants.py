@@ -8,12 +8,12 @@ from enum import IntFlag, IntEnum
 class IndexFlags(IntFlag):
   NO_DUPS      = 0x00        # No duplicates allowed in values
   DUPS         = 0x01        # Duplicates allowed in values
-  DUP_COMPRESS = 0x02
-  LDR_COMPRESS = 0x04
-  TRL_COMPRESS = 0x08
-  ALL_COMPRESS = 0x0E
+  DUP_COMPRESS = 0x02        # Compress duplicate parts of index
+  LDR_COMPRESS = 0x04        # Compress leading parts of index
+  TRL_COMPRESS = 0x08        # Compress trailing parts of index
+  ALL_COMPRESS = 0x0E        # Compress both leading and trailing parts of index
   CLUSTER      = 0x20
-  DESCEND      = 0x80
+  DESCEND      = 0x80        # Store index in descending order
 
 # The OpenMode and LockMode enums provide the available modes used
 # when using the isbuild or isopen methods.
@@ -40,24 +40,7 @@ class ReadMode(IntFlag):
   ISLAST     = 0x001         # Position at last record
   ISNEXT     = 0x002         # Position at next record
   ISPREV     = 0x003         # Position at previous record
-  ISCURR     = 0x004         # Position at current record
-  ISEQUAL    = 0x005         # Position at == value
-  ISGREAT    = 0x006         # Position at >  value
-  ISGTEQ     = 0x007         # Position at >= value
-  ISLOCK     = 0x100         # Lock record
-  ISSKIPLOCK = 0x200         # Skip record even if locked
-  ISWAIT     = 0x400         # Wait for record lock
-  ISLCKW     = 0x500
-  ISKEEPLOCK = 0x800         # Keep record lock in auto locking mode
-
-# The ExtReadMode enum provides extra modes that are available when
-# using an instance of ISAMtable.
-class ExtReadMode(IntFlag):
-  ISFIRST    = 0x000         # Position at first record
-  ISLAST     = 0x001         # Position at last record
-  ISNEXT     = 0x002         # Position at next record
-  ISPREV     = 0x003         # Position at previous record
-  ISCURR     = 0x004         # Position at current record
+  ISCURR     = 0x004         # Position at given record
   ISEQUAL    = 0x005         # Position at == value
   ISGREAT    = 0x006         # Position at >  value
   ISGTEQ     = 0x007         # Position at >= value
@@ -65,14 +48,16 @@ class ExtReadMode(IntFlag):
   ISFLTEQ    = 0x009         # Position at <= value for one record only
   ISMATCH    = 0x00A         # Position at >= value (forward matching)
   ISRMATCH   = 0x00B         # Position at <= value (reverse matching)
-  ISAGAIN    = 0x00C
-  ISSMALL    = 0x00E         # Position at <  value
+  ISAGAIN    = 0x00D         # Reread the current record
+  ISLESS     = 0x00E         # Position at <  value
   ISLTEQ     = 0x00F         # Position at <= value
   ISLOCK     = 0x100         # Lock record
   ISSKIPLOCK = 0x200         # Skip record even if locked
   ISWAIT     = 0x400         # Wait for record lock
   ISLCKW     = 0x500
   ISKEEPLOCK = 0x800         # Keep record lock in auto locking mode
+  _MASK      = 0xF07         # Mask to remove extra modes from flag
+  _EXTMASK   = 0x008
  
 # The types of column supported by the package
 class ColumnType(IntEnum):

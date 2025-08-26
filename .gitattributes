@@ -1,0 +1,6 @@
+# default behaviour is to always use unix style line endings
+* text eol=lf
+*.lib binary
+*.so binary
+*.dat binary
+*.idx binary	

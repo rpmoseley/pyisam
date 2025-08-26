@@ -26,15 +26,16 @@ class IsamRecordMutable(IsamException):
 
 class IsamFunctionFailed(IsamException):
   'Exception raised when an ISAM function is not found in the libaray'
-  def __init__(self, tabname, errno, errstr=None):
-    self.tabname = tabname
+  def __init__(self, fname, errno, errstr=None):
+    self.fname = fname
     self.errno = errno
     self.errstr = errstr
 
   def __str__(self):
-    if self.errstr is None:
-      return f'{self.tabname}: {self.errno}'
-    return f'{self.tabname}: {self.errstr} ({self.errno})'
+    if self.errstr:
+      return f'{self.fname}: {self.errstr} ({self.errno})'
+    else:
+      return f'{self.fname}: {self.errno}'
 
 class IsamVariableLength(IsamException):
   'Exception raised when opening a variable length file if not enabled'

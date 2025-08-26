@@ -1,15 +1,19 @@
 option('isamsupp', type: 'array',
        choices: ['default', 'all', 'ifisam', 'vbisam', 'disam'],
        value: ['default'],
-       description: 'Select the backend variants to be supported')
-option('vbisam_extended', type: 'boolean',
-       value: false,
-       description: 'Enable extended mode in VBISAM')
+       description: 'Select the backend libraries to be supported')
+option('ffisupp', type: 'array',
+       choices: ['default', 'all', 'cffi', 'ctypes', 'cython'],
+       value: ['default'],
+       description: 'Select the backend access methods to be supported')
 option('default_backend', type: 'combo',
        choices: ['ctypes', 'cffi'],
        value: 'cffi',
        description: 'Define the default backend to be used')
 option('default_isamlib', type: 'combo',
-       choices: ['ifisam', 'vbisam', disam'],
+       choices: ['ifisam', 'vbisam', 'disam'],
        value: 'vbisam',
        description: 'Define the default isamlib to be used')
+option('vb_extended', type: 'boolean',
+       value: false,
+       description: 'Enable extended mode in VBISAM')

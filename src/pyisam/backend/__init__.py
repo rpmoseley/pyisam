@@ -8,7 +8,7 @@ package will fail with the ModuleImport exception.
 
 import importlib
 
-_all_conf = ('ctypes', 'cffi')   # TODO: , 'cython')
+_all_conf = ('ctypes', 'cffi')   # TODO: , 'cython', 'raw')
 _all_isam = ('vbisam', 'ifisam', 'disam')
 
 # Pickup the interface to use

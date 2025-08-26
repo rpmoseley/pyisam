@@ -16,18 +16,19 @@ print('Idx Size :', dictinfo.idxsize)
 print('Num Rows :', dictinfo.nrecords)
 for cidx in range(0, dictinfo.nkeys):
   keyinfo = isfd.iskeyinfo(cidx)
+  keyflgs = []
   print('Index', cidx, ':')
-  print(' Flags   :', end=' ')
   if keyinfo.flags & 0x0e == 0x0e:
-    print('COMPRESS')
+    keyflgs.append('COMPRESS')
   else:
     if keyinfo.flags & 0x08:
-      print('TCOMPRESS', end=' ')
+      keyflgs.append('TCOMPRESS')
     if keyinfo.flags & 0x04:
-      print(' LCOMPRESS', end=' ')
+      keyflgs.append('LCOMPRESS')
     if keyinfo.flags & 0x02:
-      print(' DCOMPRESS')
-    print('ISDUPS' if keyinfo.flags & 0x01 else 'ISNODUPS')
+      keyflgs.append('DCOMPRESS')
+    keyflgs.append('ISDUPS' if keyinfo.flags & 0x01 else 'ISNODUPS')
+  print(' Flags   :', keyflgs.join(', '))
   print(' Num Part:', keyinfo.nparts)
   print(' Length  :', keyinfo.length)
   for cprt in range(keyinfo.nparts):

@@ -6,11 +6,11 @@ from pyisam.constants import OpenMode
 from pyisam.tabdefns import dscfile
 from pyisam.table import ISAMtable
 
+def use_tstdata():
+  return True
+
 def test(opts):
   # Check if there is any test data available
-  if not hasattr(opts, 'tstdata'):
-    print('Test not supported without test data')
-    return
   tabdefn = dscfile.ParseDSCFile('decomp', tabpath=opts.tstdata)
   tabinst = ISAMtable(tabdefn, tabpath=opts.tstdata, mode=OpenMode.ISINPUT)
   #print(tabinst._idxinfo_._idxmap.items())

@@ -1,0 +1,94 @@
+/*
+ * This file contains the necessary C code to define the interface and functions provided by the
+ * VBISAM CFFI extension module.
+ */
+
+/* The following defines provide the decimal support found in "decimal.h" */
+struct decimal;
+extern int          decadd(struct decimal *, struct decimal *, struct decimal *);
+extern int          decsub(struct decimal *, struct decimal *, struct decimal *);
+extern int          decmul(struct decimal *, struct decimal *, struct decimal *);
+extern int          decdiv(struct decimal *, struct decimal *, struct decimal *);
+extern int          deccmp(struct decimal *, struct decimal *);
+extern void         deccopy(struct decimal *, struct decimal *);
+extern int          deccvasc(signed char *, int, struct decimal *);
+extern int          deccvdbl(double, struct decimal *);
+extern int          deccvint(int, struct decimal *);
+extern int          deccvlong(long, struct decimal *);
+extern signed char *dececvt(struct decimal *, int, int *, int *);
+extern signed char *decfcvt(struct decimal *, int, int *, int *);
+/*extern void         decround(struct decimal *, int);  -- Not implemented */
+extern int          dectoasc(struct decimal *, signed char *, int, int);
+extern int          dectodbl(struct decimal *, double *);
+extern int          dectoint(struct decimal *, int *);
+extern int          dectolong(struct decimal *, long *);
+/*extern void         dectrunc(struct decimal *, int);  -- Not implemented */
+extern int          deccvflt(double, struct decimal *);
+extern int          dectoflt(struct decimal *, float *);
+
+/* The following defines provide the structures and functions found in "vbisam.h" */
+struct keypart {
+    short kp_start;
+    short kp_leng;
+    short kp_type;
+};
+struct keydesc {
+    short          k_flags;
+    short          k_nparts;
+    struct keypart k_part[8];
+    short          k_len;
+    ...;
+};
+struct dictinfo {
+    short     di_nkeys;
+    short     di_recsize;
+    short     di_idxsize;
+    long long di_nrecords;
+};
+extern void         *vb_get_rtd(void);     /* Used to initialise library correctly */
+extern int           is_nerr(void);
+extern int           iserrno(void);
+extern int           iserrio(void);
+extern long long     isrecnum(void);
+extern int           isreclen(void);
+extern const char   *is_strerror(int);
+extern int           isaddindex(int, struct keydesc *);
+extern int           isaudit(int, signed char *, int);
+extern int           isbegin(void);
+extern int           isbuild(signed char *, int, struct keydesc *, int);
+extern int           iscleanup(void);
+extern int           isclose(int);
+extern int           iscluster(int, struct keydesc *);
+extern int           iscommit(void);
+extern int           isdelcurr(int);
+extern int           isdelete(int, signed char *);
+extern int           isdelindex(int, struct keydesc *);
+extern int           isdelrec(int, long long);
+extern int           isdictinfo(int, struct dictinfo *);
+extern int           iserase(signed char *);
+extern int           isflush(int);
+extern int           isindexinfo(int, void *, int);
+extern int           iskeyinfo(int, struct keydesc *, int);
+/*extern void          islangchk(void);   -- Not implemented */
+/*extern char         *islanginfo(char *);   -- Not implemented */
+extern int           islock(int);
+extern int           islogclose(void);
+extern int           islogopen(signed char *);
+/*extern int           isnlsversion(char *);   -- Not implemented */
+/*extern int           isglsversion(char *);   -- Not implemented */
+/*extern void          isnolangchk(void);   -- Not implemented */
+extern int           isopen(signed char *, int);
+extern int           isread(int, signed char *, int);
+extern int           isrecover(void);
+extern int           isrelease(int);
+extern int           isrename(signed char *, signed char *);
+extern int           isrewcurr(int, signed char *);
+extern int           isrewrec(int, long long, signed char *);
+extern int           isrewrite(int, signed char *);
+extern int           isrollback(void);
+extern int           issetunique(int, long long);
+extern int           isstart(int, struct keydesc *, int, signed char *, int);
+extern int           isuniqueid(int, long long *);
+extern int           isunlock(int);
+extern int           iswrcurr(int, signed char *);
+extern int           iswrite(int, signed char *);

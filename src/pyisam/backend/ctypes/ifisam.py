@@ -7,14 +7,16 @@ the existing libifisam/libifisamx libraries are combined such that the SONAME
 can be verified.
 '''
 
-import os
+import pathlib
+import sysconfig
 from ctypes import c_char_p, c_int, c_int32, CDLL, _dlopen
-from .common import ISAMcommonMixin, ISAMindexMixin, ISAMkeydesc, ISAMdictinfo, create_record
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMkeydesc, ISAMdictinfo
 from ...utils import ISAM_str
 
 # The name of the library used to load the underlying ISAM
-_lib_nm = 'libpyifisam'
-_lib_so = os.path.join(os.path.dirname(__file__), _lib_nm + '.so')
+_soext = sysconfig.get_config_var('SHLIB_SUFFIX')
+_lib_nm = pathlib.PurePath('libpyifisam')
+_lib_so = pathlib.Path(__file__).parent / _lib_nm.with_suffix(_soext)
 
 class ISAMobjectMixin(ISAMcommonMixin):
   '''This provides the interface to the underlying ISAM libraries.
@@ -22,9 +24,6 @@ class ISAMobjectMixin(ISAMcommonMixin):
      prefix of an underscore, so isopen becomes _isopen.
   '''
   __slots__ = ()
-
-  # Open the underlying library once
-  _lib = CDLL(_lib_nm, handle=_dlopen(_lib_so))
 
   # The _const dictionary initially consists of the ctypes type
   # which will be mapped to the correct variable when accessed.
@@ -36,6 +35,9 @@ class ISAMobjectMixin(ISAMcommonMixin):
     'is_nerr'      : c_int,    'is_errlist'   : None
   }
   
+  # Open the underlying library once
+  _lib = CDLL(_lib_nm, handle=_dlopen(_lib_so))
+
   def __getattr__(self,name):
     '''Lookup the ISAM function and return the entry point into the library
        or define and return the numeric equivalent'''

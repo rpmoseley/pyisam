@@ -1,83 +1,73 @@
 # pyisam build file for meson
 project(
   'pyisam', 'c', 
-  version : '0.20',
+  version : files('VERSION'),
+  meson_version : '>1.1.0',
 )
 
-# Get the compiler
+# Select which variants to build support for
+isamsupp = get_option('isamsupp')
+ffisupp = get_option('ffisupp')
+
+pkgconf = configuration_data()
+pkgconf.set('vbisam', 'all' in isamsupp or 'default' in isamsupp or 'vbisam' in isamsupp)
+pkgconf.set('ifisam', 'all' in isamsupp or 'default' in isamsupp or 'ifisam' in isamsupp)
+pkgconf.set('disam',  'all' in isamsupp or                          'disam'  in isamsupp)
+pkgconf.set('cffi',   'all' in ffisupp  or                          'cffi'   in ffisupp)
+pkgconf.set('ctypes', 'all' in ffisupp  or 'default' in ffisupp  or 'ctypes' in ffisupp)
+pkgconf.set('cython',                                               'cython' in ffisupp)
+
+# Load the compiler and check for some header files
 cc = meson.get_compiler('c')
+has_fcntl_h = cc.has_header('fcntl.h')
 
-# Determine the list of compiler arguments
-cflags = cc.get_supported_arguments([
-  '-finline-functions',
-  '-fomit-frame-pointer',
-  '-fsigned-char',
-  '-Wall',
-  '-Wwrite-strings',
-  '-Wmissing-prototypes',
-  '-Wno-format-y2k',
-])
+# Load the python support for meson-python and cffi-buildtool
+py = import('python').find_installation(pure: false)
+gen_cffi_src = find_program('gen-cffi-src', required: pkgconf.get('cffi'))
 
-# Create the configuration to store settings in
-conf = configuration_data()
-add_project_arguments(['-imacros', meson.project_build_root() / 'config.h'], language: 'c')
+# Configure VBISAM
+if pkgconf.get('vbisam')
+  pkgconf.set10('HAVE_LFS64', true,
+                description: 'Set if the system supports 64-bit I/O')
+  pkgconf.set10('VBDEBUG', false,
+                description: 'Enable the internal debug of VBISAM')
+  pkgconf.set10('ISAMMODE', get_option('vb_extended'),
+                description: 'Set if compiling VBISAM in extended mode')
+  pkgconf.set10('NEED_COUNT_ROWS', true,
+                description: 'Enable the slower row counting routine')
+  pkgconf.set10('ISOPEN_SET_ISRECLEN', true,
+                description: 'Make isopen() set the isreclen variable')
+  pkgconf.set10('HAVE_FCNTL_H', has_fcntl_h,
+                description: 'Define if you have the fcntl.h header')
+  pkgconf.set10('HAVE_UNISTD_H', cc.has_header('unistd.h'),
+                description: 'Define if you have the unistd.h header')
+  if has_fcntl_h
+    pkgconf.set10('HAVE_STRUCT_FLOCK64', cc.has_header_symbol('fcntl.h', 'flock64'),
+                  description: 'Define if using the flock64 structure')
+  endif
+endif
 
 # Create the configuration for the pyisam package
 pyisam_conf = configuration_data()
-
-# Select which variant to build support for
-isamsupp = get_option('isamsupp')
-if 'all' in isamsupp
-  use_vbisam = true
-  use_ifisam = true
-  use_disam = true
-elif 'default' in isamsupp
-  use_vbisam = true
-  use_ifisam = true
-  use_disam = false
-else
-  use_vbisam = 'vbisam' in isamsupp
-  use_ifisam = 'ifisam' in isamsupp
-  use_disam = 'disam' in isamsupp
-endif
-
-# Add the standard header and functions for variants selected
-std_hdrs = []
-req_func = []
-if use_vbisam
-  conf.set10('HAVE_LFS64', true, description: 'Set if the system supports 64-bit I/O')
-  conf.set10('VBDEBUG', false, description: 'Enable internal debug of vbisam')
-  conf.set10('NEED_COUNT_ROWS', true, description: 'Enable the slower row counting routine')
-  cont.set10('ISOPEN_SET_ISRECLEN', true, description: 'Make isopen() set the isreclen variale')
-  std_hdrs += ['fcntl.h', 'unistd.h']
-endif
-pyisam_conf.set('PYISAM_BACKEND', get_option('default_backend',
-                description: 'Set the default backend')
-pyisam_conf.set('PYISAM_ISAMLIB', get_option('default_isamlib',
-                description: 'Set the default ISAM library to use')
-
-# Check for the required headers
-foreach hdr: std_hdrs
-  conf.set10('HAVE_' + hdr.underscorify().to_upper(),
-    cc.has_header(hdr),
-    description: 'Define if have the @hdr@ header')
-endforeach
-foreach fun: req_func
-  conf.set10('HAVE_' + fun.underscorify().to_upper(),
-    cc.has_function(fun),
-    description: 'Define if have the @fun@ function')
-endforeach
-
-# Check if the fcntl.h header defines struct flock64
-conf.set10('HAVE_STRUCT_FLOCK64', cc.has_header_symbol('fcntl.h', 'flock64'), description: 'Define if you use the flock64 structure')
-
-# Create the config.h file for compilations
-conf_h = configure_file(configuration: conf, output: 'config.h')
+pyisam_conf.set('PYISAM_BACKEND', get_option('default_backend'), description: 'Default backend to be used')
+pyisam_conf.set('PYISAM_ISAMLIB', get_option('default_isamlib'), description: 'Default ISAM library to be used')
+pyisam_conf.set('PYISAM_VERSION', meson.project_version(),       description: 'Version of package')
 conf_py = configure_file(
   configuration: pyisam_conf,
   output: 'conf.py',
-  input: meson.project_source_root() / 'src' / 'pyisam' / 'backend' / 'conf.py.in'
+  input: 'conf.py.in',
+  install: true,
+  install_dir: 'pyisam',
+  install_mode: 'r--r--r--'
 )
 
-# Bring in the various libraries that are supported
-subdir('lib')
+# Compile the underlying ISAM libraries as required
+if pkgconf.get('vbisam')
+  subdir('lib/libvbisam') 
+endif
+if pkgconf.get('ifisam')
+  subdir('lib/libifisam')
+endif
+if pkgconf.get('disam')
+  subdir('lib/libdisam')
+endif

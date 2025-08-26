@@ -9,7 +9,7 @@ can be verified.
 
 import os
 from ctypes import c_char_p, c_int, c_int32, CDLL, POINTER, _dlopen
-from .common import ISAMcommonMixin, ISAMindexMixin, ISAMfunc, ISAMdictinfo, ISAMkeydesc, create_record
+from .common import ISAMcommonMixin, ISAMindexMixin, ISAMfunc, ISAMdictinfo, ISAMkeydesc
 from ...error import IsamNotOpen
 from ...utils import ISAM_str
 

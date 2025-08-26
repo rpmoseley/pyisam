@@ -7,12 +7,16 @@ the ctypes based module in that it aims to provide the same classes for
 situations when performance is required.
 '''
 
+import traceback
 from ..common import check_keypart
 from ...constants import IndexFlags, LockMode, OpenMode, ReadMode
 from ...constants import dflt_lockmode, dflt_openmode
 from ...error import IsamOpen, IsamNotOpen, IsamNoRecord, IsamFunctionFailed
 from ...error import IsamEndFile, IsamReadOnly
 from ...utils import ISAM_bytes
+
+__all__ = ('ISAMdictinfo', 'ISAMkeydesc', 'ISAMcommonMixin', 'ISAMindexMixin',
+           'new_keydesc')
 
 # Provide same information as the ctypes backend provides
 class ISAMdictinfo:
@@ -36,49 +40,51 @@ class keypart:
   def __str__(self):
     return f'({self.start}, {self.leng}, {self.type})'
 
+def new_keydesc(ffiobj):
+  return ffiobj._ffi.new('struct keydesc *')
+
 class ISAMkeydesc:
   'Class that provides the keydesc as expected by the rest of the package'
   def __init__(self, kinfo=None):
     if kinfo is None:
-      self.nparts = 0
       self.flags = 0
       self.leng = 0
       self.part = []
     else:
-      self.nparts = kinfo.k_nparts
       self.flags  = kinfo.k_flags
       self.leng   = kinfo.k_len
       self.part   = [keypart(kinfo.k_part[n]) for n in range(kinfo.k_nparts)]
 
   def as_keydesc(self, ffiobj):
     'Create an instance of keydesc() for low-level library use'
-    kinfo = ffiobj.new('struct keydesc *')
-    kinfo.k_nparts = self.nparts
+    kinfo = new_keydesc(ffiobj)
+    kinfo.k_nparts = len(self.part)
     kinfo.k_flags = self.flags
     kinfo.k_len = self.leng
-    for kp in range(self.nparts):
-      kinfo.k_part[kp].kp_start = self.part[kp].start
-      kinfo.k_part[kp].kp_leng = self.part[kp].leng
-      kinfo.k_part[kp].kp_type = self.part[kp].type
+    for kpn, kp in enumerate(self.part):
+      kinfo.k_part[kpn].kp_start = kp.start
+      kinfo.k_part[kpn].kp_leng = kp.leng
+      kinfo.k_part[kpn].kp_type = kp.type
     return kinfo
 
   def __getitem__(self, part):
     return self.part[check_keypart(self, part)]
 
   def __setitem__(self, part, kpart):
+    if not isinstance(kpart, keypart):
+      raise ValueError('Expecting an instance of keypart')
     self.part[check_keypart(self, part)] = kpart
 
   def __str__(self):
     'Generate a string representation of the underlying keydesc structure'
     prt = ', '.join([str(cpart) for cpart in self.part])
-    return f'({self.nparts}, [{prt}], 0x{self.flags:02x})'
+    return f'({len(self.part)}, [{prt}], 0x{self.flags:02x})'
 
 class ISAMcommonMixin:
-  ''' This provides the interface to underlying ISAM libraries adding the context of the
-      current file to avoid having to remember it separately.
+  ''' This provides the interface to underlying ISAM libraries adding the context
+      of the current file to avoid having to remember it separately.
   '''
   __slots__ = ()
-
   _vld_errno = (100, 172)
 
   _const = (
@@ -95,7 +101,7 @@ class ISAMcommonMixin:
       return val
     raise AttributeError(name)
 
-  def _chkerror(self, result, func):
+  def _chkerror(self, result):
     '''Perform checks on the running of the underlying ISAM function by
        checking the iserrno provided by the ISAM library.'''
     if result < 0:
@@ -107,7 +113,9 @@ class ISAMcommonMixin:
       elif errno == 111:
         raise IsamNoRecord
       elif errno:
-        raise IsamFunctionFailed(func, errno, self.strerror(errno))
+        # Pull the function name out of the execution stack
+        exstk = traceback.extract_stack(limit=2)
+        raise IsamFunctionFailed(exstk[0].name, errno, self.strerror(errno))
     return result
 
   def _raw(self, buff):
@@ -133,7 +141,7 @@ class ISAMcommonMixin:
       raise IsamNotOpen
     if not isinstance(kdesc, ISAMkeydesc):
       raise ValueError('Must be an instance of ISAMkeydesc')
-    self._chkerror(self._lib.isaddindex(self._fd, kdesc.value), 'isaddindex')
+    self._chkerror(self._lib.isaddindex(self._fd, kdesc.value))
 
   def isaudit(self, mode, audname=None):
     'Perform audit trail related processing'
@@ -142,15 +150,15 @@ class ISAMcommonMixin:
     if not isinstance(mode, str):
       raise ValueError('Must provide a string value')
     if mode == 'AUDSETNAME':
-      self._chkerror(self._lib.isaudit(self._fd, ISAM_bytes(audname), 0), 'isaudit')
+      self._chkerror(self._lib.isaudit(self._fd, ISAM_bytes(audname), 0))
     elif mode == 'AUDGETNAME':
       buff = bytes(256)
-      self._chkerror(self._lib.isaudit(self._fd, buff, 1), 'isaudit')
+      self._chkerror(self._lib.isaudit(self._fd, buff, 1))
       return buff
     elif mode == 'AUDSTART':
-      return bool(self._chkerror(self._lib.isaudit(self._fd, b'', 2), 'isaudit'))
+      return bool(self._chkerror(self._lib.isaudit(self._fd, b'', 2)))
     elif mode == 'AUDSTOP':
-      return bool(self._chkerror(self._lib.isaudit(self._fd, b'', 3), 'isaudit'))
+      return bool(self._chkerror(self._lib.isaudit(self._fd, b'', 3)))
     elif mode == 'AUDINFO':
       buff = bytes(1)
       self._lib.isaudit(self._fd, buff, 4)
@@ -164,7 +172,7 @@ class ISAMcommonMixin:
     'Begin a transaction'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isbegin(self._fd), 'isbegin')
+    self._chkerror(self._lib.isbegin(self._fd))
 
   def isbuild(self, tabpath, reclen, kdesc, varlen=None):
     'Build a new table in exclusive mode'
@@ -181,36 +189,36 @@ class ISAMcommonMixin:
       fdmode |= OpenMode.ISVARLEN.value
       self._fdmode |= OpenMode.ISVARLEN
     END NOT USED"""
-    self._fd = self._chkerror(self._lib.isbuild(ISAM_bytes(tabpath), reclen, kdesc._kinfo, fdmode), 'isbuild')
+    self._fd = self._chkerror(self._lib.isbuild(ISAM_bytes(tabpath), reclen, kdesc._kinfo, fdmode))
 
   def iscleanup(self):
     'Cleanup the ISAM library'
-    self._chkerror(self._lib.iscleanup(), 'iscleanup')
+    self._chkerror(self._lib.iscleanup())
 
   def isclose(self):
     'Close an open ISAM table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isclose(self._fd), 'isclose')
+    self._chkerror(self._lib.isclose(self._fd))
     self._fd = self._fdmode = self._fdlock = None
 
   def iscluster(self, kdesc):
     'Create a clustered index'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.iscluster(self._fd, kdesc.raw()), 'iscluster')
+    self._chkerror(self._lib.iscluster(self._fd, kdesc.raw()))
 
   def iscommit(self):
     'Commit the current transaction'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.iscommit(self._fd), 'iscommit')
+    self._chkerror(self._lib.iscommit(self._fd))
 
   def isdelcurr(self):
     'Delete the current record from the table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isdelcurr(self._fd), 'isdelcurr')
+    self._chkerror(self._lib.isdelcurr(self._fd))
 
   def isdelete(self, keybuff):
     'Delete a record by using its key'
@@ -218,7 +226,7 @@ class ISAMcommonMixin:
       raise IsamNotOpen
     if not isinstance(keybuff, bytes):
       raise ValueError('Expected a bytes array for record')
-    self._chkerror(self._lib.isdelete(self._fd, keybuff), 'isdelete')
+    self._chkerror(self._lib.isdelete(self._fd, keybuff))
 
   def isdelindex(self, kdesc):
     'Remove the given index from the table'
@@ -226,31 +234,31 @@ class ISAMcommonMixin:
       raise IsamNotOpen
     if not isinstance(kdesc, ISAMkeydesc):
       raise ValueError('Must provide an instance of keydesc')
-    self._chkerror(self._lib.isdelindex(self._fd, kdesc.value), 'isdelindex')
+    self._chkerror(self._lib.isdelindex(self._fd, kdesc.value))
 
   def iserase(self, tabname):
     'Remove the table from the filesystem'
-    self._chkerror(self._lib.iserase(ISAM_bytes(tabname)), 'iserase')
+    self._chkerror(self._lib.iserase(ISAM_bytes(tabname)))
 
   def isflush(self):
     'Flush the data out to the table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isflush(self._fd), 'isflush')
+    self._chkerror(self._lib.isflush(self._fd))
 
   def islock(self):
     'Lock the entire table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.islock(self._fd), 'islock')
+    self._chkerror(self._lib.islock(self._fd))
 
   def islogclose(self):
     'Close the transaction logfile'
-    self._chkerror(self._lib.islogclose(), 'islogclose')
+    self._chkerror(self._lib.islogclose())
 
   def islogopen(self, logname):
     'Open a transaction logfile'
-    self._chkerror(self._lib.islogopen(ISAM_bytes(logname)), 'islogopen')
+    self._chkerror(self._lib.islogopen(ISAM_bytes(logname)))
 
   def isopen(self, tabname, mode=None, lock=None):
     'Open an ISAM table'
@@ -271,9 +279,9 @@ class ISAMcommonMixin:
       # Try a variable length table second
       opnmde |= OpenMode.ISVARLEN.value
       mode |= OpenMode.ISVARLEN
-      self._fd = self._chkerror(self._lib.isopen(ISAM_bytes(tabname), opnmde), 'isopen')
+      self._fd = self._chkerror(self._lib.isopen(ISAM_bytes(tabname), opnmde))
     END NOT USED"""
-    self._fd = self._chkerror(self._lib.isopen(ISAM_bytes(tabname), opnmde), 'isopen')
+    self._fd = self._chkerror(self._lib.isopen(ISAM_bytes(tabname), opnmde))
     self._fdmode = mode
     self._fdlock = lock
     self._recsize = self.isreclen
@@ -282,27 +290,27 @@ class ISAMcommonMixin:
     'Read a record from an open ISAM table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isread(self._fd, self._raw(recbuff), mode.value), 'isread')
+    self._chkerror(self._lib.isread(self._fd, self._raw(recbuff), mode.value))
 
   def isrecover(self):
     'Recover a transaction'
-    self._chkerror(self._lib.isrecover(), 'isrecover')
+    self._chkerror(self._lib.isrecover())
 
   def isrelease(self):
     'Release all locks on table'
     if self._fd_ is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isrelease(self._fd), 'isrelease')
+    self._chkerror(self._lib.isrelease(self._fd))
 
   def isrename(self, oldname, newname):
     'Rename an ISAM table'
-    self._chkerror(self._lib.isrename(ISAM_bytes(oldname), ISAM_bytes(newname)), 'isrename')
+    self._chkerror(self._lib.isrename(ISAM_bytes(oldname), ISAM_bytes(newname)))
 
   def isrewcurr(self, recbuff):
     'Rewrite the current record on the table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isrewcurr(self._fd, self._raw(recbuff)), 'isrewcurr')
+    self._chkerror(self._lib.isrewcurr(self._fd, self._raw(recbuff)))
 
   def isrewrec(self, recnum, recbuff):
     'Rewrite the specified record'
@@ -310,17 +318,17 @@ class ISAMcommonMixin:
       raise IsamNotOpen
     if not isinstance(recnum, int):
       raise ValueError('Expected a numeric rowid' )
-    self._chkerror(self._lib.isrewrec(self._fd, recnum, self._raw(recbuff)), 'isrewrec')
+    self._chkerror(self._lib.isrewrec(self._fd, recnum, self._raw(recbuff)))
 
   def isrewrite(self, recbuff):
     'Rewrite the record on the table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isrewrite(self._fd, self._raw(recbuff)), 'isrewrite')
+    self._chkerror(self._lib.isrewrite(self._fd, self._raw(recbuff)))
 
   def isrollback(self):
     'Rollback the current transaction'
-    self._chkerror(self._lib.isrollback(), 'isrollback')
+    self._chkerror(self._lib.isrollback())
 
   def issetunique(self, uniqnum):
     'Set the unique number on the table'
@@ -328,7 +336,7 @@ class ISAMcommonMixin:
       raise IsamNotOpen
     if self._fdmode_ is OpenMode.ISINPUT:
       raise IsamReadOnly
-    self._chkerror(self._lib.issetunique(self._fd, uniqnum), 'issetunique')
+    self._chkerror(self._lib.issetunique(self._fd, uniqnum))
 
   def isstart(self, kdesc, mode, recbuff, keylen=0):
     'Start using a different index'
@@ -338,7 +346,7 @@ class ISAMcommonMixin:
       raise ValueError('Must provide a ReadMode value')
     elif mode in (ReadMode.ISNEXT, ReadMode.ISPREV, ReadMode.ISCURR):
       raise ValueError('Cannot request a directional start')
-    self._chkerror(self._lib.isstart(self._fd, kdesc, keylen, self._raw(recbuff), mode.value), 'isstart')
+    self._chkerror(self._lib.isstart(self._fd, kdesc, keylen, self._raw(recbuff), mode.value))
 
   def isuniqueid(self):
     'Return the unique id for the table'
@@ -347,31 +355,32 @@ class ISAMcommonMixin:
     if self._fdmode is OpenMode.ISINPUT:
       raise IsamReadOnly
     val = self._ffi.new('uint32_t *')
-    self._chkerror(self._lib.isuniqueid(self._fd, val), 'isuniqueid')
+    self._chkerror(self._lib.isuniqueid(self._fd, val))
     return val 
 
   def isunlock(self):
     'Unlock the current table'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.isunlock(self._fd), 'isunlock')
+    self._chkerror(self._lib.isunlock(self._fd))
 
   def iswrcurr(self, recbuff):
     'Write the current record'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.iswrcurr(self._fd, self._raw(recbuff)), 'iswrcurr')
+    self._chkerror(self._lib.iswrcurr(self._fd, self._raw(recbuff)))
 
   def iswrite(self, recbuff):
     'Write a new record'
     if self._fd is None:
       raise IsamNotOpen
-    self._chkerror(self._lib.iswrite(self._fd, self._raw(recbuff)), 'iswrite')
+    self._chkerror(self._lib.iswrite(self._fd, self._raw(recbuff)))
 
 class ISAMindexMixin:
   'This class provides the cffi specific methods for ISAMindex'
-  def create_keydesc(self, isobj, record, optimize=False):
+  def create_keydesc(self, ffiobj, record, optimize=False):
     'Create a new keydesc using the column information in RECORD'
+    # FIXME: Need to review this to make it correct
     # NOTE: The information stored in an instance of _TableIndexCol
     #       is relative to the associated column within in the
     #       record object not to the overall record in general, thus
@@ -401,7 +410,7 @@ class ISAMindexMixin:
       kdesc.k_part[idxno].kp_type = colinfo.type.value
       return kdesc.k_part[idxno].kp_leng
 
-    kdesc = isobj._ffi.new('struct keydesc *')
+    kdesc = new_keydesc(ffiobj)
     kdesc.k_flags = IndexFlags.DUPS if self.dups else IndexFlags.NO_DUPS
     if self.desc:
       kdesc.k_flags |= IndexFlags.DESCEND

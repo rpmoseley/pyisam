@@ -121,7 +121,7 @@ class CTYPES_Builder(Builder):
       '-rpath' ,'$ORIGIN/../lib',     # Dependant libraries
       '-soname', self._mod_so.soext,  # Set the SONAME in library
       '--output', wrk_outname,        # Name the library 
-      '-L', str(self._workdir)        # Location of dependant libraris
+      '-L', str(self._workdir)        # Location of dependant libraries
     ]
     if self.bits == 32:
       cmd += ['--oformat', 'elf32-i386']
@@ -133,7 +133,7 @@ class CTYPES_Builder(Builder):
     # Call the linker using the return code to determine if it has failed
     pret = subprocess.run(cmd)
     if pret.returncode:
-      raise BuildException('Linker failed')
+      raise BuildException('Linker failed:' + str(pret))
 
 class CFFI_Builder(Builder):
   'Class providing the shared methods for the CFFI builders'

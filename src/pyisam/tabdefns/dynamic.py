@@ -83,7 +83,7 @@ class DynamicTableDefn:
     if not isinstance(index.colinfo, (list, tuple)):
       if not isinstance(index.colinfo, TableDefnIndexCol):
         raise TableDefnError('Index column should be instance of TableDefnIndexCol')
-      if index.colinfo.name not in self._columns_:
+      if index.colinfo.name not in self._columns:
         raise TableDefnError('Index contains a column not present in the table definition')
     else:
       for col in index.colinfo:

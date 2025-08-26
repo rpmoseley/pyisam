@@ -108,9 +108,9 @@ class TableIndex(_backend.ISAMindexMixin):
     else:
       raise ValueError('Unhandled type of column information')
 
-  def as_keydesc(self, isobj, record, optimize=False):
+  def as_keydesc(self, ffiobj, record, optimize=False):
     if self._kdesc is None:
-      self._kdesc = self.create_keydesc(isobj, record, optimize=optimize)
+      self._kdesc = self.create_keydesc(ffiobj, record, optimize=optimize)
     return self._kdesc
 
   def fill_fields(self, record, *args, **kwd):
@@ -206,14 +206,14 @@ class TableIndex(_backend.ISAMindexMixin):
     out.append('])')       
     return ''.join(out).format(self)
 
+# TODO: Sort out the record order index along with the keydesc information
 class RecordOrderIndex(TableIndex):
   def __init__(self, debug=False):
-    super().__init__('#RECNUM', debug=debug, dups=False)
+    super().__init__('RECNUM', debug=debug, dups=False)
 
-  def create_keydesc(self, isobj, record, optimize=False):
+  def create_keydesc(self, ffiobj, record, optimize=False):
     if self._kdesc is None:
-      self._kdesc = isobj._ffi.new('struct keydesc *')
-      self._kdesc.k_nparts = 0
+      self._kdesc = _backend.ISAMkeydesc().as_keydesc(ffiobj)
     return self._kdesc
 
 def create_TableIndex(keydesc, record, idxnum):
