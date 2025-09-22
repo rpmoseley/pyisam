@@ -196,7 +196,7 @@ class TableIndexMapping:
       name = name_or_idxnum
       idxnum = self._idxmap[name_or_idxnum].idxnum
     else:
-      raise ValueError('Unhandled type of object: {}'.format(name_or_idxnum))
+      raise ValueError(f'Unhandled type of object: {name_or_idxnum}')
     # Remove the elements by both index name and number
     del self._idxmap[name], self._idxmap[idxnum]      
 
@@ -257,11 +257,9 @@ class ISAMtable:
     self._isobj = isobj if isinstance(isobj, ISAMobject) else ISAMobject(**kwds)
     self._database = getattr(tabdefn, '_database', None)
     self._prefix = getattr(tabdefn, '_prefix', None)
-    self._record = kwds.get('recordclass', getattr(tabdefn, '_recinfo', None))
-    if self._record is None:
-      # NOTE: The following allocates a low-level buffer for the record, but
-      # NOTE: then another instance is allocated for this object itself.
-      self._record = create_record_class(tabdefn)
+    # NOTE: The following allocates a low-level buffer for the record, but
+    # NOTE: then another instance is allocated for this object itself.
+    self._record = kwds.pop('recordclass', getattr(tabdefn, '_recinfo', create_record_class(tabdefn)))
     self._idxinfo = TableIndexMapping(self)  # Mapping of indexes on this table's object
     self._primary = None             # Set to the primary index or first otherwise
     self._curindex = None            # Current index being used in isread/isstart

@@ -60,6 +60,7 @@ class ReadMode(IntFlag):
   _EXTMASK   = 0x008
  
 # The types of column supported by the package
+ColumnCType = ['char', 'short', 'int', 'long', 'double', 'float']
 class ColumnType(IntEnum):
   CHAR   = 0
   SHORT  = 1

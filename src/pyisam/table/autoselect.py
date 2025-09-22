@@ -23,7 +23,7 @@ class _CompareMixin:
     self.chkvalue = self._conv(chkvalue)
 
   def _print(self, comp, ownvalue, othvalue):
-    print("{0._id}_{1}: {2} {3} {4}".format(self, comp, ownvalue, _cmp_sym.get(comp.upper()), othvalue))
+    print(f'{self._id}_{comp}: {ownvalue} {_cmp_sym.get(comp.upper())}, {othvalue}')
 
   def __eq__(self, value):
     self._print('EQ', value, self.chkvalue)
@@ -56,7 +56,7 @@ class _TextCompare(_CompareMixin):
     return value if isinstance(value, str) else str(value)
 
   def _print(self, comp, ownvalue, othvalue):
-    print("{0._id}_{1}: '{2}' {3} '{4}'".format(self, comp, ownvalue, _cmp_sym.get(comp.upper()), othvalue))
+    print(f"{self._id}_{comp}: '{ownvalue}' {_cmp_sym.get(comp.upper())}, '{othvalue}'")
 
 class _IntegerCompare(_CompareMixin):
   'Perform integer number comparisons'
@@ -88,13 +88,13 @@ def prepare_colcheck(record, **colcomp):
     # Default to equality for column checks
     colcheck = colname.split('__') + ['eq']
     colname, colop = colcheck[:2]
-    if colname not in record._flddict:
-      #raise ValueError('Column not present in the table: {}'.format(colname))
+    if colname not in record._fields:
+      #raise ValueError(f'Column not present in the table: {colname}')
       continue   # Ignore the column check 
     if colop in _sub_ops:
       colop = _sub_ops[colop]
     if colop not in _vld_ops:
-      raise ValueError('Comparison not currently supported: {}'.format(colop))
+      raise ValueError(f'Comparison not currently supported: {colop}')
     coldict[colname] = (colop, colvalue)
 
   # Now process the fields in record order adding those that need checking
@@ -104,7 +104,7 @@ def prepare_colcheck(record, **colcomp):
     if col.name in coldict:
       colop, colvalue = coldict[col.name]
       # Add the appropriate call to make the correct comparison
-      colcmp = '__{colop}__'.format(colop=colop)
+      colcmp = f'__{colop}__'
       chkinst = _conv_cmp[col.type](colvalue)
       chkfunc = getattr(chkinst, colcmp)
       new_colcheck.append((col, chkfunc))
@@ -113,7 +113,7 @@ def prepare_colcheck(record, **colcomp):
 def select_index(tabobj, colcheck, record=None):
   '''Attempt to select the correct index given the column checks'''
   if not isinstance(colcheck, (tuple, list)):
-    raise ValueError('Expected a sequence of column check, got {}'.format(type(colcheck)))
+    raise ValueError(f'Expected a sequence of column check, got {type(colcheck)}')
   if not isinstance(record, ISAMrecordBase):
     record = tabobj._default_record()
   # Create a dictionary for each index defined for the record
@@ -125,7 +125,7 @@ if _shortcircuit:
   def perform_colcheck(record, colcheck):
     '''Run the prepared column check against the current record values'''
     if not isinstance(colcheck, (tuple, list)):
-      raise ValueError('Expected a sequence of column check, got {}'.format(type(colcheck)))
+      raise ValueError(f'Expected a sequence of column check, got {type(colcheck)}')
     for col, chkfunc in colcheck:
       # Perform the comparison using the current value as self and the stored value
       # as the other (ie curvalue OP self.value)
@@ -139,7 +139,7 @@ else:
   def perform_colcheck(record, colcheck):
     '''Run the prepared column check against the current record values'''
     if not isinstance(colcheck, (tuple, list)):
-      raise ValueError('Expected a sequence of column check, got {}'.format(type(colcheck)))
+      raise ValueError(f'Expected a sequence of column check, got {type(colcheck)}')
     rslt = True
     for col, chkfunc in colcheck:
       # Perform the comparison using the current value as self and the stored value
