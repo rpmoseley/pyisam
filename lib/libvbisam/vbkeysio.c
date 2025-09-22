@@ -1091,6 +1091,7 @@ ichktree (int ihandle, int ikeynumber)
         cbuffer[0] = pskey->ckey[0];
     } else {
         icurrintree = 1;
+        memset(cbuffer, 0, sizeof(cbuffer));
     }
     if (ichktree2 (pstree, pstree->ilevel, pskey, &icurrintree)) {
         printf ("Tree is invalid!\n");

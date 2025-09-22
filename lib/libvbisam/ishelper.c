@@ -435,20 +435,40 @@ stfloat (double dsource, void *pcdestination)
 double
 ldfltnull (void *pclocation, short *pinullflag)
 {
-	double dvalue;
-
-	*pinullflag = 0;
-	dvalue = ldfloat (pclocation);
-	return (double)dvalue;
+#if ISAMMODE == 1
+	if (pinullflag) {
+		unsigned short chk;
+		for (chk = 0; chk < FLOATSIZE && *(pclocation + chk) == 0xff; chk++);
+		if (chk == FLOATSIZE) {
+			*pinullflag = 1;
+			return 0.0;
+		} else {
+			*pinullflag = 0;
+			return ldfloat(pclocation);
+		}
+	} else {
+		return ldfloat(pclocation);
+	}
+#else
+	if (pinullflag)
+		*pinullflag = 0;
+	return ldfloat(pclocation);
+#endif
 }
 
 void
 stfltnull (double dsource, void *pcdestination, int inullflag)
 {
-	if (inullflag) {
+#if ISAMMODE == 1
+	if (inullflag)
+		memset(pcdestination, 0xff, FLOATSIZE);
+	else
+		stfloat(dsource, pcdestination);
+#else
+	if (inullflag)
 		dsource = 0;
-	}
-	stfloat (dsource, pcdestination);
+	stfloat(dsource, pcdestination);
+#endif
 }
 
 double
@@ -469,15 +489,37 @@ stdbl (double dsource, void *pcdestination)
 double
 lddblnull (void *pclocation, short *pinullflag)
 {
+#if ISAMMODE == 1
+	if (pinullflag) {
+		unsigned short chk;
+		for (chk = 0; chk < DOUBLESIZE && *(pclocation + chk) == 0xff; chk++);
+		if (chk) {
+			*pinullflag = 0;
+			return lddbl(pclocation);
+		} else {
+			*pinullflag = 1;
+			return 0.0;
+		}
+	} else {
+		return ldfloat(pclocation);
+	}
+#else
 	*pinullflag = 0;
 	return (lddbl (pclocation));
+#endif
 }
 
 void
 stdblnull (double dsource, void *pcdestination, int inullflag)
 {
-	if (inullflag) {
+#if ISAMMODE == 1
+	if (inullflag)
+		memset(pcdestination, 0xff, DOUBLESIZE);
+	else
+		stdbl(dsource, pcdestination);
+#else
+	if (inullflag)
 		dsource = 0;
-	}
-	stdbl (dsource, pcdestination);
+	stdbl(dsource, pcdestination);
+#endif
 }
