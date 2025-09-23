@@ -45,6 +45,10 @@ libvbisam = shared_library('vbisam',
   vbisam_src, vbisam_hdr,
   c_args: vbflags,
   include_directories: vbisam_incl,
+  install: true,
+  install_dir: py.get_install_dir() + 'pyisam/backend/lib',
+  install_mode: 'r-xr-xr-x',
+  install_tag: 'runtime',
 )
 
 # Build the CFFI extension if required
@@ -68,10 +72,12 @@ if gen_cffi_src.found()
   libvbisam_cffi = py.extension_module(
     '_vbisam_cffi',
     libvbisam_cffi_src,
-    subdir: 'pyisam.backend.cffi',
-    install: true,
     dependencies: [py.dependency()],
     link_with: libvbisam,
+    install: true,
+    subdir: 'pyisam/backend/cffi',
+    install_mode: 'rwxr-xr-x',
+    install_tag: 'runtime',
   ) 
 endif
 

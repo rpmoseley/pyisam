@@ -55,10 +55,10 @@ pyisam_conf.set('PYISAM_VERSION', meson.project_version(),       description: 'V
 conf_py = configure_file(
   configuration: pyisam_conf,
   output: 'conf.py',
-  input: 'conf.py.in',
-  install: true,
-  install_dir: 'pyisam',
-  install_mode: 'r--r--r--'
+  input: 'src/pyisam/backend/conf.py.in',
+  install_dir: py.get_install_dir() + 'pyisam/backend',
+  install_mode: 'r--r--r--',
+  install_tag: 'runtime',
 )
 
 # Compile the underlying ISAM libraries as required
