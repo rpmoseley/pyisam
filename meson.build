@@ -13,13 +13,24 @@ pkgconf = configuration_data()
 pkgconf.set('vbisam', 'all' in isamsupp or 'default' in isamsupp or 'vbisam' in isamsupp)
 pkgconf.set('ifisam', 'all' in isamsupp or 'default' in isamsupp or 'ifisam' in isamsupp)
 pkgconf.set('disam',  'all' in isamsupp or                          'disam'  in isamsupp)
-pkgconf.set('cffi',   'all' in ffisupp  or                          'cffi'   in ffisupp)
+pkgconf.set('cffi',   'all' in ffisupp  or 'default' in ffisupp  or 'cffi'   in ffisupp)
 pkgconf.set('ctypes', 'all' in ffisupp  or 'default' in ffisupp  or 'ctypes' in ffisupp)
 pkgconf.set('cython',                                               'cython' in ffisupp)
+
+message('VBISAM:', pkgconf.get('vbisam'))
+message('IFISAM:', pkgconf.get('ifisam'))
+message('DISAM: ', pkgconf.get('disam'))
+message('CFFI:  ', pkgconf.get('cffi'))
+message('CTYPES:', pkgconf.get('ctypes'))
+message('CYTHON:', pkgconf.get('cython'))
+message('ISAMSUPP=', isamsupp)
+message('FFISUPP =', ffisupp)
 
 # Load the compiler and check for some header files
 cc = meson.get_compiler('c')
 has_fcntl_h = cc.has_header('fcntl.h')
+
+message('LINKER:', cc.get_linker_id())
 
 # Load the python support for meson-python and cffi-buildtool
 py = import('python').find_installation(pure: false)
