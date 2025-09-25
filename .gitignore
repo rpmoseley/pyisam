@@ -8,8 +8,6 @@ __pycache__/
 *.la
 *.lo
 /bin
-/lib32
-/lib64
 /pip-selfcheck.json
 /pyvenv.cfg
-.*venv/
+/.*venv/
