@@ -1,8 +1,9 @@
 /*
- * Provide the definition of structures and functions provided by libifisam
+ * This file contains the necessary C code to define the interface and functions provided by the
+ * IFISAM CFFI extension module.
  */
 
-/* Define the structures and functions defined in "decimal.h" */
+/* The following defines provide the decimal support found in "decimal.h" */
 struct decimal;
 extern int   decadd(struct decimal *, struct decimal *, struct decimal *);
 extern int   decsub(struct decimal *, struct decimal *, struct decimal *);
@@ -25,7 +26,7 @@ extern void  dectrunc(struct decimal *, int);
 extern int   deccvflt(double, struct decimal *);
 extern int   dectoflt(struct decimal *, float *);
 
-/* Define the structures and functions defined in "isam.h" */
+/* The following defines provide the structures and functions found in "isam.h" */
 struct keypart {
     short kp_start;
     short kp_leng;

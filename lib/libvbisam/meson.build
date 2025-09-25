@@ -69,7 +69,7 @@ if pkgconf.get('cffi') and gen_cffi_src.found()
     command: [
         gen_cffi_src,
         'read-sources',
-        'pyisam.backend.cffi._vbisam_cffi',
+        '_vbisam_cffi',     # WAS: pyisam.backend.cffi._vbisam_cffi
         '@INPUT0@',
         '@INPUT1@',
         '@OUTPUT@',

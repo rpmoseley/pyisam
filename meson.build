@@ -17,24 +17,17 @@ pkgconf.set('cffi',   'all' in ffisupp  or 'default' in ffisupp  or 'cffi'   in 
 pkgconf.set('ctypes', 'all' in ffisupp  or 'default' in ffisupp  or 'ctypes' in ffisupp)
 pkgconf.set('cython',                                               'cython' in ffisupp)
 
-message('VBISAM:', pkgconf.get('vbisam'))
-message('IFISAM:', pkgconf.get('ifisam'))
-message('DISAM: ', pkgconf.get('disam'))
-message('CFFI:  ', pkgconf.get('cffi'))
-message('CTYPES:', pkgconf.get('ctypes'))
-message('CYTHON:', pkgconf.get('cython'))
-message('ISAMSUPP=', isamsupp)
-message('FFISUPP =', ffisupp)
-
 # Load the compiler and check for some header files
 cc = meson.get_compiler('c')
 has_fcntl_h = cc.has_header('fcntl.h')
 
-message('LINKER:', cc.get_linker_id())
-
 # Load the python support for meson-python and cffi-buildtool
-py = import('python').find_installation(pure: false)
+py = import('python').find_installation(pure: true)
 gen_cffi_src = find_program('gen-cffi-src', required: pkgconf.get('cffi'))
+
+# Load the source set support
+ssmod = import('sourceset')
+python_sources = ssmod.source_set()
 
 # Configure VBISAM
 if pkgconf.get('vbisam')
@@ -82,3 +75,6 @@ endif
 if pkgconf.get('disam')
   subdir('lib/libdisam')
 endif
+
+# Install all the various subdirectories of the package
+subdir('src/pyisam')

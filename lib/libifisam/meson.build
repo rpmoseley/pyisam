@@ -30,7 +30,7 @@ if pkgconf.get('cffi') and gen_cffi_src.found()
     command: [
       gen_cffi_src,
       'read-sources',
-      'pyisam.backend.cffi._ifisam_cffi',
+      '_ifisam_cffi',       # WAS: pyisam.backend.cffi._ifisam_cffi
       '@INPUT0@',
       '@INPUT1@',
       '@OUTPUT@',

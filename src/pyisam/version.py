@@ -6,6 +6,7 @@ file, a fixed version is given.
 
 __all__ = ('__version__',)
 
+print(__package__)
 import importlib.metadata
 try: 
   __version__ = importlib.metadata.version(__package__)
@@ -28,4 +29,4 @@ except importlib.metadata.PackageNotFoundError:
           __version__  = projobj['version']
           break
   except:
-    __version__ = '0.20dev'
+    __version__ = '0.21dev'

@@ -333,7 +333,7 @@ class ISAMrecordBase:
         fldval.append(f"{fld}='{getattr(self, fld)}'")
       else:
         fldval.append(f'{fld}={getattr(self, fld)}')
-    return f'{self.__class__.__name__}({", ".join(fldval)})')
+    return f'{self.__class__.__name__}({", ".join(fldval)})'
 
 # Define the templates used to generate the record definition class at runtime,
 # these will be passed through the 'format' function.
@@ -361,7 +361,7 @@ def create_record_class(tabdefn, recname, keepsrc, **kwd):
   if recname is None:
     fqname = [getattr(tabdefn, '_database', None),
               getattr(tabdefn, '_prefix',   None),
-              kwd.get('idname', getattr(tabdefn, '_tabname', None)]
+              kwd.get('idname', getattr(tabdefn, '_tabname', None))]
     recname = '_'.join([x for x in fqname if x is not None])
 
   # Retrieve the field information from the table definition
