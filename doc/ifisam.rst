@@ -1,5 +1,5 @@
-libisam
-=======
+ifisam
+======
 
 This file provides details about how to prepare the CISAM libraries provided by IBM for use by the pyisam package.
 

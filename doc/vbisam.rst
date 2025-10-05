@@ -9,14 +9,10 @@ a call to 'islogopen' is a separate file that is used to hold transactional deta
 
 Compatibility concerns
 ----------------------
-Splitting the locking information into a separate file would break existing situations
-where the VBISAM library is used, and expect that only two files are related to an
-individual table, these being the .dat and .idx files. Optionally, a log file would
-exist, if the islogopen()/islogclose() functions are invoked, and as is expected by
-the original C-ISAM implementation should be a pre-existing file on the filesystem,
-otherwise no logging will actually be performed without error. Unlike the C-ISAM
-library, the index file seems to grow whenever the VBISAM library is used, which
-is adding information about every access even if no data is being updated.
+To avoid the situation where the index file seems to grow whilst using the library,
+an application should ensure that it calls the vb_get_rtd() function to correctly
+initialise the library. Otherwise, the locking file handle is 0, which then matches
+the first actual file opened with the library.
 
 The use of variable length tables as supported by C-ISAM is broken in VBISAM, although
 the table can be opened, the fact that the table is using variable record length is
@@ -31,3 +27,10 @@ isreclen when a table is opened, it is only updated when the application makes a
 to the isindexinfo() function. This has been fixed in the version of the library that
 is distributed with the pyisam package when the macro ISOPEN_SET_ISRECLEN is set during
 compilation.
+
+The default source code for the vbisam library *DOES NOT* handle the storage of a NUL
+float or double correctly, under libifisam, this is represented by a sequence of 0xFF
+bytes to the length of either a float or double depending on the type of value. This
+means that the use of the stfltnull/stdblnull functions always returns that a value is
+not NUL even if the actual value is the aforementioned sequence (this leads a -Nan
+being given if the value is later output using the printf family of functions).

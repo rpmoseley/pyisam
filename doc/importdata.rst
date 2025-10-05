@@ -7,7 +7,7 @@ populated with data from the specified textual file.
 
 Operational Notes
 -----------------
-A special varaint of the ISAMrecord object is used which takes each field from a line
+A special variant of the ISAMrecord object is used which takes each field from a line
 within the textual file in the order of the _namedtuple._fields method and then places
 the value suitably converted using the normal packing functionality before calling the
 iswrite method on the underlying ISAMobject.
