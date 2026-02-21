@@ -94,7 +94,14 @@ current index, then returns the current contents of the row by issuing a ISEQUAL
 ISEQUAL
 ~~~~~~~
 Use any provided keyfield values, or default them to the type of field, and then
-perform 
+perform a ISEQUAL .isread() call. If the row returned matches all the keyfields,
+then save it as the saved row, subsequently calls to ISNEXT will then return
+subsequent rows until the end of the table is reached.
+
+ISGREAT
+=======
+B
+
 
 Iterator  | Initial | Record |
   Mode    |  Mode   |  Mode  | Notes
@@ -123,3 +130,16 @@ Iterator  | Initial | Record |
 2 - This is not directly provided by the underlying ISAM library, this is
     implemented in the iterator by ensuring that the keyfield values are adjusted
     then the first row is fetched using ISGREAT
+3 - This is not directly provided by the underlying ISAM library, this is
+    implemented in the iterator by fetching the first row using ISGTEQ/ISLTEQ,
+    then set a flag to say that the resultset is complete.
+4 - This is not directly provided by the underlying ISAM library, this is
+    implemented in the iterator by storing the initial keyfield values then
+    performing a ISGTEQ. It then checks that the non-NULL keyfield values match 
+    the row fetched, subsequent fetchs make use of ISNEXT and then check that
+    the non-NULL keyfield values still match.
+5 - This is not directly provided by the underlying ISAM library, this is
+    implemented in the iterator by storing the initial keyfield values then
+    performing a ISLTEQ. It then checks that the non-NULL keyfield values match
+    the row fetched, subsequent fetchs make use of ISPREV and then check that
+    the non-NULL keyfield values still match.

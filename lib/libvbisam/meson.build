@@ -52,7 +52,7 @@ libvbisam = shared_library('vbisam',
 
 # Build the CTYPES helper library
 if pkgconf.get('ctypes')
-  libvbisam_ctypes = shared_library('pyvbisam',
+  libvbisam_ctype = shared_library('pyvbisam',
     '_dummy.c',
     link_with: libvbisam,
     install: true,
@@ -84,7 +84,7 @@ if pkgconf.get('cffi') and gen_cffi_src.found()
   libvbisam_cffi = py.extension_module(
     '_vbisam_cffi',
     libvbisam_cffi_src,
-    dependencies: [py.dependency()],
+    #CHK#dependencies: [py.dependency()],
     link_with: libvbisam,
     install: true,
     subdir: 'pyisam/backend/cffi',

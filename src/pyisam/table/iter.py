@@ -14,50 +14,55 @@ class ISAMiter:
     # Ensure that we have a correct table object to operate on
     if not isinstance(tabobj, ISAMtable):
       raise ValueError('Must pass an ISAMtable instance to operate on')
-    self.tabobj = tabobj
+    self._tabobj = tabobj
 
     # Parse the arguments and keywords
     self._parseargs(*args, **kwds)
 
   def _parseargs(self, *args, **kwds):
-    'Parse the arguments appropriately'
-
-    # Calling sequence:
-    #   ()                             -> (CURINDEX, CURMODE, RECBUFF) {}
-    #   (INDEX)                        ->
-    #   (MODE)                         ->
-    #   (BUFF)                         ->
-    #   (KEYCOL...)                    ->
-    #   (INDEX, MODE)                  ->
-    #   (INDEX, MODE, KEYCOL...)       ->
-    #   (INDEX, BUFF)                  ->
-    #   (INDEX, BUFF, KEYCOL...)       ->
-    #   (INDEX, MODE, BUFF)            ->
-    #   (INDEX, MODE, BUFF, KEYCOL...) ->
+    '''Parse the arguments appropriately, use *args to indicate the index, mode, buffer and
+       values for the keyfields in order of the index, use **kwds to set individual keyfields
+       for the index selected'''
+    # Calling sequence:                   _initmode  _recmode  _useindex  _condflds  _recbuff
+    #   ()                             ->  ISFIRST    ISNEXT    PRIMARY
+    #   (INDEX)                        ->                        index
+    #   (MODE)                         ->   
+    #   (BUFF)                         ->                                               buff
+    #   (KEYCOL...)                    ->  ISGTEQ     ISNEXT    PRIMARY     keycol
+    #   (INDEX, MODE)                  ->                        index
+    #   (INDEX, MODE, KEYCOL...)       ->                        index
+    #   (INDEX, BUFF)                  ->                        index                  buff
+    #   (INDEX, BUFF, KEYCOL...)       ->                        index                  buff
+    #   (INDEX, MODE, BUFF)            ->                        index                  buff
+    #   (INDEX, MODE, BUFF, KEYCOL...) ->                        index                  buff
     #   (MODE, KEYCOL...)              ->
-    #   (MODE, BUFF)                   ->
-    #   (MODE, BUFF, KEYCOL...)        ->
-    if len(args) + len(kwds) < 1:
+    #   (MODE, BUFF)                   ->                                               buff
+    #   (MODE, BUFF, KEYCOL...)        ->                                               buff
+    #   {keycol=val...}                ->                                   keycol 
+    if not args and not kwds:
       # Assume that the entire table will be processed
+      # return ReadMode.ISFIRST, ReadMode.ISNEXT, self.tabobj._PrimaryIndex, None, None:w
       self._initmode = ReadMode.ISFIRST
       self._recmode = ReadMode.ISNEXT
       self._useindex = self.tabobj._PrimaryIndex
       self._condflds = None
+      self._recbuff = None
       return
 
-    elif len(args) < 1:
+    elif not args:
       # Assume that the entire table will be processed filtered by keywords
       self._initmode = ReadMode.ISGTEQ
       self._recmode = ReadMode.ISNEXT
       self._useindex = self.tabobj._PrimaryIndex
       self._condflds = kwds
+      self._recbuff = None
       return
 
     # Convert the arguments to a list to permit popping values
     largs = list(args)
 
     # Determine the index to be used
-    if isinstance(olargs[0], (ReadMode, ISAMrecordBase)):
+    if isinstance(args[0], (ReadMode, ISAMrecordBase)):
       index = None
     elif args[0] is None or isinstance(args[0], (str, int, TableIndex)):
       index = largs.pop(0)
@@ -78,7 +83,7 @@ class ISAMiter:
 
     # Prepare new *args and **kwds for the .read() method
     nargs = (useindex, mode, recbuff)
-    nkwds = kwds.copy() if kwds else dict()
+    nkwds = kwds.copy()
 
     # Copy each of the remaining arguments as new entries in the keywords
     # using the column name from the underlying table in order of appearance

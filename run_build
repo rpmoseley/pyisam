@@ -1,0 +1,25 @@
+if test x$VIRTUAL_ENV = x; then
+  source .venv/bin/activate
+fi
+case $1 in
+--help)
+  printf '%s [--build|--pip|--setup]\n' $0
+  printf '  --build   Perform a compile using the specified buildtool\n'
+  printf '  --pip     Perform a compile using pip install\n'
+  printf '  --setup   Reconfigure using meson\n'
+  printf '  Default is to attempt to compile, or reconfigure using meson\n'
+  ;;
+--build)
+  python -m build .
+  ;;
+--pip)
+  python -m pip install --no-build-isolation --editable .
+  ;;
+--setup)
+  meson setup --reconfigure build
+  ;;
+*)
+  if ! meson compile -C build; then
+    meson setup --reconfigure build && meson compile -C build
+  fi
+esac

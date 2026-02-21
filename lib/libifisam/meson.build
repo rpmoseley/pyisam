@@ -11,11 +11,13 @@ install_data(
   install_tag: 'runtime',
 )
 
+libifisam_link = [libifisam_dir, '-lifisam', '-lifisamx']
+
 # Build the CTYPES helper library
 if pkgconf.get('ctypes')
   libifisam_ctypes = shared_library('pyifisam',
     '_dummy.c',
-    link_args: [libifisam_dir, '-lifisam', '-lifisamx'],
+    link_args: libifisam_link,
     install: true,
     install_dir: py.get_install_dir() + 'pyisam/backend/ctypes',
     install_mode: 'r-xr-xr-x',
@@ -45,12 +47,12 @@ if pkgconf.get('cffi') and gen_cffi_src.found()
   libifisam_cffi = py.extension_module(
     '_ifisam_cffi',
     libifisam_cffi_src,
-    dependencies: py.dependency(),
-    link_args: [libifisam_dir, '-lifisam', '-lifisamx'],
+    #CHK#dependencies: py.dependency(),
+    link_args: libifisam_link,
     install: true,
     subdir: 'pyisam/backend/cffi',
-    install_rpath: '$ORIGIN/../lib',
     install_mode: 'rwxr-xr-x',
+    install_rpath: '$ORIGIN/../lib',
     install_tag: 'runtime',
   )
 endif

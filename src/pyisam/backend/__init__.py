@@ -14,9 +14,17 @@ _all_isam = ('vbisam', 'ifisam', 'disam')
 # Pickup the interface to use
 try:
   confmod = importlib.import_module('.conf', 'pyisam.backend')
-  rawconf = getattr(confmod, 'backend', '')
 except ModuleNotFoundError:
-  rawconf = ''
+  try:
+    confmod = importlib.import_module('.conf', 'pyisam')
+  except ModuleNotFoundError:
+    confmod = None
+
+# If no configuration was found check the environment
+rawconf = None if confmod is None else getattr(confmod, 'backend', None)
+if rawconf is None:
+  import os
+  rawconf = os.environ.get('PYISAM_BACKEND', 'cffi.vbisam')
 
 # Validate the configuration and variant and default to the first allowed
 use_conf, *rest = rawconf.split('.', 1)
